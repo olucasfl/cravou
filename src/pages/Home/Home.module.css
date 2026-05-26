@@ -1,0 +1,248 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.greeting {
+  font-size: 0.85rem;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #000;
+  flex-shrink: 0;
+}
+
+/* Score card */
+.scoreCard {
+  background: linear-gradient(135deg, var(--c-green-dark), var(--c-green));
+  border-radius: var(--r-xl);
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-green);
+}
+
+.scoreLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(0,0,0,0.6);
+}
+
+.scoreValue {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  color: #000;
+  line-height: 1;
+}
+
+.scoreSub {
+  font-size: 0.75rem;
+  color: rgba(0,0,0,0.5);
+  margin-top: 2px;
+}
+
+.scoreIcon {
+  width: 56px;
+  height: 56px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Section */
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+
+.seeAll {
+  font-size: 0.8rem;
+  color: var(--c-green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Match card */
+.matchCard {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: var(--transition);
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+}
+
+.matchCard:hover {
+  border-color: var(--c-border-2);
+  background: var(--c-surface-2);
+}
+
+.matchMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.matchGroup {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--c-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.matchDate {
+  font-size: 0.7rem;
+  color: var(--c-text-3);
+}
+
+.matchTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.teamFlag {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.teamName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-2);
+  text-align: center;
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+}
+
+.scoreNum {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--c-text);
+  line-height: 1;
+  min-width: 20px;
+  text-align: center;
+}
+
+.scoreSep {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-text-3);
+}
+
+.vs {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--c-text-3);
+  letter-spacing: 2px;
+}
+
+.matchPrediction {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.predLabel {
+  font-size: 0.7rem;
+  color: var(--c-text-3);
+}
+
+.predValue {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--c-gold);
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--c-text-3);
+  font-size: 0.9rem;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+/* Status badge inline */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--c-red);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-red);
+  animation: pulse-green 1s ease infinite;
+}

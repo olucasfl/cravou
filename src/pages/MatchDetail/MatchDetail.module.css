@@ -1,0 +1,200 @@
+.back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-text-3);
+  font-size: 0.85rem;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition: var(--transition);
+}
+.back:hover { color: var(--c-text); }
+
+.hero {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 24px 20px;
+  margin-bottom: 20px;
+}
+
+.heroBadge {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.heroTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.heroTeam {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.heroFlag { font-size: 3rem; line-height: 1; }
+
+.heroName {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-text);
+  text-align: center;
+}
+
+.heroScore {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+.heroScoreNum {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  color: var(--c-text);
+  line-height: 1;
+  min-width: 32px;
+  text-align: center;
+}
+
+.heroScoreSep {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  color: var(--c-text-3);
+}
+
+.heroVs {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--c-text-3);
+  letter-spacing: 3px;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--c-text-3);
+  flex-wrap: wrap;
+}
+
+.heroDot { color: var(--c-border-2); }
+
+/* Prediction section */
+.section {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+.predInputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.predTeamLabel {
+  font-size: 0.7rem;
+  color: var(--c-text-3);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.scoreInput {
+  width: 72px;
+  height: 72px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  background: var(--c-surface-2);
+  border: 2px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text);
+  outline: none;
+  transition: var(--transition);
+}
+.scoreInput:focus {
+  border-color: var(--c-green);
+  box-shadow: 0 0 0 3px var(--c-green-glow);
+}
+.scoreInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.predSep {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--c-text-3);
+  padding-bottom: 24px;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 16px;
+}
+
+.lockedMsg {
+  text-align: center;
+  padding: 12px;
+  background: var(--c-gold-glow);
+  border: 1px solid var(--c-gold);
+  border-radius: var(--r-md);
+  font-size: 0.85rem;
+  color: var(--c-gold);
+}
+
+.pointsResult {
+  text-align: center;
+  padding: 16px;
+  background: var(--c-green-glow);
+  border: 1px solid var(--c-green);
+  border-radius: var(--r-md);
+}
+.pointsResultValue {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  color: var(--c-green);
+  line-height: 1;
+}
+.pointsResultLabel {
+  font-size: 0.75rem;
+  color: var(--c-text-3);
+  margin-top: 4px;
+}
+
+.successMsg {
+  text-align: center;
+  padding: 10px;
+  font-size: 0.85rem;
+  color: var(--c-green);
+}
+
+.errorMsg {
+  text-align: center;
+  padding: 10px;
+  font-size: 0.85rem;
+  color: var(--c-red);
+}

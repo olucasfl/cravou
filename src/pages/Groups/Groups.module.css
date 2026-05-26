@@ -1,0 +1,125 @@
+.title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.groupCard {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+}
+.groupCard:hover { border-color: var(--c-border-2); background: var(--c-surface-2); }
+
+.groupLetter {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--c-green);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.groupTeams {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.groupTeamRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--c-text-2);
+}
+.groupTeamRow.qualified { color: var(--c-green); }
+
+.teamFlagSm { font-size: 0.9rem; }
+
+/* Detail */
+.detail {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.detailHeader {
+  padding: 14px 16px;
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detailTitle {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-green);
+  letter-spacing: 2px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  padding: 8px 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-text-3);
+  text-align: center;
+  border-bottom: 1px solid var(--c-border);
+}
+.th:first-child { text-align: left; }
+
+.tr { border-bottom: 1px solid var(--c-border); }
+.tr:last-child { border-bottom: none; }
+.tr.qualified { background: var(--c-green-glow); }
+
+.td {
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--c-text-2);
+  text-align: center;
+}
+.td:first-child { text-align: left; }
+
+.tdTeam {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+}
+
+.pos {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--c-text-3);
+  min-width: 16px;
+}
+.pos.top { color: var(--c-green); }
+
+.pts {
+  font-weight: 800;
+  color: var(--c-text);
+  font-size: 0.9rem;
+}

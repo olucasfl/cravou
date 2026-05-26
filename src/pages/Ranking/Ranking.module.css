@@ -1,0 +1,169 @@
+.title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+}
+
+/* Podium */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.podiumItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 110px;
+}
+
+.podiumItem.first { order: 2; }
+.podiumItem.second { order: 1; }
+.podiumItem.third  { order: 3; }
+
+.podiumAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #000;
+}
+.podiumItem.first  .podiumAvatar { width: 60px; height: 60px; background: var(--c-gold); font-size: 1.3rem; }
+.podiumItem.second .podiumAvatar { background: #9ca3af; }
+.podiumItem.third  .podiumAvatar { background: #92400e; }
+
+.podiumCrown { font-size: 1.2rem; }
+
+.podiumName {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--c-text-2);
+  text-align: center;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podiumPts {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-text);
+}
+.podiumItem.first .podiumPts { font-size: 1.8rem; color: var(--c-gold); }
+
+.podiumBar {
+  width: 100%;
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+}
+.podiumItem.first  .podiumBar { height: 48px; background: var(--c-gold-glow); border: 1px solid var(--c-gold); }
+.podiumItem.second .podiumBar { height: 32px; background: var(--c-surface-2); border: 1px solid var(--c-border-2); }
+.podiumItem.third  .podiumBar { height: 24px; background: var(--c-surface-2); border: 1px solid var(--c-border-2); }
+
+/* List */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+}
+
+.item.me {
+  border-color: var(--c-green);
+  background: var(--c-green-glow);
+}
+
+.pos {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--c-text-3);
+  min-width: 28px;
+  text-align: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--c-surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--c-text-2);
+  flex-shrink: 0;
+}
+
+.name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--c-text);
+}
+
+.pts {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-text);
+}
+
+.ptsBlock {
+  text-align: right;
+}
+
+.ptsLabel {
+  font-size: 0.65rem;
+  color: var(--c-text-3);
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.podiumPtsLabel {
+  font-size: 0.65rem;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  margin-top: -4px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyIcon { font-size: 2.5rem; }
+
+.emptyTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--c-text-2);
+}
+
+.emptySub {
+  font-size: 0.8rem;
+  color: var(--c-text-3);
+  max-width: 240px;
+  line-height: 1.5;
+}
