@@ -16,9 +16,10 @@ function processQueue(token: string) {
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
-  // Impede que o browser sirva respostas cacheadas de outra sessão
-  config.headers['Cache-Control'] = 'no-cache'
-  config.headers['Pragma'] = 'no-cache'
+  // Garante URL única em cada GET para o browser não servir cache de outra sessão
+  if (!config.method || config.method.toLowerCase() === 'get') {
+    config.params = { ...config.params, _t: Date.now() }
+  }
   return config
 })
 
