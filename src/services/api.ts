@@ -16,6 +16,9 @@ function processQueue(token: string) {
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  // Impede que o browser sirva respostas cacheadas de outra sessão
+  config.headers['Cache-Control'] = 'no-cache'
+  config.headers['Pragma'] = 'no-cache'
   return config
 })
 
@@ -72,10 +75,14 @@ api.interceptors.response.use(
   }
 )
 
-function logout() {
+async function logout() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
-  window.location.href = '/login'
+  if ('caches' in window) {
+    const keys = await caches.keys()
+    await Promise.all(keys.map((k) => caches.delete(k)))
+  }
+  window.location.replace('/login')
 }
 
 export default api

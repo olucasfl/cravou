@@ -29,10 +29,15 @@ export async function getMe(): Promise<User> {
   return data
 }
 
-export function logout() {
+export async function logout() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
-  window.location.href = '/login'
+  // Limpa cache do Service Worker para não servir dados da sessão anterior
+  if ('caches' in window) {
+    const keys = await caches.keys()
+    await Promise.all(keys.map((k) => caches.delete(k)))
+  }
+  window.location.replace('/login')
 }
 
 export function isAuthenticated() {

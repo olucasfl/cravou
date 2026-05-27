@@ -23,7 +23,11 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      // Força reload completo para limpar qualquer estado React cacheado de sessão anterior
+      // Limpa cache do browser/SW antes de navegar para garantir dados frescos da nova sessão
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
       window.location.replace('/home')
     } catch (err) {
       setPassword('')
