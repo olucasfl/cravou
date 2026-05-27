@@ -7,6 +7,7 @@ import { useSocketEvent } from '@/hooks/useSocketEvent'
 import {
   formatMatchDate,
   formatTimeUntil,
+  formatTimeUntilClose,
   isWithinMinutes,
   minutesElapsed,
   phaseLabel,
@@ -148,7 +149,7 @@ export default function MatchDetail() {
               {isLive && (
                 <div className={s.liveTag}>
                   <span className={s.livePulse} />
-                  AO VIVO · {elapsed}'
+                  AO VIVO · {gameMinute(elapsed)}
                 </div>
               )}
               {isWaiting && (
@@ -187,11 +188,11 @@ export default function MatchDetail() {
           <div className={s.section}>
             {closingVerySoon ? (
               <div className={s.bannerUrgent}>
-                <Zap size={14} /> ÚLTIMO MOMENTO! Palpites fecham em {formatTimeUntil(match.matchDate)}
+                <Zap size={14} /> ÚLTIMO MOMENTO! Palpites fecham em {formatTimeUntilClose(match.matchDate)}
               </div>
             ) : closingSoon ? (
               <div className={s.bannerWarn}>
-                <Clock size={14} /> Palpites fecham em {formatTimeUntil(match.matchDate)} — não perca o prazo!
+                <Clock size={14} /> Palpites fecham em {formatTimeUntilClose(match.matchDate)} — não perca o prazo!
               </div>
             ) : (
               <div className={s.bannerInfo}>
@@ -320,6 +321,13 @@ export default function MatchDetail() {
 }
 
 // ── Phase helper ───────────────────────────────────────────────────────────────
+
+function gameMinute(elapsed: number): string {
+  if (elapsed < 45)  return `${elapsed}'`
+  if (elapsed < 60)  return `45'`
+  if (elapsed < 105) return `${elapsed - 15}'`
+  return `90'+`
+}
 
 function getMatchPhase(elapsed: number): { label: string; barPct: number; pulsing: boolean } {
   if (elapsed < 45) return { label: `1º TEMPO · ${elapsed}'`, barPct: (elapsed / 45) * 50, pulsing: false }

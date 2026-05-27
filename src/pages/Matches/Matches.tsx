@@ -2,17 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Lock, Zap, Clock, Target, CheckCircle2, XCircle } from 'lucide-react'
 import { getMatches, getMyPredictions, type Match, type Prediction } from '@/services/cravouService'
-import { formatMatchDate, formatTimeUntil, isWithinMinutes, phaseLabel, getPredCategory, type PredCategory } from '@/utils/format'
+import { formatMatchDate, formatTimeUntil, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, type PredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Matches.module.css'
 
 const FILTERS = [
-  { label: 'Todos',      value: '' },
-  { label: 'Ao vivo',   value: 'live' },
-  { label: 'Grupos',    value: 'group_stage' },
-  { label: 'Mata-mata', value: 'round_of_32' },
+  { label: 'Todos',       value: '' },
+  { label: 'Ao vivo',    value: 'live' },
+  { label: 'Calculando', value: 'awaiting_result' },
+  { label: 'Grupos',     value: 'group_stage' },
+  { label: 'Mata-mata',  value: 'round_of_32' },
   { label: 'Encerrados', value: 'finished' },
 ]
 
@@ -44,15 +45,15 @@ export default function Matches() {
 
   const filtered = matches.filter((m) => {
     if (!filter) return true
-    if (filter === 'live')        return m.status === 'live' || m.status === 'awaiting_result'
-    if (filter === 'finished')    return m.status === 'finished'
-    if (filter === 'round_of_32') return m.phase !== 'group_stage'
+    if (filter === 'live')             return m.status === 'live'
+    if (filter === 'awaiting_result')  return m.status === 'awaiting_result'
+    if (filter === 'finished')         return m.status === 'finished'
+    if (filter === 'round_of_32')      return m.phase !== 'group_stage'
     return m.phase === filter
   })
 
-  const liveCount = matches.filter(
-    (m) => m.status === 'live' || m.status === 'awaiting_result'
-  ).length
+  const liveCount = matches.filter((m) => m.status === 'live').length
+  const calcCount = matches.filter((m) => m.status === 'awaiting_result').length
 
   return (
     <div className="app-layout">
@@ -60,17 +61,23 @@ export default function Matches() {
         <div className={s.header}>
           <div className={s.title}>Jogos</div>
           <div className={s.filters}>
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                className={`${s.filter} ${filter === f.value ? s.active : ''} ${f.value === 'live' && filter !== 'live' && liveCount > 0 ? s.filterLiveAlert : ''}`}
-                onClick={() => setFilter(f.value)}
-              >
-                {f.value === 'live' && liveCount > 0 ? (
-                  <><span className={s.filterLiveDot} />{f.label}<span className={s.filterBadge}>{liveCount}</span></>
-                ) : f.label}
-              </button>
-            ))}
+            {FILTERS.map((f) => {
+              const isLive = f.value === 'live'
+              const isCalc = f.value === 'awaiting_result'
+              const count  = isLive ? liveCount : isCalc ? calcCount : 0
+              const alert  = count > 0 && filter !== f.value
+              return (
+                <button
+                  key={f.value}
+                  className={`${s.filter} ${filter === f.value ? s.active : ''} ${isLive && alert ? s.filterLiveAlert : ''} ${isCalc && alert ? s.filterCalcAlert : ''}`}
+                  onClick={() => setFilter(f.value)}
+                >
+                  {count > 0 ? (
+                    <>{isLive && <span className={s.filterLiveDot} />}{f.label}<span className={s.filterBadge}>{count}</span></>
+                  ) : f.label}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -182,10 +189,10 @@ function StatusChip({ match: m, closingSoon, closingVerySoon }: { match: Match; 
     <span className={`${s.chip} ${s.chipLocked}`}><Lock size={10} /> Aguardando início</span>
   )
   if (closingVerySoon) return (
-    <span className={`${s.chip} ${s.chipUrgent}`}><Zap size={10} /> Fecha em {formatTimeUntil(m.matchDate)}</span>
+    <span className={`${s.chip} ${s.chipUrgent}`}><Zap size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
   )
   if (closingSoon) return (
-    <span className={`${s.chip} ${s.chipWarn}`}><Clock size={10} /> Fecha em {formatTimeUntil(m.matchDate)}</span>
+    <span className={`${s.chip} ${s.chipWarn}`}><Clock size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
   )
   return <span className={`${s.chip} ${s.chipDefault}`}>Agendado</span>
 }

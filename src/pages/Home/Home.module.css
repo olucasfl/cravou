@@ -68,30 +68,55 @@
   flex-shrink: 0;
 }
 
-/* Score card */
+/* ── Score Card ──────────────────────────────────────────── */
 .scoreCard {
   background: var(--c-surface);
   border: 1px solid var(--c-accent);
   border-radius: var(--r-xl);
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-accent);
+}
+
+.scoreCardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: var(--shadow-accent);
+  margin-bottom: 10px;
+}
+
+.scoreLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--c-text-3);
+}
+
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: rgba(234,179,8,0.12);
+  border: 1px solid rgba(234,179,8,0.3);
+  color: #eab308;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .scoreLeft {
   display: flex;
   flex-direction: column;
-}
-
-.scoreLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--c-text-3);
 }
 
 .scoreValue {
@@ -102,33 +127,9 @@
 }
 
 .scoreSub {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--c-text-3);
   margin-top: 2px;
-}
-
-.cravasRow {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--c-border);
-}
-
-.cravasValue {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  color: var(--c-green);
-  line-height: 1;
-}
-
-.cravasLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--c-text-3);
 }
 
 .scoreIcon {
@@ -146,6 +147,201 @@
   width: 44px;
   height: 44px;
   object-fit: contain;
+}
+
+.cravasRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--c-border);
+}
+
+.cravasIcon { color: var(--c-green); flex-shrink: 0; }
+
+.cravasValue {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-green);
+  line-height: 1;
+}
+
+.cravasLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--c-text-3);
+}
+
+/* History toggle button */
+.historyToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  color: var(--c-text-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color var(--transition);
+  align-self: flex-start;
+}
+.historyToggle:hover { color: var(--c-accent); }
+
+/* History list */
+.historyList {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border-top: 1px solid var(--c-border);
+  padding-top: 8px;
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 4px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  transition: background var(--transition);
+  gap: 8px;
+}
+.historyRow:hover { background: var(--c-surface-2); }
+
+.historyTeams {
+  font-size: 0.78rem;
+  color: var(--c-text-2);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.historyRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.historyPred {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--c-text-3);
+}
+
+.historyPts {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.historyGood  { color: #eab308; }
+.historyExact { color: var(--c-green); }
+
+/* ── Mini Stats ──────────────────────────────────────────── */
+.miniStats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 12px 0;
+  margin-bottom: 12px;
+}
+
+.miniStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.miniDivider {
+  width: 1px;
+  height: 28px;
+  background: var(--c-border);
+  flex-shrink: 0;
+}
+
+.miniVal {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--c-text);
+  line-height: 1;
+}
+
+.miniGood { color: var(--c-green); }
+
+.miniLbl {
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--c-text-3);
+}
+
+/* ── Tournament Progress ─────────────────────────────────── */
+.progress {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.progressLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progressCount {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--c-text-3);
+}
+
+.progressBar {
+  height: 4px;
+  background: var(--c-border-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--c-accent), #22c55e);
+  transition: width 0.6s ease;
+  min-width: 4px;
 }
 
 /* Section */

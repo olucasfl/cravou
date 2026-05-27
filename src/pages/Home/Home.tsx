@@ -1,33 +1,48 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X,
   Lock, Clock, Target, CheckCircle2, XCircle,
-  Calendar, Flag, Timer,
+  Calendar, Flag, Timer, ChevronDown, ChevronUp, Crown,
 } from 'lucide-react'
 import { getMe, type User } from '@/services/authService'
-import { getMatches, type Match } from '@/services/cravouService'
-import { formatMatchDate } from '@/utils/format'
+import {
+  getMatches, getMyPredictions, getRanking,
+  type Match, type Prediction,
+} from '@/services/cravouService'
+import { formatMatchDate, getPredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Home.module.css'
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null)
-  const [upcoming, setUpcoming] = useState<Match[]>([])
-  const [live, setLive] = useState<Match[]>([])
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]             = useState<User | null>(null)
+  const [upcoming, setUpcoming]     = useState<Match[]>([])
+  const [live, setLive]             = useState<Match[]>([])
+  const [allMatches, setAllMatches] = useState<Match[]>([])
+  const [myPredictions, setMyPredictions] = useState<Prediction[]>([])
+  const [myPosition, setMyPosition] = useState<number | null>(null)
+  const [loading, setLoading]       = useState(true)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [showHistory, setShowHistory]   = useState(false)
 
   const load = useCallback(async () => {
-    const [u, all] = await Promise.all([
+    const [u, all, preds, ranking] = await Promise.all([
       getMe().catch(() => null),
       getMatches().catch(() => []),
+      getMyPredictions().catch(() => []),
+      getRanking().catch(() => []),
     ])
     setUser(u)
+    setAllMatches(all)
     setLive(all.filter((m) => m.status === 'live'))
     setUpcoming(all.filter((m) => m.status === 'upcoming').slice(0, 5))
+    setMyPredictions(preds)
+    if (u) {
+      const entry = ranking.find((r) => r.userId === u.id)
+      setMyPosition(entry?.position ?? null)
+    }
     setLoading(false)
   }, [])
 
@@ -35,11 +50,37 @@ export default function Home() {
   useSocketEvent('match:updated', load)
   useSocketEvent('match:locked', load)
 
+  // ── Computed ─────────────────────────────────────────────
+
+  const matchMap = useMemo(() => {
+    const m = new Map<string, Match>()
+    allMatches.forEach((match) => m.set(match.id, match))
+    return m
+  }, [allMatches])
+
+  const scoredPredictions = useMemo(() =>
+    myPredictions
+      .filter((p) => p.points !== null && p.points > 0)
+      .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+      .map((p) => ({ ...p, match: matchMap.get(p.matchId) }))
+      .filter((p) => p.match != null) as (Prediction & { match: Match })[],
+    [myPredictions, matchMap]
+  )
+
+  const finishedCount = allMatches.filter((m) => m.status === 'finished').length
+  const totalMatches  = allMatches.length
+  const progressPct   = totalMatches > 0 ? Math.round((finishedCount / totalMatches) * 100) : 0
+
+  const acertos     = scoredPredictions.length
+  const totalPalp   = myPredictions.length
+  const aprovPct    = totalPalp > 0 ? Math.round((acertos / totalPalp) * 100) : 0
+
   const initials = user?.name?.slice(0, 2).toUpperCase() ?? '?'
 
   return (
     <div className="app-layout">
       <div className="page fade-up">
+
         {/* Brand */}
         <div className={s.brand}>
           <img src="/logo-text.png" className={s.brandLogo} alt="Cravou!" />
@@ -59,23 +100,105 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Pontuação */}
+        {/* ── Score Card ────────────────────────────────────── */}
         <div className={s.scoreCard}>
-          <div className={s.scoreLeft}>
-            <div className={s.scoreLabel}>Seus pontos</div>
-            <div className={s.scoreValue}>{loading ? '—' : (user?.bolaoPoints ?? 0)}</div>
-            <div className={s.scoreSub}>no bolão</div>
-            <div className={s.cravasRow}>
-              <span className={s.cravasValue}>{loading ? '—' : (user?.cravadas ?? 0)}</span>
-              <span className={s.cravasLabel}>cravadas</span>
+
+          {/* Top row: label + rank badge */}
+          <div className={s.scoreCardTop}>
+            <span className={s.scoreLabel}>Seus pontos</span>
+            {!loading && myPosition && (
+              <span className={s.rankBadge}>
+                <Crown size={11} />
+                #{myPosition} no ranking
+              </span>
+            )}
+          </div>
+
+          {/* Points + icon */}
+          <div className={s.scoreRow}>
+            <div className={s.scoreLeft}>
+              <div className={s.scoreValue}>{loading ? '—' : (user?.bolaoPoints ?? 0)}</div>
+              <div className={s.scoreSub}>no bolão</div>
+            </div>
+            <div className={s.scoreIcon}>
+              <img src="/logo-ball.png" className={s.scoreIconImg} alt="" />
             </div>
           </div>
-          <div className={s.scoreIcon}>
-            <img src="/logo-ball.png" className={s.scoreIconImg} alt="" />
+
+          {/* Cravadas */}
+          <div className={s.cravasRow}>
+            <Target size={13} className={s.cravasIcon} />
+            <span className={s.cravasValue}>{loading ? '—' : (user?.cravadas ?? 0)}</span>
+            <span className={s.cravasLabel}>cravadas</span>
           </div>
+
+          {/* History toggle */}
+          {!loading && scoredPredictions.length > 0 && (
+            <button className={s.historyToggle} onClick={() => setShowHistory((v) => !v)}>
+              {showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              {showHistory ? 'Esconder' : `Ver onde ganhei pontos (${scoredPredictions.length})`}
+            </button>
+          )}
+
+          {/* History list */}
+          {showHistory && (
+            <div className={s.historyList}>
+              {scoredPredictions.map((p) => {
+                const cat = getPredCategory(p.points, true)
+                const isExact = cat === 'exact'
+                return (
+                  <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow}>
+                    <div className={s.historyTeams}>
+                      {p.match.homeTeam} × {p.match.awayTeam}
+                    </div>
+                    <div className={s.historyRight}>
+                      <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
+                      <span className={`${s.historyPts} ${isExact ? s.historyExact : s.historyGood}`}>
+                        {isExact && <Target size={10} />}
+                        +{p.points}
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Ao vivo */}
+        {/* ── Mini Stats ────────────────────────────────────── */}
+        {!loading && totalPalp > 0 && (
+          <div className={s.miniStats}>
+            <div className={s.miniStat}>
+              <span className={s.miniVal}>{totalPalp}</span>
+              <span className={s.miniLbl}>palpites</span>
+            </div>
+            <div className={s.miniDivider} />
+            <div className={s.miniStat}>
+              <span className={s.miniVal}>{acertos}</span>
+              <span className={s.miniLbl}>pontuaram</span>
+            </div>
+            <div className={s.miniDivider} />
+            <div className={s.miniStat}>
+              <span className={`${s.miniVal} ${aprovPct >= 50 ? s.miniGood : ''}`}>{aprovPct}%</span>
+              <span className={s.miniLbl}>aproveit.</span>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tournament Progress ───────────────────────────── */}
+        {!loading && totalMatches > 0 && (
+          <div className={s.progress}>
+            <div className={s.progressHeader}>
+              <span className={s.progressLabel}>Copa do Mundo 2026</span>
+              <span className={s.progressCount}>{finishedCount} / {totalMatches} jogos</span>
+            </div>
+            <div className={s.progressBar}>
+              <div className={s.progressFill} style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Ao vivo ───────────────────────────────────────── */}
         {live.length > 0 && (
           <div className={s.section}>
             <div className={s.sectionHeader}>
@@ -90,7 +213,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Próximos */}
+        {/* ── Próximos ──────────────────────────────────────── */}
         <div className={s.section}>
           <div className={s.sectionHeader}>
             <span className={s.sectionTitle}>Próximos jogos</span>
@@ -115,11 +238,12 @@ export default function Home() {
         </div>
       </div>
 
-      <BottomNavPlaceholder />
       {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
     </div>
   )
 }
+
+// ── MatchCard ────────────────────────────────────────────────────────────────
 
 function MatchCard({ match }: { match: Match }) {
   return (
@@ -155,9 +279,7 @@ function MatchCard({ match }: { match: Match }) {
   )
 }
 
-function BottomNavPlaceholder() {
-  return null
-}
+// ── Tutorial Modal ───────────────────────────────────────────────────────────
 
 function TutorialModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
@@ -174,7 +296,6 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className={s.modalBody}>
-          {/* Pontuação */}
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Pontuação</div>
             <div className={s.tutRows}>
@@ -209,7 +330,6 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* Exemplos */}
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Exemplo — Brasil 2 × 1 Argentina</div>
             <div className={s.tutExamples}>
@@ -236,7 +356,6 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* Regras de tempo */}
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Regras de tempo</div>
             <div className={s.tutCard}>
@@ -246,7 +365,6 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* Estados do jogo */}
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Estados do jogo</div>
             <div className={s.tutCard}>

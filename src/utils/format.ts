@@ -28,6 +28,12 @@ export function formatTimeUntil(targetDateStr: string): string {
   return `${m}min`
 }
 
+// Retorna o tempo até o fechamento dos palpites (30min antes do jogo)
+export function formatTimeUntilClose(matchDateStr: string): string {
+  const closeAt = new Date(new Date(matchDateStr).getTime() - 30 * 60_000)
+  return formatTimeUntil(closeAt.toISOString())
+}
+
 // Quantos minutos se passaram desde o início (para contador ao vivo)
 export function minutesElapsed(dateStr: string): number {
   return Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 60_000))

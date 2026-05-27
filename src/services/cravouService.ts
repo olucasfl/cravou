@@ -105,6 +105,16 @@ export async function adminReprocessMatch(matchId: string) {
   return data
 }
 
+export async function adminResetMatch(matchId: string) {
+  const { data } = await api.post(`/cravou/admin/matches/${matchId}/reset`)
+  return data as { affectedUsers: number }
+}
+
+export async function adminUnlockMatch(matchId: string) {
+  const { data } = await api.post(`/cravou/admin/matches/${matchId}/unlock`)
+  return data
+}
+
 export async function adminMountR32() {
   const { data } = await api.post('/cravou/admin/bracket/mount-r32')
   return data
