@@ -39,7 +39,7 @@ export default function App() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true
 
     if (isStandalone && !isPublicPath()) {
-      const t = setTimeout(() => setLoading(false), 1800)
+      const t = setTimeout(() => setLoading(false), 2500)
       return () => clearTimeout(t)
     }
 

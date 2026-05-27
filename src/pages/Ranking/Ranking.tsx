@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Trophy, Crown } from 'lucide-react'
 import { getRanking, type RankingEntry } from '@/services/cravouService'
 import { getMe } from '@/services/authService'
+import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Ranking.module.css'
 
 export default function Ranking() {
@@ -9,18 +10,18 @@ export default function Ranking() {
   const [myId, setMyId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function load() {
-      const [r, me] = await Promise.all([
-        getRanking().catch(() => []),
-        getMe().catch(() => null),
-      ])
-      setRanking(r)
-      setMyId(me?.id ?? null)
-      setLoading(false)
-    }
-    load()
+  const load = useCallback(async () => {
+    const [r, me] = await Promise.all([
+      getRanking().catch(() => []),
+      getMe().catch(() => null),
+    ])
+    setRanking(r)
+    setMyId(me?.id ?? null)
+    setLoading(false)
   }, [])
+
+  useEffect(() => { load() }, [load])
+  useSocketEvent('ranking:updated', load)
 
   const showPodium = ranking.length >= 3
   const top3 = ranking.slice(0, 3)

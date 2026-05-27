@@ -10,41 +10,25 @@
   animation: fadeIn 0.3s ease;
 }
 
-.icon {
-  width: 88px;
-  height: 88px;
-  background: var(--c-accent);
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-accent);
-  animation: pulse-green 2s ease infinite;
+.ballLogo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  animation: ballEnter 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
 }
 
-.icon svg { color: #000; }
-
-.title {
-  font-family: var(--font-display);
-  font-size: 3rem;
-  color: var(--c-text);
-  letter-spacing: 4px;
-  margin-top: 16px;
-  line-height: 1;
-}
-
-.sub {
-  font-size: 0.8rem;
-  color: var(--c-text-3);
-  margin-top: 6px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+.textLogo {
+  width: 220px;
+  object-fit: contain;
+  margin-top: 10px;
+  animation: textSlideUp 0.45s ease 0.45s both;
 }
 
 .dots {
   display: flex;
   gap: 6px;
-  margin-top: 40px;
+  margin-top: 44px;
+  animation: fadeIn 0.3s ease 0.8s both;
 }
 
 .dot {
@@ -57,6 +41,17 @@
 
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ballEnter {
+  from { opacity: 0; transform: scale(0.35); }
+  65%  { transform: scale(1.1); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes textSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 @keyframes dotPulse {
   0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }

@@ -108,30 +108,20 @@ export function CountryBadge({ country, size = 'md', style }: Props) {
     )
   }
 
-  const [c1, c2] = info.colors
-  const [l1, l2] = [info.code[0], info.code[1]]
+  const bg = info.colors[0]
+  const textColor = getTextColor(bg)
 
   return (
     <span style={{
-      display: 'inline-flex', width: w, height: h,
-      borderRadius: radius, overflow: 'hidden',
-      flexShrink: 0, ...style,
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      width: w, height: h, borderRadius: radius,
+      background: bg, color: textColor,
+      fontSize, fontWeight: 800, fontFamily: 'var(--font-display)',
+      letterSpacing: '0.5px', flexShrink: 0,
+      border: `1px solid rgba(255,255,255,0.12)`,
+      ...style,
     }}>
-      <span style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: c1, color: getTextColor(c1),
-        fontSize, fontWeight: 800, fontFamily: 'var(--font-display)',
-        letterSpacing: '0px',
-      }}>{l1}</span>
-      <span style={{
-        width: 1, background: 'rgba(0,0,0,0.25)', flexShrink: 0,
-      }} />
-      <span style={{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: c2, color: getTextColor(c2),
-        fontSize, fontWeight: 800, fontFamily: 'var(--font-display)',
-        letterSpacing: '0px',
-      }}>{l2}</span>
+      {info.code}
     </span>
   )
 }

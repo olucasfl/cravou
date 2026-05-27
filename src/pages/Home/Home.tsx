@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Trophy, HelpCircle, X,
@@ -10,6 +10,7 @@ import { getMatches, type Match } from '@/services/cravouService'
 import { formatMatchDate } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
+import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Home.module.css'
 
 export default function Home() {
@@ -19,19 +20,20 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [showTutorial, setShowTutorial] = useState(false)
 
-  useEffect(() => {
-    async function load() {
-      const [u, all] = await Promise.all([
-        getMe().catch(() => null),
-        getMatches().catch(() => []),
-      ])
-      setUser(u)
-      setLive(all.filter((m) => m.status === 'live'))
-      setUpcoming(all.filter((m) => m.status === 'upcoming').slice(0, 5))
-      setLoading(false)
-    }
-    load()
+  const load = useCallback(async () => {
+    const [u, all] = await Promise.all([
+      getMe().catch(() => null),
+      getMatches().catch(() => []),
+    ])
+    setUser(u)
+    setLive(all.filter((m) => m.status === 'live'))
+    setUpcoming(all.filter((m) => m.status === 'upcoming').slice(0, 5))
+    setLoading(false)
   }, [])
+
+  useEffect(() => { load() }, [load])
+  useSocketEvent('match:updated', load)
+  useSocketEvent('match:locked', load)
 
   const initials = user?.name?.slice(0, 2).toUpperCase() ?? '?'
 
@@ -149,6 +151,11 @@ function BottomNavPlaceholder() {
 }
 
 function TutorialModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   return (
     <div className={s.overlay} onClick={onClose}>
       <div className={s.modal} onClick={(e) => e.stopPropagation()}>

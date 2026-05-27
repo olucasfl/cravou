@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Trophy } from 'lucide-react'
 import { login } from '@/services/authService'
 import s from './Login.module.css'
@@ -13,7 +13,6 @@ function getLoginError(err: unknown): string {
 }
 
 export default function Login() {
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -25,7 +24,8 @@ export default function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/home')
+      // Força reload completo para limpar qualquer estado React cacheado de sessão anterior
+      window.location.replace('/home')
     } catch (err) {
       setPassword('')
       setError(getLoginError(err))

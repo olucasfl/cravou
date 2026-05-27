@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost } from 'lucide-react'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { getMatch, upsertPrediction, type Match, type Prediction } from '@/services/cravouService'
+import { useSocketEvent } from '@/hooks/useSocketEvent'
 import {
   formatMatchDate,
   formatTimeUntil,
@@ -44,6 +45,7 @@ export default function MatchDetail() {
   }, [id])
 
   useEffect(() => { loadMatch() }, [loadMatch])
+  useSocketEvent('match:updated', loadMatch)
 
   async function handleSave() {
     if (!match || !id) return

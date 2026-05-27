@@ -277,29 +277,36 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  z-index: 100;
+  background: rgba(0, 0, 0, 0.72);
+  z-index: 200;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
   animation: fadeIn 0.2s ease;
+  /* Impede que o toque/scroll no overlay propague para o body */
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .modal {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-radius: var(--r-xl);
   width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
+  max-width: 440px;
+  /* Deixa espaço suficiente para não sobrepor a BottomNav nem o topo */
+  max-height: calc(100dvh - 120px);
   display: flex;
   flex-direction: column;
   animation: slideUp 0.25s ease;
+  overflow: hidden;
 }
 @keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from { transform: translateY(20px) scale(0.97); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
 }
 
 .modalHeader {

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getAllGroups, type GroupData, type Standing } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
+import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Groups.module.css'
 
 export default function Groups() {
@@ -8,11 +9,15 @@ export default function Groups() {
   const [selected, setSelected] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     getAllGroups()
       .then(setGroups)
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { load() }, [load])
+  useSocketEvent('group:classified', load)
+  useSocketEvent('tournament:all-groups-complete', load)
 
   // Pair groups into rows of 2 for inline accordion
   const rows: GroupData[][] = []
