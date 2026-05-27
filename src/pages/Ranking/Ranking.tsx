@@ -23,7 +23,18 @@ export default function Ranking() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    async function init() {
+      const [rPts, me] = await Promise.all([
+        getRanking().catch(() => []),
+        getMe().catch(() => null),
+      ])
+      setRankingPontos(rPts)
+      setMyId(me?.id ?? null)
+      setLoading(false)
+    }
+    init()
+  }, [])
   useSocketEvent('ranking:updated', load)
 
   const rankingCravas = useMemo(() =>

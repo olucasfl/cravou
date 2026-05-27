@@ -181,43 +181,56 @@
   align-items: center;
   gap: 5px;
   margin-top: 10px;
-  padding: 6px 0;
-  background: none;
-  border: none;
+  padding: 7px 12px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
   color: var(--c-text-3);
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   font-family: var(--font-body);
-  transition: color var(--transition);
+  transition: var(--transition);
   align-self: flex-start;
 }
-.historyToggle:hover { color: var(--c-accent); }
+.historyToggle:hover { border-color: var(--c-accent); color: var(--c-accent); }
 
-/* History list */
-.historyList {
-  margin-top: 6px;
+/* History modal rows */
+.historySection {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  border-top: 1px solid var(--c-border);
-  padding-top: 8px;
+  gap: 2px;
+}
+
+.historySectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-accent);
+  padding: 4px 2px 6px;
 }
 
 .historyRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 4px;
-  border-radius: var(--r-sm);
+  padding: 9px 10px;
+  border-radius: var(--r-md);
   text-decoration: none;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
   transition: background var(--transition);
   gap: 8px;
+  margin-bottom: 4px;
 }
-.historyRow:hover { background: var(--c-surface-2); }
+.historyRow:hover { background: var(--c-surface); border-color: var(--c-border-2); }
 
 .historyTeams {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--c-text-2);
   font-weight: 500;
   flex: 1;
@@ -236,7 +249,7 @@
 
 .historyPred {
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: var(--c-text-3);
 }
 
@@ -246,58 +259,12 @@
   gap: 3px;
   font-size: 0.78rem;
   font-weight: 700;
-  min-width: 36px;
-  text-align: right;
+  min-width: 38px;
   justify-content: flex-end;
 }
 
 .historyGood  { color: #eab308; }
 .historyExact { color: var(--c-green); }
-
-/* ── Mini Stats ──────────────────────────────────────────── */
-.miniStats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  background: var(--c-surface-2);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  padding: 12px 0;
-  margin-bottom: 12px;
-}
-
-.miniStat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.miniDivider {
-  width: 1px;
-  height: 28px;
-  background: var(--c-border);
-  flex-shrink: 0;
-}
-
-.miniVal {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  color: var(--c-text);
-  line-height: 1;
-}
-
-.miniGood { color: var(--c-green); }
-
-.miniLbl {
-  font-size: 0.62rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--c-text-3);
-}
 
 /* ── Tournament Progress ─────────────────────────────────── */
 .progress {

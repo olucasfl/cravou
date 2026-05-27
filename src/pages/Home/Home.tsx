@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   HelpCircle, X,
   Lock, Clock, Target, CheckCircle2, XCircle,
-  Calendar, Flag, Timer, ChevronDown, ChevronUp, Crown,
+  Calendar, Flag, Timer, ChevronRight, Crown,
 } from 'lucide-react'
 import { getMe, type User } from '@/services/authService'
 import {
@@ -24,8 +24,8 @@ export default function Home() {
   const [myPredictions, setMyPredictions] = useState<Prediction[]>([])
   const [myPosition, setMyPosition] = useState<number | null>(null)
   const [loading, setLoading]       = useState(true)
-  const [showTutorial, setShowTutorial] = useState(false)
-  const [showHistory, setShowHistory]   = useState(false)
+  const [showTutorial, setShowTutorial]   = useState(false)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   const load = useCallback(async () => {
     const [u, all, preds, ranking] = await Promise.all([
@@ -46,7 +46,27 @@ export default function Home() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    async function init() {
+      const [u, all, preds, ranking] = await Promise.all([
+        getMe().catch(() => null),
+        getMatches().catch(() => []),
+        getMyPredictions().catch(() => []),
+        getRanking().catch(() => []),
+      ])
+      setUser(u)
+      setAllMatches(all)
+      setLive(all.filter((m) => m.status === 'live'))
+      setUpcoming(all.filter((m) => m.status === 'upcoming').slice(0, 5))
+      setMyPredictions(preds)
+      if (u) {
+        const entry = ranking.find((r) => r.userId === u.id)
+        setMyPosition(entry?.position ?? null)
+      }
+      setLoading(false)
+    }
+    init()
+  }, [])
   useSocketEvent('match:updated', load)
   useSocketEvent('match:locked', load)
 
@@ -70,10 +90,6 @@ export default function Home() {
   const finishedCount = allMatches.filter((m) => m.status === 'finished').length
   const totalMatches  = allMatches.length
   const progressPct   = totalMatches > 0 ? Math.round((finishedCount / totalMatches) * 100) : 0
-
-  const acertos     = scoredPredictions.length
-  const totalPalp   = myPredictions.length
-  const aprovPct    = totalPalp > 0 ? Math.round((acertos / totalPalp) * 100) : 0
 
   const initials = user?.name?.slice(0, 2).toUpperCase() ?? '?'
 
@@ -132,58 +148,15 @@ export default function Home() {
             <span className={s.cravasLabel}>cravadas</span>
           </div>
 
-          {/* History toggle */}
+          {/* History button */}
           {!loading && scoredPredictions.length > 0 && (
-            <button className={s.historyToggle} onClick={() => setShowHistory((v) => !v)}>
-              {showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-              {showHistory ? 'Esconder' : `Ver onde ganhei pontos (${scoredPredictions.length})`}
+            <button className={s.historyToggle} onClick={() => setShowHistoryModal(true)}>
+              <Target size={11} />
+              Ver onde ganhei pontos ({scoredPredictions.length})
+              <ChevronRight size={12} />
             </button>
           )}
-
-          {/* History list */}
-          {showHistory && (
-            <div className={s.historyList}>
-              {scoredPredictions.map((p) => {
-                const cat = getPredCategory(p.points, true)
-                const isExact = cat === 'exact'
-                return (
-                  <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow}>
-                    <div className={s.historyTeams}>
-                      {p.match.homeTeam} × {p.match.awayTeam}
-                    </div>
-                    <div className={s.historyRight}>
-                      <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
-                      <span className={`${s.historyPts} ${isExact ? s.historyExact : s.historyGood}`}>
-                        {isExact && <Target size={10} />}
-                        +{p.points}
-                      </span>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
         </div>
-
-        {/* ── Mini Stats ────────────────────────────────────── */}
-        {!loading && totalPalp > 0 && (
-          <div className={s.miniStats}>
-            <div className={s.miniStat}>
-              <span className={s.miniVal}>{totalPalp}</span>
-              <span className={s.miniLbl}>palpites</span>
-            </div>
-            <div className={s.miniDivider} />
-            <div className={s.miniStat}>
-              <span className={s.miniVal}>{acertos}</span>
-              <span className={s.miniLbl}>pontuaram</span>
-            </div>
-            <div className={s.miniDivider} />
-            <div className={s.miniStat}>
-              <span className={`${s.miniVal} ${aprovPct >= 50 ? s.miniGood : ''}`}>{aprovPct}%</span>
-              <span className={s.miniLbl}>aproveit.</span>
-            </div>
-          </div>
-        )}
 
         {/* ── Tournament Progress ───────────────────────────── */}
         {!loading && totalMatches > 0 && (
@@ -239,6 +212,12 @@ export default function Home() {
       </div>
 
       {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
+      {showHistoryModal && (
+        <HistoryModal
+          predictions={scoredPredictions}
+          onClose={() => setShowHistoryModal(false)}
+        />
+      )}
     </div>
   )
 }
@@ -276,6 +255,67 @@ function MatchCard({ match }: { match: Match }) {
         </div>
       </div>
     </Link>
+  )
+}
+
+// ── History Modal ────────────────────────────────────────────────────────────
+
+type ScoredPred = Prediction & { match: Match }
+
+function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onClose: () => void }) {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  const cravadas  = predictions.filter((p) => getPredCategory(p.points, true) === 'exact')
+  const others    = predictions.filter((p) => getPredCategory(p.points, true) !== 'exact')
+
+  return (
+    <div className={s.overlay} onClick={onClose}>
+      <div className={s.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={s.modalHeader}>
+          <span className={s.modalTitle}>Onde ganhei pontos</span>
+          <button className={s.modalClose} onClick={onClose}><X size={18} /></button>
+        </div>
+
+        <div className={s.modalBody}>
+          {cravadas.length > 0 && (
+            <div className={s.historySection}>
+              <div className={s.historySectionTitle}>
+                <Target size={12} /> Cravadas ({cravadas.length})
+              </div>
+              {cravadas.map((p) => (
+                <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
+                  <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
+                  <div className={s.historyRight}>
+                    <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
+                    <span className={`${s.historyPts} ${s.historyExact}`}>
+                      <Target size={9} /> +{p.points}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {others.length > 0 && (
+            <div className={s.historySection}>
+              <div className={s.historySectionTitle}>Outros pontos ({others.length})</div>
+              {others.map((p) => (
+                <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
+                  <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
+                  <div className={s.historyRight}>
+                    <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
+                    <span className={`${s.historyPts} ${s.historyGood}`}>+{p.points}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

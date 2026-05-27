@@ -70,7 +70,6 @@ export default function Admin() {
 
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
-    else setLoading(true)
     const [m, b] = await Promise.all([
       adminGetMatches().catch(() => []),
       getBracket().catch(() => []),
@@ -81,7 +80,18 @@ export default function Admin() {
     setRefreshing(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    async function init() {
+      const [m, b] = await Promise.all([
+        adminGetMatches().catch(() => []),
+        getBracket().catch(() => []),
+      ])
+      setMatches(m)
+      setBracket(b)
+      setLoading(false)
+    }
+    init()
+  }, [])
 
   function showToast(type: 'ok' | 'err', text: string) {
     setToast({ type, text })
@@ -246,7 +256,7 @@ export default function Admin() {
             <div className={s.matchList}>
               {filtered.map(m => (
                 <MatchCard
-                  key={m.id}
+                  key={`${m.id}-${m.status}-${m.homeScore ?? 'n'}-${m.awayScore ?? 'n'}-${m.matchDate}`}
                   match={m}
                   isExpanded={expandedId === m.id}
                   onToggle={() => setExpandedId(expandedId === m.id ? null : m.id)}
@@ -379,13 +389,6 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
   const [saving, setSaving] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const [savingDate, setSavingDate] = useState(false)
-
-  useEffect(() => {
-    setEditHome(m.homeScore !== null ? String(m.homeScore) : '')
-    setEditAway(m.awayScore !== null ? String(m.awayScore) : '')
-    setEditStatus(m.status)
-    setEditDate(toDatetimeLocal(m.matchDate))
-  }, [m.homeScore, m.awayScore, m.status, m.matchDate])
 
   async function doFinalize() {
     const h = parseInt(editHome), a = parseInt(editAway)
@@ -614,7 +617,7 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
           <div className={s.editSection}>
             <div className={s.sectionLabel}>Status manual</div>
             <div className={s.rowActions}>
-              <select className={s.statusSelect} value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+              <select className={s.statusSelect} value={editStatus} onChange={e => setEditStatus(e.target.value as typeof editStatus)}>
                 <option value="upcoming">Agendado</option>
                 <option value="locked">Bloqueado</option>
                 <option value="live">Ao vivo</option>

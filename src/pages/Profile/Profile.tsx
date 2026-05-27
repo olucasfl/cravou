@@ -2,20 +2,23 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Shield, BarChart2, LogOut } from 'lucide-react'
 import { getMe, logout, type User } from '@/services/authService'
-import { getRanking } from '@/services/cravouService'
+import { getRanking, getMyPredictions, type Prediction } from '@/services/cravouService'
 import s from './Profile.module.css'
 
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null)
   const [myPosition, setMyPosition] = useState<number | null>(null)
+  const [predictions, setPredictions] = useState<Prediction[]>([])
 
   useEffect(() => {
     async function load() {
-      const [u, ranking] = await Promise.all([
+      const [u, ranking, preds] = await Promise.all([
         getMe().catch(() => null),
         getRanking().catch(() => []),
+        getMyPredictions().catch(() => []),
       ])
       setUser(u)
+      setPredictions(preds)
       if (u) {
         const entry = ranking.find((r) => r.userId === u.id)
         setMyPosition(entry?.position ?? null)
@@ -23,6 +26,10 @@ export default function Profile() {
     }
     load()
   }, [])
+
+  const totalPalp  = predictions.length
+  const pontuaram  = predictions.filter((p) => p.points !== null && p.points > 0).length
+  const aprovPct   = totalPalp > 0 ? Math.round((pontuaram / totalPalp) * 100) : 0
 
   return (
     <div className="app-layout">
@@ -56,6 +63,26 @@ export default function Profile() {
             <div className={s.statLabel}>Posição</div>
           </div>
         </div>
+
+        {/* Palpite stats */}
+        {totalPalp > 0 && (
+          <div className={s.palpiteStats}>
+            <div className={s.palpiteStat}>
+              <span className={s.palpiteVal}>{totalPalp}</span>
+              <span className={s.palpiteLbl}>palpites</span>
+            </div>
+            <div className={s.palpiteDivider} />
+            <div className={s.palpiteStat}>
+              <span className={s.palpiteVal}>{pontuaram}</span>
+              <span className={s.palpiteLbl}>pontuaram</span>
+            </div>
+            <div className={s.palpiteDivider} />
+            <div className={s.palpiteStat}>
+              <span className={`${s.palpiteVal} ${aprovPct >= 50 ? s.palpiteGood : ''}`}>{aprovPct}%</span>
+              <span className={s.palpiteLbl}>aproveit.</span>
+            </div>
+          </div>
+        )}
 
         {/* Menu */}
         <div className={s.section}>

@@ -15,7 +15,9 @@ export default function Groups() {
       .finally(() => setLoading(false))
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    getAllGroups().then(setGroups).finally(() => setLoading(false))
+  }, [])
   useSocketEvent('group:classified', load)
   useSocketEvent('tournament:all-groups-complete', load)
 
