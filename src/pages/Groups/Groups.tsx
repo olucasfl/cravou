@@ -1,91 +1,258 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getAllGroups, type GroupData, type Standing } from '@/services/cravouService'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Shield, Trophy } from 'lucide-react'
+import {
+  getAllGroups, getBracket,
+  type GroupData, type Standing, type BracketSlot,
+} from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Groups.module.css'
 
+type MainTab = 'grupos' | 'mata'
+
+const ROUNDS = [
+  { value: 'round_of_32',  label: '16 avos',          short: '16av' },
+  { value: 'round_of_16',  label: 'Oitavas de final', short: 'Oitavas' },
+  { value: 'quarterfinal', label: 'Quartas de final',  short: 'Quartas' },
+  { value: 'semifinal',    label: 'Semifinal',         short: 'Semi' },
+  { value: 'third_place',  label: 'Disputa do 3º',     short: '3º' },
+  { value: 'final',        label: 'Final',             short: 'Final' },
+]
+
 export default function Groups() {
-  const [groups, setGroups] = useState<GroupData[]>([])
+  const [tab, setTab]           = useState<MainTab>('grupos')
+  const [groups, setGroups]     = useState<GroupData[]>([])
+  const [bracket, setBracket]   = useState<BracketSlot[]>([])
   const [selected, setSelected] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [bracketRound, setBracketRound] = useState('round_of_32')
+  const [loading, setLoading]   = useState(true)
 
   const load = useCallback(() => {
-    getAllGroups()
-      .then(setGroups)
-      .finally(() => setLoading(false))
+    Promise.all([
+      getAllGroups().catch(() => []),
+      getBracket().catch(() => []),
+    ]).then(([g, b]) => {
+      setGroups(g as GroupData[])
+      setBracket(b as BracketSlot[])
+    })
   }, [])
 
   useEffect(() => {
-    getAllGroups().then(setGroups).finally(() => setLoading(false))
+    Promise.all([
+      getAllGroups().catch(() => []),
+      getBracket().catch(() => []),
+    ]).then(([g, b]) => {
+      setGroups(g as GroupData[])
+      setBracket(b as BracketSlot[])
+      setLoading(false)
+    })
   }, [])
+
   useSocketEvent('group:classified', load)
   useSocketEvent('tournament:all-groups-complete', load)
 
-  // Pair groups into rows of 2 for inline accordion
+  const bracketByRound = useMemo(() => {
+    const map: Record<string, BracketSlot[]> = {}
+    for (const slot of bracket) {
+      if (!map[slot.round]) map[slot.round] = []
+      map[slot.round].push(slot)
+    }
+    for (const r in map) map[r].sort((a, b) => a.slotNumber - b.slotNumber)
+    return map
+  }, [bracket])
+
+  const availableRounds = ROUNDS.filter((r) => (bracketByRound[r.value]?.length ?? 0) > 0)
+
   const rows: GroupData[][] = []
-  for (let i = 0; i < groups.length; i += 2) {
-    rows.push(groups.slice(i, i + 2))
-  }
+  for (let i = 0; i < groups.length; i += 2) rows.push(groups.slice(i, i + 2))
 
   return (
     <div className="app-layout">
       <div className="page fade-up">
-        <div className={s.title}>Grupos</div>
 
-        {loading && (
-          <div className={s.skeletonGrid}>
-            {[1,2,3,4,5,6].map((i) => (
-              <div key={i} className="skeleton" style={{ height: 110 }} />
-            ))}
+        {/* ── Page Header ──────────────────────────────────── */}
+        <div className={s.pageHeader}>
+          <div className={s.pageTitle}>Copa 2026</div>
+          <div className={s.pageTabs}>
+            <button
+              className={`${s.pageTab} ${tab === 'grupos' ? s.pageTabActive : ''}`}
+              onClick={() => setTab('grupos')}
+            >
+              <Shield size={12} /> Grupos
+            </button>
+            <button
+              className={`${s.pageTab} ${tab === 'mata' ? s.pageTabActive : ''}`}
+              onClick={() => setTab('mata')}
+            >
+              <Trophy size={12} /> Mata-mata
+            </button>
           </div>
+        </div>
+
+        {/* ══ GRUPOS ══════════════════════════════════════════ */}
+        {tab === 'grupos' && (
+          <>
+            {loading && (
+              <div className={s.skeletonGrid}>
+                {[1,2,3,4,5,6].map((i) => (
+                  <div key={i} className="skeleton" style={{ height: 110 }} />
+                ))}
+              </div>
+            )}
+
+            {!loading && (
+              <div className={s.rows}>
+                {rows.map((row) => {
+                  const activeGroup = row.find((g) => g.group === selected)
+                  return (
+                    <div key={row[0].group} className={s.rowWrapper}>
+                      <div className={s.cardRow}>
+                        {row.map(({ group, standings }) => (
+                          <div
+                            key={group}
+                            className={`${s.groupCard} ${selected === group ? s.groupCardActive : ''}`}
+                            onClick={() => setSelected(selected === group ? null : group)}
+                          >
+                            <div className={s.groupLetter}>GRUPO {group}</div>
+                            <div className={s.groupTeams}>
+                              {standings.slice(0, 4).map((st) => (
+                                <div
+                                  key={st.teamName}
+                                  className={`${s.groupTeamRow} ${st.isQualified ? s.qualified : ''}`}
+                                >
+                                  <CountryBadge country={st.teamName} size="xs" />
+                                  <span>{st.teamName}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className={s.expandHint}>{selected === group ? '▲' : '▼'}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {activeGroup && (
+                        <div className={s.accordionPanel}>
+                          <StandingsTable group={activeGroup.group} standings={activeGroup.standings} />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
         )}
 
-        {!loading && (
-          <div className={s.rows}>
-            {rows.map((row) => {
-              const activeGroup = row.find((g) => g.group === selected)
-              return (
-                <div key={row[0].group} className={s.rowWrapper}>
-                  <div className={s.cardRow}>
-                    {row.map(({ group, standings }) => (
-                      <div
-                        key={group}
-                        className={`${s.groupCard} ${selected === group ? s.groupCardActive : ''}`}
-                        onClick={() => setSelected(selected === group ? null : group)}
-                      >
-                        <div className={s.groupLetter}>GRUPO {group}</div>
-                        <div className={s.groupTeams}>
-                          {standings.slice(0, 4).map((st) => (
-                            <div
-                              key={st.teamName}
-                              className={`${s.groupTeamRow} ${st.isQualified ? s.qualified : ''}`}
-                            >
-                              <CountryBadge country={st.teamName} size="xs" />
-                              <span>{st.teamName}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className={s.expandHint}>
-                          {selected === group ? '▲' : '▼'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+        {/* ══ MATA-MATA ════════════════════════════════════════ */}
+        {tab === 'mata' && (
+          <>
+            {loading && (
+              <div className={s.skeletonList}>
+                {[1,2,3,4].map((i) => (
+                  <div key={i} className="skeleton" style={{ height: 84, marginBottom: 8 }} />
+                ))}
+              </div>
+            )}
 
-                  {activeGroup && (
-                    <div className={s.accordionPanel}>
-                      <StandingsTable group={activeGroup.group} standings={activeGroup.standings} />
-                    </div>
+            {!loading && bracket.length === 0 && (
+              <div className={s.empty}>
+                <Trophy size={40} className={s.emptyIcon} />
+                <div className={s.emptyTitle}>Chaveamento não disponível</div>
+                <div className={s.emptySub}>Disponível após a fase de grupos</div>
+              </div>
+            )}
+
+            {!loading && bracket.length > 0 && (
+              <>
+                {/* Round selector */}
+                <div className={s.roundTabs}>
+                  {availableRounds.map((r) => (
+                    <button
+                      key={r.value}
+                      className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
+                      onClick={() => setBracketRound(r.value)}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Round title */}
+                <div className={s.roundHeading}>
+                  {ROUNDS.find((r) => r.value === bracketRound)?.label}
+                  {bracketRound !== 'final' && bracketRound !== 'third_place' && (
+                    <span className={s.roundCount}>
+                      {bracketByRound[bracketRound]?.length ?? 0} jogos
+                    </span>
                   )}
                 </div>
-              )
-            })}
-          </div>
+
+                {/* Match cards */}
+                <div className={`${s.bracketGrid} ${bracketRound === 'final' || bracketRound === 'third_place' || bracketRound === 'semifinal' ? s.bracketGridSingle : ''}`}>
+                  {(bracketByRound[bracketRound] ?? []).map((slot) => (
+                    <BracketCard
+                      key={slot.id}
+                      slot={slot}
+                      isFinal={bracketRound === 'final'}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </div>
     </div>
   )
 }
+
+// ── BracketCard ──────────────────────────────────────────────────────────────
+
+function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean }) {
+  const homeWon = !!slot.winnerTeam && slot.winnerTeam === slot.homeTeam
+  const awayWon = !!slot.winnerTeam && slot.winnerTeam === slot.awayTeam
+  const settled = !!slot.winnerTeam
+
+  return (
+    <div className={`${s.bCard} ${settled ? s.bCardDone : ''} ${isFinal ? s.bCardFinal : ''}`}>
+      {/* Slot label */}
+      <div className={s.bHeader}>
+        <span className={s.bSlot}>Confronto {slot.slotNumber}</span>
+        {isFinal && <span className={s.bFinalBadge}><Trophy size={10} /> Final</span>}
+      </div>
+
+      {/* Home team */}
+      <div className={`${s.bTeam} ${homeWon ? s.bWinner : ''} ${!slot.homeTeam ? s.bTbd : ''}`}>
+        {slot.homeTeam ? (
+          <>
+            <CountryBadge country={slot.homeTeam} size="sm" />
+            <span className={s.bName}>{slot.homeTeam}</span>
+          </>
+        ) : (
+          <span className={s.bDesc}>{slot.homeDesc || '—'}</span>
+        )}
+        {homeWon && <Trophy size={11} className={s.bTrophy} />}
+      </div>
+
+      <div className={s.bDivider} />
+
+      {/* Away team */}
+      <div className={`${s.bTeam} ${awayWon ? s.bWinner : ''} ${!slot.awayTeam ? s.bTbd : ''}`}>
+        {slot.awayTeam ? (
+          <>
+            <CountryBadge country={slot.awayTeam} size="sm" />
+            <span className={s.bName}>{slot.awayTeam}</span>
+          </>
+        ) : (
+          <span className={s.bDesc}>{slot.awayDesc || '—'}</span>
+        )}
+        {awayWon && <Trophy size={11} className={s.bTrophy} />}
+      </div>
+    </div>
+  )
+}
+
+// ── StandingsTable ────────────────────────────────────────────────────────────
 
 function StandingsTable({ group, standings }: { group: string; standings: Standing[] }) {
   const sorted = [...standings].sort((a, b) => {

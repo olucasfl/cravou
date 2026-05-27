@@ -130,6 +130,16 @@ export async function adminOverrideSlotTeams(slotId: string, homeTeam?: string, 
   return data
 }
 
+export async function adminSyncR32Teams() {
+  const { data } = await api.post('/cravou/admin/bracket/sync-r32-teams')
+  return data
+}
+
+export async function adminResetSlotResult(slotId: string) {
+  const { data } = await api.post(`/cravou/admin/bracket/${slotId}/reset-result`)
+  return data
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Match {

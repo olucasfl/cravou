@@ -5,7 +5,7 @@ import s from './BottomNav.module.css'
 const items = [
   { to: '/home',    icon: Home,      label: 'Início' },
   { to: '/matches', icon: Calendar,  label: 'Jogos' },
-  { to: '/groups',  icon: Trophy,    label: 'Grupos' },
+  { to: '/groups',  icon: Trophy,    label: 'Copa' },
   { to: '/ranking', icon: BarChart2, label: 'Ranking' },
   { to: '/profile', icon: User,      label: 'Perfil' },
 ]

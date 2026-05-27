@@ -1,3 +1,205 @@
+/* ── Page header + main tabs ── */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.pageTitle {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.pageTabs {
+  display: flex;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 3px;
+  gap: 2px;
+}
+
+.pageTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: var(--r-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  color: var(--c-text-3);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.pageTabActive {
+  background: var(--c-accent);
+  color: #000;
+}
+
+/* ── Round selector ── */
+.roundTabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+  scrollbar-width: none;
+}
+.roundTabs::-webkit-scrollbar { display: none; }
+
+.roundTab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: var(--r-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid var(--c-border-2);
+  background: transparent;
+  color: var(--c-text-3);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.roundTab:hover { color: var(--c-text-2); }
+.roundTabActive { background: var(--c-accent); border-color: var(--c-accent); color: #000; }
+.roundTabFinal.roundTabActive { background: var(--c-gold); border-color: var(--c-gold); color: #000; }
+.roundTabFinal:not(.roundTabActive) { border-color: rgba(234,179,8,0.4); color: var(--c-gold); }
+
+.roundHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--c-text-2);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.roundCount { font-size: 0.7rem; color: var(--c-text-3); font-weight: 500; text-transform: none; letter-spacing: 0; }
+
+/* ── Bracket grid ── */
+.bracketGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.bracketGridSingle { grid-template-columns: 1fr; }
+
+/* ── Bracket card ── */
+.bCard {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  transition: var(--transition);
+}
+.bCard:hover { border-color: var(--c-border-2); }
+.bCardDone { border-left: 3px solid var(--c-accent); }
+.bCardFinal {
+  border-color: var(--c-gold);
+  box-shadow: 0 0 24px rgba(234,179,8,0.15);
+}
+.bCardFinal .bHeader { background: rgba(234,179,8,0.08); }
+
+.bHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 5px;
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
+}
+.bSlot {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--c-text-3);
+}
+.bFinalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--c-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.bTeam {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  transition: background 0.2s;
+  min-height: 38px;
+}
+.bWinner {
+  background: rgba(234,179,8,0.09);
+}
+
+.bName {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bWinner .bName { color: var(--c-gold); font-weight: 700; }
+
+.bTbd .bDesc {
+  font-size: 0.72rem;
+  color: var(--c-text-3);
+  font-style: italic;
+  padding-left: 2px;
+}
+.bDesc {
+  font-size: 0.72rem;
+  color: var(--c-text-3);
+  font-style: italic;
+}
+
+.bTrophy {
+  color: var(--c-gold);
+  flex-shrink: 0;
+}
+
+.bDivider {
+  height: 1px;
+  background: var(--c-border);
+  margin: 0 10px;
+}
+
+/* ── Empty state ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 16px;
+  gap: 10px;
+  color: var(--c-text-3);
+  text-align: center;
+}
+.emptyIcon { opacity: 0.4; }
+.emptyTitle { font-size: 1rem; font-weight: 700; color: var(--c-text-2); }
+.emptySub   { font-size: 0.82rem; color: var(--c-text-3); }
+
+.skeletonList { display: flex; flex-direction: column; }
+
+/* ── legacy title (keep for safety) ── */
 .title {
   font-size: 1.4rem;
   font-weight: 800;
