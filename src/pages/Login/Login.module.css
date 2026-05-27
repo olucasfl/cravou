@@ -18,13 +18,13 @@
 .logoIcon {
   width: 72px;
   height: 72px;
-  background: var(--c-green);
+  background: var(--c-accent);
   border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 12px;
-  box-shadow: var(--shadow-green);
+  box-shadow: var(--shadow-accent);
 }
 
 .logoIcon svg {
@@ -110,7 +110,7 @@
 }
 
 .link {
-  color: var(--c-green);
+  color: var(--c-accent);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;

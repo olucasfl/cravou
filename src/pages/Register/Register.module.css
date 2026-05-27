@@ -94,7 +94,7 @@
 }
 
 .link {
-  color: var(--c-green);
+  color: var(--c-accent);
   font-weight: 600;
   text-decoration: none;
 }

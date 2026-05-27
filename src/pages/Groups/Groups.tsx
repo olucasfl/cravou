@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAllGroups, type GroupData, type Standing } from '@/services/cravouService'
-import { teamFlag } from '@/utils/format'
+import { CountryBadge } from '@/components/CountryBadge'
 import s from './Groups.module.css'
 
 export default function Groups() {
@@ -14,7 +14,11 @@ export default function Groups() {
       .finally(() => setLoading(false))
   }, [])
 
-  const selectedGroup = groups.find((g) => g.group === selected)
+  // Pair groups into rows of 2 for inline accordion
+  const rows: GroupData[][] = []
+  for (let i = 0; i < groups.length; i += 2) {
+    rows.push(groups.slice(i, i + 2))
+  }
 
   return (
     <div className="app-layout">
@@ -22,7 +26,7 @@ export default function Groups() {
         <div className={s.title}>Grupos</div>
 
         {loading && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className={s.skeletonGrid}>
             {[1,2,3,4,5,6].map((i) => (
               <div key={i} className="skeleton" style={{ height: 110 }} />
             ))}
@@ -30,33 +34,46 @@ export default function Groups() {
         )}
 
         {!loading && (
-          <div className={s.grid}>
-            {groups.map(({ group, standings }) => (
-              <div
-                key={group}
-                className={s.groupCard}
-                onClick={() => setSelected(selected === group ? null : group)}
-                style={selected === group ? { borderColor: 'var(--c-green)' } : {}}
-              >
-                <div className={s.groupLetter}>GRUPO {group}</div>
-                <div className={s.groupTeams}>
-                  {standings.slice(0, 4).map((st) => (
-                    <div
-                      key={st.teamName}
-                      className={`${s.groupTeamRow} ${st.isQualified ? s.qualified : ''}`}
-                    >
-                      <span className={s.teamFlagSm}>{teamFlag(st.teamName)}</span>
-                      <span>{st.teamName}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+          <div className={s.rows}>
+            {rows.map((row) => {
+              const activeGroup = row.find((g) => g.group === selected)
+              return (
+                <div key={row[0].group} className={s.rowWrapper}>
+                  <div className={s.cardRow}>
+                    {row.map(({ group, standings }) => (
+                      <div
+                        key={group}
+                        className={`${s.groupCard} ${selected === group ? s.groupCardActive : ''}`}
+                        onClick={() => setSelected(selected === group ? null : group)}
+                      >
+                        <div className={s.groupLetter}>GRUPO {group}</div>
+                        <div className={s.groupTeams}>
+                          {standings.slice(0, 4).map((st) => (
+                            <div
+                              key={st.teamName}
+                              className={`${s.groupTeamRow} ${st.isQualified ? s.qualified : ''}`}
+                            >
+                              <CountryBadge country={st.teamName} size="xs" />
+                              <span>{st.teamName}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={s.expandHint}>
+                          {selected === group ? '▲' : '▼'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-        {selectedGroup && (
-          <StandingsTable group={selectedGroup.group} standings={selectedGroup.standings} />
+                  {activeGroup && (
+                    <div className={s.accordionPanel}>
+                      <StandingsTable group={activeGroup.group} standings={activeGroup.standings} />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -90,13 +107,13 @@ function StandingsTable({ group, standings }: { group: string; standings: Standi
         </thead>
         <tbody>
           {sorted.map((st, idx) => (
-            <tr key={st.teamName} className={`${s.tr} ${st.isQualified ? s.qualified : ''}`}>
-              <td className={`${s.td}`}>
+            <tr key={st.teamName} className={`${s.tr} ${st.isQualified ? s.qualifiedRow : ''}`}>
+              <td className={s.td}>
                 <div className={s.tdTeam}>
                   <span className={`${s.pos} ${idx < 2 ? s.top : ''}`}>
                     {st.position ?? idx + 1}
                   </span>
-                  <span>{teamFlag(st.teamName)}</span>
+                  <CountryBadge country={st.teamName} size="xs" />
                   <span>{st.teamName}</span>
                 </div>
               </td>

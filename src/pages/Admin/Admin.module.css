@@ -92,8 +92,8 @@
 }
 
 .pillActive {
-  background: var(--c-green);
-  border-color: var(--c-green);
+  background: var(--c-accent);
+  border-color: var(--c-accent);
   color: #000;
 }
 
@@ -187,7 +187,7 @@
 .score {
   font-family: var(--font-display);
   font-size: 1.3rem;
-  color: var(--c-green);
+  color: var(--c-accent);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -219,7 +219,7 @@
   color: var(--c-text);
   border: 1px solid var(--c-border-2);
 }
-.editBtn:hover { border-color: var(--c-green); color: var(--c-green); }
+.editBtn:hover { border-color: var(--c-accent); color: var(--c-accent); }
 
 .lockBtn {
   background: var(--c-gold-glow);
@@ -229,10 +229,10 @@
 .lockBtn:hover { background: var(--c-gold); color: #000; }
 
 .saveBtn {
-  background: var(--c-green);
+  background: var(--c-accent);
   color: #000;
 }
-.saveBtn:hover { background: var(--c-green-dark); }
+.saveBtn:hover { background: var(--c-accent-dark); }
 .saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .reprocessBtn {
@@ -261,7 +261,72 @@
   padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+}
+
+/* Seções internas do painel de edição */
+.editSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--c-border);
+}
+.editSection:last-of-type { border-bottom: none; padding-bottom: 0; }
+
+.editSectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Botão principal de registrar resultado */
+.finalizeBtn {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+  background: var(--c-accent);
+  color: #000;
+  font-size: 0.9rem;
+  border-radius: var(--r-md);
+  font-weight: 700;
+}
+.finalizeBtn:hover { background: var(--c-accent-dark); }
+.finalizeBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Campo de data/hora */
+.editDateRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dateInput {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 12px;
+  background: var(--c-surface-3);
+  border: 1px solid var(--c-border-2);
+  border-radius: var(--r-md);
+  color: var(--c-text);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  outline: none;
+  color-scheme: dark;
+}
+.dateInput:focus { border-color: var(--c-accent); }
+
+.dateHint {
+  font-size: 0.72rem;
+  color: var(--c-text-3);
+  font-style: italic;
+  line-height: 1.4;
 }
 
 .editScoreRow {
@@ -303,7 +368,7 @@
 }
 .scoreInput::-webkit-inner-spin-button,
 .scoreInput::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.scoreInput:focus { border-color: var(--c-green); }
+.scoreInput:focus { border-color: var(--c-accent); }
 
 .editSep {
   font-family: var(--font-display);
@@ -324,7 +389,7 @@
   outline: none;
   cursor: pointer;
 }
-.statusSelect:focus { border-color: var(--c-green); }
+.statusSelect:focus { border-color: var(--c-accent); }
 
 .editActions {
   display: flex;
@@ -468,13 +533,13 @@
   font-family: var(--font-body);
   outline: none;
 }
-.winnerSelect:focus { border-color: var(--c-green); }
+.winnerSelect:focus { border-color: var(--c-accent); }
 
 .winnerBtn {
   width: 36px;
   height: 36px;
   border-radius: var(--r-md);
-  background: var(--c-green);
+  background: var(--c-accent);
   border: none;
   color: #000;
   display: flex;
@@ -484,7 +549,7 @@
   flex-shrink: 0;
   transition: background var(--transition);
 }
-.winnerBtn:hover { background: var(--c-green-dark); }
+.winnerBtn:hover { background: var(--c-accent-dark); }
 .winnerBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .slotPending {
@@ -503,7 +568,7 @@
   text-align: center;
 }
 
-.emptyIcon { font-size: 2.5rem; }
+.emptyIcon { display: flex; justify-content: center; color: var(--c-text-3); }
 
 .emptyTitle {
   font-size: 1rem;

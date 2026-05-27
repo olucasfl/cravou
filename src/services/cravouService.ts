@@ -85,6 +85,16 @@ export async function adminLockMatch(matchId: string) {
   return data
 }
 
+export async function adminFinalizeMatch(matchId: string, homeScore: number, awayScore: number) {
+  const { data } = await api.post(`/cravou/admin/matches/${matchId}/finalize`, { homeScore, awayScore })
+  return data
+}
+
+export async function adminUpdateDate(matchId: string, matchDate: string) {
+  const { data } = await api.patch(`/cravou/admin/matches/${matchId}/date`, { matchDate })
+  return data
+}
+
 export async function adminReprocessMatch(matchId: string) {
   const { data } = await api.post(`/cravou/admin/matches/${matchId}/reprocess`)
   return data
@@ -119,7 +129,7 @@ export interface Match {
   penaltyWinner: string | null
   matchDate: string
   stadium: string | null
-  status: 'upcoming' | 'live' | 'finished' | 'locked'
+  status: 'upcoming' | 'live' | 'finished' | 'locked' | 'awaiting_result'
   predictionsLocked: boolean
 }
 

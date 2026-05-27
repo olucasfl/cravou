@@ -1,15 +1,16 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Save, RefreshCw, Lock, Check, Trophy, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Save, RefreshCw, Lock, Check, Trophy, Flag, Calendar, Building2 } from 'lucide-react'
 import {
   adminGetMatches,
   adminUpdateScore,
   adminUpdateStatus,
   adminLockMatch,
   adminReprocessMatch,
+  adminFinalizeMatch,
+  adminUpdateDate,
   adminMountR32,
   adminSetKnockoutResult,
-  adminOverrideSlotTeams,
   getBracket,
   type Match,
   type BracketSlot,
@@ -19,7 +20,7 @@ import s from './Admin.module.css'
 
 type Tab = 'matches' | 'bracket'
 type PhaseFilter = 'all' | 'group_stage' | 'knockout'
-type StatusFilter = 'all' | 'upcoming' | 'live' | 'finished' | 'locked'
+type StatusFilter = 'all' | 'upcoming' | 'live' | 'awaiting_result' | 'finished' | 'locked'
 
 interface Msg { id: string; type: 'ok' | 'err'; text: string }
 
@@ -31,6 +32,13 @@ const ROUND_LABELS: Record<string, string> = {
   semifinal: 'Semifinal',
   third_place: '3º Lugar',
   final: 'Final',
+}
+
+// Converte Date para valor de <input type="datetime-local"> (local browser time)
+function toDatetimeLocal(dateStr: string): string {
+  const d = new Date(dateStr)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 export default function Admin() {
@@ -46,7 +54,10 @@ export default function Admin() {
   const [editHome, setEditHome] = useState('')
   const [editAway, setEditAway] = useState('')
   const [editStatus, setEditStatus] = useState('')
+  const [editDate, setEditDate] = useState('')
   const [saving, setSaving] = useState(false)
+  const [finalizing, setFinalizing] = useState(false)
+  const [savingDate, setSavingDate] = useState(false)
   const [msg, setMsg] = useState<Msg | null>(null)
 
   const [winnerInputs, setWinnerInputs] = useState<Record<string, string>>({})
@@ -82,34 +93,92 @@ export default function Admin() {
     setEditHome(m.homeScore !== null ? String(m.homeScore) : '')
     setEditAway(m.awayScore !== null ? String(m.awayScore) : '')
     setEditStatus(m.status)
+    setEditDate(toDatetimeLocal(m.matchDate))
     setMsg(null)
   }
 
-  async function saveMatch(m: Match) {
-    const h = parseInt(editHome)
-    const a = parseInt(editAway)
-    const hasScore = !isNaN(h) && !isNaN(a) && h >= 0 && a >= 0
-    const scoreChanged = hasScore && (h !== m.homeScore || a !== m.awayScore)
-    const statusChanged = editStatus !== m.status
-
-    if (!scoreChanged && !statusChanged) {
+  // Salvar apenas status (sem score)
+  async function saveStatus(m: Match) {
+    if (editStatus === m.status) {
       setMsg({ id: m.id, type: 'ok', text: 'Nenhuma alteração.' })
       setEditId(null)
       return
     }
-
     setSaving(true)
     setMsg(null)
     try {
-      if (scoreChanged) await adminUpdateScore(m.id, h, a)
-      if (statusChanged) await adminUpdateStatus(m.id, editStatus)
-      setMsg({ id: m.id, type: 'ok', text: 'Salvo com sucesso!' })
+      await adminUpdateStatus(m.id, editStatus)
+      setMsg({ id: m.id, type: 'ok', text: 'Status atualizado!' })
       setEditId(null)
       await load()
     } catch {
-      setMsg({ id: m.id, type: 'err', text: 'Erro ao salvar.' })
+      setMsg({ id: m.id, type: 'err', text: 'Erro ao atualizar status.' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Salvar apenas placar (sem finalizar)
+  async function saveScore(m: Match) {
+    const h = parseInt(editHome)
+    const a = parseInt(editAway)
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) {
+      setMsg({ id: m.id, type: 'err', text: 'Placar inválido.' })
+      return
+    }
+    setSaving(true)
+    setMsg(null)
+    try {
+      await adminUpdateScore(m.id, h, a)
+      setMsg({ id: m.id, type: 'ok', text: 'Placar salvo!' })
+      await load()
+    } catch {
+      setMsg({ id: m.id, type: 'err', text: 'Erro ao salvar placar.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // REGISTRAR RESULTADO: define placar + finaliza + calcula pontos em um passo
+  async function finalizeMatch(m: Match) {
+    const h = parseInt(editHome)
+    const a = parseInt(editAway)
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) {
+      setMsg({ id: m.id, type: 'err', text: 'Informe um placar válido antes de finalizar.' })
+      return
+    }
+    setFinalizing(true)
+    setMsg(null)
+    try {
+      await adminFinalizeMatch(m.id, h, a)
+      setMsg({ id: m.id, type: 'ok', text: `Resultado registrado! ${h}×${a} — pontos calculados.` })
+      setEditId(null)
+      await load()
+    } catch {
+      setMsg({ id: m.id, type: 'err', text: 'Erro ao finalizar partida.' })
+    } finally {
+      setFinalizing(false)
+    }
+  }
+
+  // Alterar data/hora da partida
+  async function saveDate(m: Match) {
+    if (!editDate) {
+      setMsg({ id: m.id, type: 'err', text: 'Informe uma data válida.' })
+      return
+    }
+    setSavingDate(true)
+    setMsg(null)
+    try {
+      // datetime-local está no timezone do browser; converte para ISO UTC
+      const isoDate = new Date(editDate).toISOString()
+      await adminUpdateDate(m.id, isoDate)
+      setMsg({ id: m.id, type: 'ok', text: 'Data atualizada! O cron job ajustará o status em até 1 minuto.' })
+      await load()
+    } catch {
+      setMsg({ id: m.id, type: 'err', text: 'Erro ao atualizar data.' })
+    } finally {
+      setSavingDate(false)
     }
   }
 
@@ -189,16 +258,10 @@ export default function Admin() {
 
         {/* Tabs */}
         <div className={s.tabs}>
-          <button
-            className={`${s.tab} ${tab === 'matches' ? s.tabActive : ''}`}
-            onClick={() => setTab('matches')}
-          >
+          <button className={`${s.tab} ${tab === 'matches' ? s.tabActive : ''}`} onClick={() => setTab('matches')}>
             Partidas
           </button>
-          <button
-            className={`${s.tab} ${tab === 'bracket' ? s.tabActive : ''}`}
-            onClick={() => setTab('bracket')}
-          >
+          <button className={`${s.tab} ${tab === 'bracket' ? s.tabActive : ''}`} onClick={() => setTab('bracket')}>
             Chaveamento
           </button>
         </div>
@@ -214,7 +277,6 @@ export default function Admin() {
         {/* ═══ PARTIDAS ═══ */}
         {!loading && tab === 'matches' && (
           <>
-            {/* Filters */}
             <div className={s.filters}>
               <div className={s.filterRow}>
                 {(['all', 'group_stage', 'knockout'] as PhaseFilter[]).map((f) => (
@@ -228,13 +290,13 @@ export default function Admin() {
                 ))}
               </div>
               <div className={s.filterRow}>
-                {(['all', 'upcoming', 'live', 'finished', 'locked'] as StatusFilter[]).map((f) => (
+                {(['all', 'upcoming', 'live', 'awaiting_result', 'finished', 'locked'] as StatusFilter[]).map((f) => (
                   <button
                     key={f}
                     className={`${s.pill} ${statusFilter === f ? s.pillActive : ''}`}
-                    onClick={() => setStatusFilter(f as StatusFilter)}
+                    onClick={() => setStatusFilter(f)}
                   >
-                    {f === 'all' ? 'Todos' : statusLabel(f as Match['status'])}
+                    {f === 'all' ? 'Todos' : statusLabel(f)}
                   </button>
                 ))}
               </div>
@@ -278,66 +340,120 @@ export default function Admin() {
                     <span className={s.teamName}>{m.awayTeam}</span>
                   </div>
 
-                  {/* Inline edit panel */}
+                  {/* Painel de edição */}
                   {editId === m.id ? (
                     <div className={s.editPanel}>
-                      <div className={s.editScoreRow}>
-                        <div className={s.editScoreGroup}>
-                          <span className={s.editTeamLabel}>{m.homeTeam}</span>
-                          <input
-                            className={s.scoreInput}
-                            type="number"
-                            min={0}
-                            max={30}
-                            placeholder="0"
-                            value={editHome}
-                            onChange={(e) => setEditHome(e.target.value)}
-                          />
+
+                      {/* ── Seção: Resultado ── */}
+                      <div className={s.editSection}>
+                        <div className={s.editSectionLabel}>Resultado</div>
+                        <div className={s.editScoreRow}>
+                          <div className={s.editScoreGroup}>
+                            <span className={s.editTeamLabel}>{m.homeTeam}</span>
+                            <input
+                              className={s.scoreInput}
+                              type="number" min={0} max={30} placeholder="0"
+                              value={editHome}
+                              onChange={(e) => setEditHome(e.target.value)}
+                            />
+                          </div>
+                          <span className={s.editSep}>×</span>
+                          <div className={s.editScoreGroup}>
+                            <span className={s.editTeamLabel}>{m.awayTeam}</span>
+                            <input
+                              className={s.scoreInput}
+                              type="number" min={0} max={30} placeholder="0"
+                              value={editAway}
+                              onChange={(e) => setEditAway(e.target.value)}
+                            />
+                          </div>
                         </div>
-                        <span className={s.editSep}>—</span>
-                        <div className={s.editScoreGroup}>
-                          <span className={s.editTeamLabel}>{m.awayTeam}</span>
-                          <input
-                            className={s.scoreInput}
-                            type="number"
-                            min={0}
-                            max={30}
-                            placeholder="0"
-                            value={editAway}
-                            onChange={(e) => setEditAway(e.target.value)}
-                          />
+
+                        {/* Botão principal: registrar resultado final */}
+                        {m.status !== 'finished' && (
+                          <button
+                            className={`${s.actionBtn} ${s.finalizeBtn}`}
+                            onClick={() => finalizeMatch(m)}
+                            disabled={finalizing}
+                          >
+                            <Flag size={14} />
+                            {finalizing ? 'Finalizando...' : 'Registrar Resultado Final'}
+                          </button>
+                        )}
+
+                        <div className={s.editActions}>
+                          <button
+                            className={`${s.actionBtn} ${s.saveBtn}`}
+                            onClick={() => saveScore(m)}
+                            disabled={saving}
+                          >
+                            <Save size={13} /> {saving ? 'Salvando...' : 'Só placar'}
+                          </button>
+                          <button
+                            className={`${s.actionBtn} ${s.reprocessBtn}`}
+                            onClick={() => reprocess(m.id)}
+                            disabled={m.status !== 'finished'}
+                            title={m.status !== 'finished' ? 'Só disponível em partidas finalizadas' : ''}
+                          >
+                            <RefreshCw size={13} /> Recalcular pts
+                          </button>
                         </div>
                       </div>
 
-                      <select
-                        className={s.statusSelect}
-                        value={editStatus}
-                        onChange={(e) => setEditStatus(e.target.value)}
-                      >
-                        <option value="upcoming">Agendado</option>
-                        <option value="live">Ao vivo</option>
-                        <option value="finished">Encerrado</option>
-                        <option value="locked">Bloqueado</option>
-                      </select>
-
-                      <div className={s.editActions}>
-                        <button
-                          className={`${s.actionBtn} ${s.saveBtn}`}
-                          onClick={() => saveMatch(m)}
-                          disabled={saving}
-                        >
-                          <Save size={14} /> {saving ? 'Salvando...' : 'Salvar'}
-                        </button>
-                        <button
-                          className={`${s.actionBtn} ${s.reprocessBtn}`}
-                          onClick={() => reprocess(m.id)}
-                        >
-                          <RefreshCw size={14} /> Reprocessar
-                        </button>
-                        <button className={s.cancelBtn} onClick={() => setEditId(null)}>
-                          Cancelar
-                        </button>
+                      {/* ── Seção: Status manual ── */}
+                      <div className={s.editSection}>
+                        <div className={s.editSectionLabel}>Status manual</div>
+                        <div className={s.editActions}>
+                          <select
+                            className={s.statusSelect}
+                            value={editStatus}
+                            onChange={(e) => setEditStatus(e.target.value)}
+                          >
+                            <option value="upcoming">Agendado</option>
+                            <option value="locked">Bloqueado</option>
+                            <option value="live">Ao vivo</option>
+                            <option value="awaiting_result">Aguardando resultado</option>
+                            <option value="finished">Encerrado</option>
+                          </select>
+                          <button
+                            className={`${s.actionBtn} ${s.saveBtn}`}
+                            onClick={() => saveStatus(m)}
+                            disabled={saving}
+                          >
+                            <Save size={13} /> Salvar status
+                          </button>
+                        </div>
                       </div>
+
+                      {/* ── Seção: Data/hora (para testes) ── */}
+                      <div className={s.editSection}>
+                        <div className={s.editSectionLabel}>
+                          <Calendar size={13} /> Data / hora (para testes)
+                        </div>
+                        <div className={s.editDateRow}>
+                          <input
+                            className={s.dateInput}
+                            type="datetime-local"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                          />
+                          <button
+                            className={`${s.actionBtn} ${s.saveBtn}`}
+                            onClick={() => saveDate(m)}
+                            disabled={savingDate}
+                          >
+                            {savingDate ? 'Salvando...' : 'Alterar data'}
+                          </button>
+                        </div>
+                        <div className={s.dateHint}>
+                          Mude para daqui a 1 min → bloqueia palpites em segundos via cron job.
+                          O cron roda a cada minuto.
+                        </div>
+                      </div>
+
+                      <button className={s.cancelBtn} onClick={() => setEditId(null)}>
+                        Fechar painel
+                      </button>
 
                       {msg?.id === m.id && (
                         <div className={msg.type === 'ok' ? s.msgOk : s.msgErr}>{msg.text}</div>
@@ -386,7 +502,7 @@ export default function Admin() {
 
             {bracket.length === 0 && (
               <div className={s.empty}>
-                <div className={s.emptyIcon}>🏟️</div>
+                <div className={s.emptyIcon}><Building2 size={40} /></div>
                 <div className={s.emptyTitle}>Chaveamento vazio</div>
                 <div className={s.emptySub}>
                   Clique em "Montar R32" após todos os grupos serem classificados

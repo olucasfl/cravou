@@ -34,7 +34,7 @@
 .item:hover { color: var(--c-text-2); }
 
 .item.active {
-  color: var(--c-green);
+  color: var(--c-accent);
 }
 
 .icon {
@@ -54,7 +54,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--c-green);
+  background: var(--c-accent);
 }
 
 .label {

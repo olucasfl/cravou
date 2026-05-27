@@ -56,8 +56,8 @@ export default function Profile() {
         {/* Menu */}
         <div className={s.section}>
           <Link to="/ranking" className={s.menuItem}>
-            <div className={s.menuIcon} style={{ background: 'var(--c-green-glow)' }}>
-              <BarChart2 size={18} color="var(--c-green)" />
+            <div className={s.menuIcon} style={{ background: 'var(--c-accent-glow)' }}>
+              <BarChart2 size={18} color="var(--c-accent)" />
             </div>
             <span className={s.menuLabel}>Ver ranking</span>
             <ChevronRight size={16} className={s.menuChevron} />

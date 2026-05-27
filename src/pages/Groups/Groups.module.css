@@ -2,30 +2,57 @@
   font-size: 1.4rem;
   font-weight: 800;
   margin-bottom: 20px;
+  color: var(--c-text);
 }
 
-.grid {
+.skeletonGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-bottom: 24px;
 }
 
+/* ── Row layout ── */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.rowWrapper {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.cardRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Group card ── */
 .groupCard {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
-  padding: 14px;
+  padding: 14px 14px 10px;
   cursor: pointer;
   transition: var(--transition);
-  text-decoration: none;
+  user-select: none;
+  position: relative;
 }
 .groupCard:hover { border-color: var(--c-border-2); background: var(--c-surface-2); }
+.groupCardActive {
+  border-color: var(--c-accent);
+  background: var(--c-accent-glow);
+  border-bottom-left-radius: var(--r-sm);
+  border-bottom-right-radius: var(--r-sm);
+}
 
 .groupLetter {
   font-family: var(--font-display);
-  font-size: 2rem;
-  color: var(--c-green);
+  font-size: 1.6rem;
+  color: var(--c-accent);
   line-height: 1;
   margin-bottom: 8px;
 }
@@ -43,21 +70,46 @@
   font-size: 0.72rem;
   color: var(--c-text-2);
 }
-.groupTeamRow.qualified { color: var(--c-green); }
+.qualified { color: var(--c-green); }
 
-.teamFlagSm { font-size: 0.9rem; }
+.teamFlagSm {
+  font-size: 0.9rem;
+  min-width: 16px;
+  text-align: center;
+}
 
-/* Detail */
+.expandHint {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  font-size: 0.6rem;
+  color: var(--c-text-3);
+  opacity: 0.6;
+}
+
+/* ── Accordion panel ── */
+.accordionPanel {
+  animation: slideDown 0.2s ease;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  overflow: hidden;
+  margin-top: -1px;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Standings table ── */
 .detail {
   background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-xl);
+  border: 1px solid var(--c-accent);
+  border-top: none;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
   overflow: hidden;
-  margin-bottom: 16px;
 }
 
 .detailHeader {
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: var(--c-surface-2);
   border-bottom: 1px solid var(--c-border);
   display: flex;
@@ -67,8 +119,8 @@
 
 .detailTitle {
   font-family: var(--font-display);
-  font-size: 1.4rem;
-  color: var(--c-green);
+  font-size: 1.2rem;
+  color: var(--c-accent);
   letter-spacing: 2px;
 }
 
@@ -78,8 +130,8 @@
 }
 
 .th {
-  padding: 8px 12px;
-  font-size: 0.65rem;
+  padding: 7px 10px;
+  font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -91,11 +143,11 @@
 
 .tr { border-bottom: 1px solid var(--c-border); }
 .tr:last-child { border-bottom: none; }
-.tr.qualified { background: var(--c-green-glow); }
+.qualifiedRow { background: var(--c-green-glow); }
 
 .td {
-  padding: 10px 12px;
-  font-size: 0.8rem;
+  padding: 9px 10px;
+  font-size: 0.78rem;
   color: var(--c-text-2);
   text-align: center;
 }
@@ -104,19 +156,30 @@
 .tdTeam {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-weight: 600;
   color: var(--c-text);
   white-space: nowrap;
 }
 
+.flagCell {
+  font-size: 1rem;
+  min-width: 20px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: var(--font-body);
+}
+
 .pos {
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--c-text-3);
-  min-width: 16px;
+  min-width: 14px;
 }
-.pos.top { color: var(--c-green); }
+.top { color: var(--c-green); }
 
 .pts {
   font-weight: 800;

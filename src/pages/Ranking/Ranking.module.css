@@ -41,7 +41,7 @@
 .podiumItem.second .podiumAvatar { background: #9ca3af; }
 .podiumItem.third  .podiumAvatar { background: #92400e; }
 
-.podiumCrown { font-size: 1.2rem; }
+.podiumCrown { display: flex; justify-content: center; }
 
 .podiumName {
   font-size: 0.7rem;
@@ -87,8 +87,8 @@
 }
 
 .item.me {
-  border-color: var(--c-green);
-  background: var(--c-green-glow);
+  border-color: var(--c-accent);
+  background: var(--c-accent-glow);
 }
 
 .pos {
@@ -153,7 +153,7 @@
   text-align: center;
 }
 
-.emptyIcon { font-size: 2.5rem; }
+.emptyIcon { display: flex; justify-content: center; color: var(--c-text-3); }
 
 .emptyTitle {
   font-size: 1rem;

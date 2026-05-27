@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trophy, Crown } from 'lucide-react'
 import { getRanking, type RankingEntry } from '@/services/cravouService'
 import { getMe } from '@/services/authService'
 import s from './Ranking.module.css'
@@ -36,7 +37,7 @@ export default function Ranking() {
 
         {!loading && ranking.length === 0 && (
           <div className={s.empty}>
-            <div className={s.emptyIcon}>🏆</div>
+            <div className={s.emptyIcon}><Trophy size={40} /></div>
             <div className={s.emptyTitle}>Nenhum palpite pontuado ainda</div>
             <div className={s.emptySub}>O ranking aparecerá quando as partidas forem encerradas</div>
           </div>
@@ -48,10 +49,9 @@ export default function Ranking() {
               const e = top3[idx]
               if (!e) return null
               const cls = idx === 0 ? s.first : idx === 1 ? s.second : s.third
-              const medals = ['🥇', '🥈', '🥉']
               return (
                 <div key={e.userId} className={`${s.podiumItem} ${cls}`}>
-                  {idx === 0 && <div className={s.podiumCrown}>👑</div>}
+                  {idx === 0 && <div className={s.podiumCrown}><Crown size={18} color="var(--c-gold)" /></div>}
                   <div className={s.podiumAvatar}>{e.name.slice(0, 2).toUpperCase()}</div>
                   <div className={s.podiumName}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
                   <div className={s.podiumPts}>{e.points}</div>
