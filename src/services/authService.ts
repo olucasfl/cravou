@@ -6,6 +6,7 @@ export interface User {
   email: string
   isAdmin: boolean
   bolaoPoints: number
+  cravadas: number
 }
 
 export async function login(email: string, password: string) {

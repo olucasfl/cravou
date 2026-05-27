@@ -1,3 +1,16 @@
+/* ── Brand bar ──────────────────────────────────────────── */
+.brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.brandLogo {
+  width: 120px;
+  object-fit: contain;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
@@ -68,6 +81,11 @@
   box-shadow: var(--shadow-accent);
 }
 
+.scoreLeft {
+  display: flex;
+  flex-direction: column;
+}
+
 .scoreLabel {
   font-size: 0.75rem;
   font-weight: 700;
@@ -89,6 +107,30 @@
   margin-top: 2px;
 }
 
+.cravasRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--c-border);
+}
+
+.cravasValue {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--c-green);
+  line-height: 1;
+}
+
+.cravasLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--c-text-3);
+}
+
 .scoreIcon {
   width: 56px;
   height: 56px;
@@ -97,6 +139,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.scoreIconImg {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
 }
 
 /* Section */

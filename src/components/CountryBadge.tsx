@@ -108,20 +108,28 @@ export function CountryBadge({ country, size = 'md', style }: Props) {
     )
   }
 
-  const bg = info.colors[0]
-  const textColor = getTextColor(bg)
-
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       width: w, height: h, borderRadius: radius,
-      background: bg, color: textColor,
-      fontSize, fontWeight: 800, fontFamily: 'var(--font-display)',
-      letterSpacing: '0.5px', flexShrink: 0,
+      overflow: 'hidden',
       border: `1px solid rgba(255,255,255,0.12)`,
+      flexShrink: 0,
       ...style,
     }}>
-      {info.code}
+      {info.code.split('').map((char, i) => {
+        const bg = info.colors[Math.min(i, info.colors.length - 1)]
+        return (
+          <span key={i} style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: `${100 / info.code.length}%`, height: '100%',
+            background: bg, color: getTextColor(bg),
+            fontSize, fontWeight: 800, fontFamily: 'var(--font-display)',
+          }}>
+            {char}
+          </span>
+        )
+      })}
     </span>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost } from 'lucide-react'
 import { SoccerBall } from '@/components/icons/SoccerBall'
@@ -14,6 +14,7 @@ import {
   type PredCategory,
 } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
+import CravouCelebration from '@/components/CravouCelebration/CravouCelebration'
 import s from './MatchDetail.module.css'
 
 export default function MatchDetail() {
@@ -26,6 +27,8 @@ export default function MatchDetail() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [, setTick] = useState(0)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const celebratedRef = useRef(false)
 
   useEffect(() => {
     const iv = setInterval(() => setTick((t) => t + 1), 15_000)
@@ -46,6 +49,17 @@ export default function MatchDetail() {
 
   useEffect(() => { loadMatch() }, [loadMatch])
   useSocketEvent('match:updated', loadMatch)
+
+  useEffect(() => {
+    if (!match || !prediction) return
+    if (match.status !== 'finished') return
+    const category = getPredCategory(prediction.points, true)
+    if (category === 'exact' && !celebratedRef.current) {
+      celebratedRef.current = true
+      const t = setTimeout(() => setShowCelebration(true), 900)
+      return () => clearTimeout(t)
+    }
+  }, [match, prediction])
 
   async function handleSave() {
     if (!match || !id) return
@@ -295,6 +309,12 @@ export default function MatchDetail() {
           </div>
         )}
       </div>
+
+      <CravouCelebration
+        show={showCelebration}
+        points={prediction?.points ?? 10}
+        onDismiss={() => setShowCelebration(false)}
+      />
     </div>
   )
 }
@@ -346,7 +366,7 @@ function ResultCard({ prediction, match, cat }: { prediction: Prediction; match:
     none:    null,
   } as const
   const catMsg: Record<PredCategory, string> = {
-    exact:   'Placar exato! Incrível!',
+    exact:   'CRAVOU! Placar exato!',
     right:   'Acertou o resultado!',
     partial: 'Quase lá — gols de um time certos',
     wrong:   'Dessa vez não — mais sorte no próximo!',

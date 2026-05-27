@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Trophy } from 'lucide-react'
 import { login } from '@/services/authService'
 import s from './Login.module.css'
 
@@ -36,10 +35,8 @@ export default function Login() {
   return (
     <div className={s.page}>
       <div className={s.logo}>
-        <div className={s.logoIcon}>
-          <Trophy size={36} />
-        </div>
-        <div className={s.logoTitle}>CRAVOU!</div>
+        <img src="/logo-ball.png" className={s.logoBall} alt="" />
+        <img src="/logo-text.png" className={s.logoText} alt="Cravou!" />
         <div className={s.logoSub}>Copa do Mundo 2026</div>
       </div>
 

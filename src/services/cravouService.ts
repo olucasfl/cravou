@@ -34,6 +34,11 @@ export async function getRanking() {
   return data as RankingEntry[]
 }
 
+export async function getCravasRanking() {
+  const { data } = await api.get('/cravou/ranking/cravadas')
+  return data as RankingEntry[]
+}
+
 // ── Copa standings ────────────────────────────────────────────────────────────
 
 export async function getAllGroups() {
@@ -145,6 +150,7 @@ export interface RankingEntry {
   userId: string
   name: string
   points: number
+  cravadas: number
   position: number
 }
 

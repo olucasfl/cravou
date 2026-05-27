@@ -47,6 +47,10 @@ export default function Profile() {
             <div className={s.statValue}>{user?.bolaoPoints ?? 0}</div>
             <div className={s.statLabel}>Pontos</div>
           </div>
+          <div className={`${s.statCard} ${s.statCardCravas}`}>
+            <div className={`${s.statValue} ${s.statValueCravas}`}>{user?.cravadas ?? 0}</div>
+            <div className={s.statLabel}>Cravadas</div>
+          </div>
           <div className={s.statCard}>
             <div className={s.statValue}>{myPosition ? `#${myPosition}` : '—'}</div>
             <div className={s.statLabel}>Posição</div>

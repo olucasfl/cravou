@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  Trophy, HelpCircle, X,
+  HelpCircle, X,
   Lock, Clock, Target, CheckCircle2, XCircle,
   Calendar, Flag, Timer,
 } from 'lucide-react'
@@ -40,6 +40,11 @@ export default function Home() {
   return (
     <div className="app-layout">
       <div className="page fade-up">
+        {/* Brand */}
+        <div className={s.brand}>
+          <img src="/logo-text.png" className={s.brandLogo} alt="Cravou!" />
+        </div>
+
         {/* Header */}
         <div className={s.header}>
           <div>
@@ -56,13 +61,17 @@ export default function Home() {
 
         {/* Pontuação */}
         <div className={s.scoreCard}>
-          <div>
+          <div className={s.scoreLeft}>
             <div className={s.scoreLabel}>Seus pontos</div>
             <div className={s.scoreValue}>{loading ? '—' : (user?.bolaoPoints ?? 0)}</div>
             <div className={s.scoreSub}>no bolão</div>
+            <div className={s.cravasRow}>
+              <span className={s.cravasValue}>{loading ? '—' : (user?.cravadas ?? 0)}</span>
+              <span className={s.cravasLabel}>cravadas</span>
+            </div>
           </div>
           <div className={s.scoreIcon}>
-            <Trophy size={28} color="var(--c-accent)" />
+            <img src="/logo-ball.png" className={s.scoreIconImg} alt="" />
           </div>
         </div>
 
@@ -172,7 +181,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               <div className={s.tutRow}>
                 <span className={s.tutIcon}><Target size={20} color="var(--c-accent)" /></span>
                 <div className={s.tutInfo}>
-                  <strong>Placar exato</strong>
+                  <strong>CRAVOU! — Placar exato</strong>
                   <span>10 pts (grupos) · 15 pts (mata-mata)</span>
                 </div>
               </div>
@@ -207,7 +216,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               <div className={s.tutEx}>
                 <span className={s.tutExScore}>2 × 1</span>
                 <span className={s.tutExGreen}><Target size={11} /> +10 pts</span>
-                <span className={s.tutExLabel}>placar exato</span>
+                <span className={s.tutExLabel}>CRAVOU!</span>
               </div>
               <div className={s.tutEx}>
                 <span className={s.tutExScore}>3 × 0</span>
@@ -250,7 +259,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className={s.tutFooter}>
-            Boa sorte no bolão da Copa 2026!
+            Acerte o placar exato e <strong>CRAVOU!</strong>
           </div>
         </div>
       </div>

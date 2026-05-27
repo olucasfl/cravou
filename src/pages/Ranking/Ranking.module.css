@@ -1,7 +1,48 @@
 .title {
   font-size: 1.4rem;
   font-weight: 800;
+  margin-bottom: 16px;
+}
+
+/* ── Tabs ─────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 8px;
   margin-bottom: 20px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 4px;
+}
+
+.tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--r-full);
+  background: transparent;
+  border: none;
+  color: var(--c-text-3);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tabActive {
+  background: var(--c-gold-glow);
+  color: var(--c-gold);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.tabActiveCravas {
+  background: var(--c-accent-glow);
+  color: var(--c-accent);
+  border: 1px solid rgba(0, 212, 255, 0.3);
 }
 
 /* Podium */
@@ -87,6 +128,11 @@
 }
 
 .item.me {
+  border-color: var(--c-gold);
+  background: var(--c-gold-glow);
+}
+
+.item.meCravas {
   border-color: var(--c-accent);
   background: var(--c-accent-glow);
 }
@@ -166,4 +212,33 @@
   color: var(--c-text-3);
   max-width: 240px;
   line-height: 1.5;
+}
+
+/* ── Variantes cravadas ───────────────────────────────── */
+.firstCravas {
+  background: var(--c-accent) !important;
+  color: #000 !important;
+}
+
+.podiumPtsCravas {
+  color: var(--c-accent) !important;
+}
+
+.podiumBarCravas {
+  background: var(--c-accent-glow) !important;
+  border-color: var(--c-accent) !important;
+}
+
+.ptsCravas {
+  color: var(--c-accent) !important;
+}
+
+.me {
+  border-color: var(--c-gold);
+  background: var(--c-gold-glow);
+}
+
+.meCravas {
+  border-color: var(--c-accent);
+  background: var(--c-accent-glow);
 }
