@@ -36,6 +36,7 @@ export default function BolaoDetail() {
 
   const [detail, setDetail] = useState<GroupDetail | null>(null)
   const [tab, setTab] = useState<Tab>('ranking')
+  const [rankTab, setRankTab] = useState<'pontos' | 'cravadas'>('pontos')
   const [loading, setLoading] = useState(true)
   const [codeCopied, setCodeCopied] = useState(false)
   const [showInvitePanel, setShowInvitePanel] = useState(false)
@@ -60,8 +61,17 @@ export default function BolaoDetail() {
   const group = detail?.group
   const ranking = detail?.ranking ?? []
   const isOwner = group?.ownerId === myId
-  const top3 = ranking.slice(0, 3)
-  const listRest = ranking.slice(3)
+
+  const rankingCravas = useMemo(() =>
+    [...ranking]
+      .sort((a, b) => b.cravadas - a.cravadas || b.points - a.points)
+      .map((e, i) => ({ ...e, position: i + 1 })),
+    [ranking]
+  )
+  const isCravas = rankTab === 'cravadas'
+  const activeRanking = isCravas ? rankingCravas : ranking
+  const top3 = activeRanking.slice(0, 3)
+  const listRest = activeRanking.slice(3)
 
   async function handleCopyCode() {
     if (!group) return
@@ -175,6 +185,22 @@ export default function BolaoDetail() {
         {/* ── Ranking Tab ── */}
         {tab === 'ranking' && (
           <>
+            {/* Sub-tabs pontos / cravadas */}
+            <div className={r.tabs}>
+              <button
+                className={`${r.tab} ${!isCravas ? r.tabActive : ''}`}
+                onClick={() => setRankTab('pontos')}
+              >
+                <Trophy size={14} /> Pontos
+              </button>
+              <button
+                className={`${r.tab} ${isCravas ? r.tabActiveCravas : ''}`}
+                onClick={() => setRankTab('cravadas')}
+              >
+                <Target size={14} /> Cravadas
+              </button>
+            </div>
+
             {ranking.length === 0 && (
               <div className={r.empty}>
                 <div className={r.emptyIcon}><Trophy size={40} /></div>
@@ -183,7 +209,7 @@ export default function BolaoDetail() {
               </div>
             )}
 
-            {ranking.length >= 3 && (
+            {activeRanking.length >= 3 && (
               <div className={r.podium}>
                 {[1, 0, 2].map((idx) => {
                   const e = top3[idx]
@@ -193,32 +219,39 @@ export default function BolaoDetail() {
                     <div key={e.userId} className={`${r.podiumItem} ${cls}`}>
                       {idx === 0 && (
                         <div className={r.podiumCrown}>
-                          <Crown size={18} color="var(--c-gold)" />
+                          {isCravas
+                            ? <Target size={18} color="var(--c-accent)" />
+                            : <Crown size={18} color="var(--c-gold)" />
+                          }
                         </div>
                       )}
-                      <div className={r.podiumAvatar}>
+                      <div className={`${r.podiumAvatar} ${idx === 0 && isCravas ? r.firstCravas : ''}`}>
                         {e.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className={r.podiumName}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
-                      <div className={r.podiumPts}>{e.points}</div>
-                      <div className={r.podiumPtsLabel}>pts</div>
-                      <div className={r.podiumBar} />
+                      <div className={`${r.podiumPts} ${idx === 0 && isCravas ? r.podiumPtsCravas : ''}`}>
+                        {isCravas ? e.cravadas : e.points}
+                      </div>
+                      <div className={r.podiumPtsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
+                      <div className={`${r.podiumBar} ${idx === 0 && isCravas ? r.podiumBarCravas : ''}`} />
                     </div>
                   )
                 })}
               </div>
             )}
 
-            {ranking.length > 0 && (
+            {activeRanking.length > 0 && (
               <div className={r.list}>
-                {(ranking.length < 3 ? ranking : listRest).map((e) => (
-                  <div key={e.userId} className={`${r.item} ${e.userId === myId ? r.me : ''}`}>
+                {(activeRanking.length < 3 ? activeRanking : listRest).map((e) => (
+                  <div key={e.userId} className={`${r.item} ${e.userId === myId ? (isCravas ? r.meCravas : r.me) : ''}`}>
                     <div className={r.pos}>#{e.position}</div>
                     <div className={r.avatar}>{e.name.slice(0, 2).toUpperCase()}</div>
                     <div className={r.name}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
                     <div className={r.ptsBlock}>
-                      <div className={r.pts}>{e.points}</div>
-                      <div className={r.ptsLabel}>pts</div>
+                      <div className={`${r.pts} ${isCravas ? r.ptsCravas : ''}`}>
+                        {isCravas ? e.cravadas : e.points}
+                      </div>
+                      <div className={r.ptsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
                     </div>
                   </div>
                 ))}
