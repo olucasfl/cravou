@@ -201,6 +201,11 @@ export async function adminUnlinkMatchFromSlot(slotId: string) {
   return data as BracketSlot
 }
 
+export async function adminSeedCalendar() {
+  const { data } = await api.post('/cravou/admin/seed-calendar')
+  return data as { groupUpdated: number; groupCreated: number; knockoutCreated: number; knockoutUpdated: number; slotsUpserted: number }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Match {

@@ -488,8 +488,8 @@ export default function Admin() {
                                 await adminUnlinkMatchFromSlot(slot.id)
                                 setBracketMsg({ type: 'ok', text: 'Partida desvinculada! Slot voltou para "A definir".' })
                                 await load(true)
-                              } catch (e: any) {
-                                setBracketMsg({ type: 'err', text: e?.response?.data?.message ?? 'Erro ao desvincular partida.' })
+                              } catch (e) {
+                                setBracketMsg({ type: 'err', text: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao desvincular partida.' })
                               }
                             },
                           })}
@@ -520,8 +520,8 @@ export default function Admin() {
                               await adminCreateMatchFromSlot(slot.id, new Date(slotDate).toISOString())
                               setBracketMsg({ type: 'ok', text: slot.matchId ? 'Partida atualizada!' : 'Partida criada com sucesso!' })
                               await load(true)
-                            } catch (e: any) {
-                              setBracketMsg({ type: 'err', text: e?.response?.data?.message ?? 'Erro ao criar partida' })
+                            } catch (e) {
+                              setBracketMsg({ type: 'err', text: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao criar partida' })
                             } finally {
                               setCreatingMatch(prev => { const ns = new Set(prev); ns.delete(slot.id); return ns })
                             }

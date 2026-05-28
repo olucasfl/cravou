@@ -183,6 +183,14 @@
   font-weight: 600;
 }
 
+/* ── Admin Actions Bar ───────────────────────────────────── */
+.adminActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
 /* ── Match List ──────────────────────────────────────────── */
 .matchList {
   display: flex;

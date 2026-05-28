@@ -9,21 +9,31 @@ import { SoccerBall } from '@/components/icons/SoccerBall'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
 import s from './Matches.module.css'
 
-const FILTERS = [
-  { label: 'Todos',       value: '' },
-  { label: 'Ao vivo',    value: 'live' },
+const STATUS_TABS = [
+  { label: 'Todos',      value: '' },
+  { label: 'Agendado',   value: 'upcoming' },
   { label: 'Calculando', value: 'awaiting_result' },
-  { label: 'Grupos',     value: 'group_stage' },
-  { label: 'Mata-mata',  value: 'round_of_32' },
-  { label: 'Encerrados', value: 'finished' },
+  { label: 'Encerrado',  value: 'finished' },
 ]
 
+const CAT_CHIPS = [
+  { label: 'Grupos',    value: 'group_stage' },
+  { label: 'Mata-mata', value: 'knockout' },
+  { label: 'Ao vivo',   value: 'live' },
+  { label: 'Palpitei',  value: 'palpitei' },
+]
+
+const STATUS_ORDER: Record<string, number> = {
+  live: 0, awaiting_result: 1, upcoming: 2, finished: 3,
+}
+
 export default function Matches() {
-  const [matches, setMatches]     = useState<Match[]>([])
+  const [matches, setMatches]         = useState<Match[]>([])
   const [predictions, setPredictions] = useState<Map<string, Prediction>>(new Map())
-  const [filter, setFilter]       = useState('')
-  const [loading, setLoading]     = useState(true)
-  const [, setTick]               = useState(0)
+  const [statusFilter, setStatusFilter] = useState('')
+  const [catFilter, setCatFilter]     = useState('')
+  const [loading, setLoading]         = useState(true)
+  const [, setTick]                   = useState(0)
 
   const load = useCallback(async () => {
     const [all, preds] = await Promise.all([
@@ -35,7 +45,19 @@ export default function Matches() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    async function init() {
+      const [all, preds] = await Promise.all([
+        getMatches().catch(() => []),
+        getMyPredictions().catch(() => []),
+      ])
+      setMatches(all)
+      setPredictions(new Map(preds.map((p) => [p.matchId, p])))
+      setLoading(false)
+    }
+    init()
+  }, [])
+
   useSocketEvent('match:updated', useCallback(() => { clearCache('matches', 'predictions'); load() }, [load]))
   useSocketEvent('match:locked',  useCallback(() => { clearCache('matches'); load() }, [load]))
 
@@ -44,38 +66,95 @@ export default function Matches() {
     return () => clearInterval(iv)
   }, [])
 
-  const filtered = matches.filter((m) => {
-    if (!filter) return true
-    if (filter === 'live')             return m.status === 'live'
-    if (filter === 'awaiting_result')  return m.status === 'awaiting_result'
-    if (filter === 'finished')         return m.status === 'finished'
-    if (filter === 'round_of_32')      return m.phase !== 'group_stage'
-    return m.phase === filter
-  })
+  const sorted = [...matches]
+    .filter((m) => {
+      if (statusFilter === 'upcoming')        return m.status === 'upcoming'
+      if (statusFilter === 'awaiting_result') return m.status === 'awaiting_result'
+      if (statusFilter === 'finished')        return m.status === 'finished'
+      return true
+    })
+    .filter((m) => {
+      if (catFilter === 'group_stage') return m.phase === 'group_stage'
+      if (catFilter === 'knockout')    return m.phase !== 'group_stage'
+      if (catFilter === 'live')        return m.status === 'live'
+      if (catFilter === 'palpitei')    return predictions.has(m.id)
+      return true
+    })
+    .sort((a, b) => {
+      const so = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
+      if (so !== 0) return so
+      if (a.status === 'finished') return new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()
+      return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
+    })
 
   const liveCount = matches.filter((m) => m.status === 'live').length
   const calcCount = matches.filter((m) => m.status === 'awaiting_result').length
+  const predCount = matches.filter((m) => predictions.has(m.id)).length
+
+  function toggleStatus(val: string) {
+    setStatusFilter(prev => prev === val ? '' : val)
+  }
+  function toggleCat(val: string) {
+    setCatFilter(prev => prev === val ? '' : val)
+  }
 
   return (
     <div className="app-layout">
       <div className="page">
         <div className={s.header}>
           <div className={s.title}>Jogos</div>
-          <div className={s.filters}>
-            {FILTERS.map((f) => {
-              const isLive = f.value === 'live'
-              const isCalc = f.value === 'awaiting_result'
-              const count  = isLive ? liveCount : isCalc ? calcCount : 0
-              const alert  = count > 0 && filter !== f.value
+
+          {/* ── Linha 1: Condição ── */}
+          <div className={s.statusRow}>
+            {STATUS_TABS.map((t) => {
+              const isCalc = t.value === 'awaiting_result'
+              const count  = isCalc ? calcCount : 0
+              const alert  = count > 0 && statusFilter !== t.value
               return (
                 <button
-                  key={f.value}
-                  className={`${s.filter} ${filter === f.value ? s.active : ''} ${isLive && alert ? s.filterLiveAlert : ''} ${isCalc && alert ? s.filterCalcAlert : ''}`}
-                  onClick={() => setFilter(f.value)}
+                  key={t.value}
+                  className={[
+                    s.statusTab,
+                    statusFilter === t.value ? s.statusTabActive : '',
+                    isCalc && alert ? s.statusTabCalc : '',
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => toggleStatus(t.value)}
                 >
-                  {count > 0 ? (
-                    <>{isLive && <span className={s.filterLiveDot} />}{f.label}<span className={s.filterBadge}>{count}</span></>
-                  ) : f.label}
+                  {t.label}
+                  {isCalc && count > 0 && <span className={`${s.statusBadge} ${s.statusBadgeCalc}`}>{count}</span>}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ── Linha 2: Filtros ── */}
+          <div className={s.catRow}>
+            {CAT_CHIPS.map((c) => {
+              const isLive = c.value === 'live'
+              const isPalp = c.value === 'palpitei'
+              const count  = isLive ? liveCount : isPalp ? predCount : 0
+              const active = catFilter === c.value
+              return (
+                <button
+                  key={c.value}
+                  className={[
+                    s.catChip,
+                    active && isLive  ? s.catChipActiveLive : '',
+                    active && isPalp  ? s.catChipActivePalp : '',
+                    active && !isLive && !isPalp ? s.catChipActive : '',
+                    !active && isLive && liveCount > 0 ? s.catChipLiveAlert : '',
+                  ].filter(Boolean).join(' ')}
+                  onClick={() => toggleCat(c.value)}
+                >
+                  {isLive && liveCount > 0 && !active && <span className={s.liveDot} />}
+                  {c.label}
+                  {count > 0 && (
+                    <span className={[
+                      s.catBadge,
+                      isLive ? s.catBadgeLive : '',
+                      isPalp ? s.catBadgePalp : '',
+                    ].filter(Boolean).join(' ')}>{count}</span>
+                  )}
                 </button>
               )
             })}
@@ -96,13 +175,13 @@ export default function Matches() {
               <div className="skeleton" style={{ width: '50%', height: 10, borderRadius: 99, marginTop: 12 }} />
             </div>
           ))}
-          {!loading && filtered.length === 0 && (
+          {!loading && sorted.length === 0 && (
             <div className={s.empty}>
               <div className={s.emptyIcon}><SoccerBall size={40} /></div>
               Nenhum jogo encontrado
             </div>
           )}
-          {filtered.map((m) => (
+          {sorted.map((m) => (
             <MatchCard key={m.id} match={m} prediction={predictions.get(m.id)} />
           ))}
         </div>

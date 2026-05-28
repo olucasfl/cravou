@@ -63,4 +63,29 @@
   letter-spacing: 0.3px;
   text-transform: uppercase;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.itemDisabled {
+  background: none;
+  border: none;
+  opacity: 0.55;
+  cursor: default;
+}
+.itemDisabled:hover { color: var(--c-text-3); }
+
+.testeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #eab308;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }

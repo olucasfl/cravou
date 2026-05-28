@@ -11,6 +11,7 @@ const DATA: Record<string, CountryInfo> = {
   'áfrica do sul':       { code: 'ZA', colors: ['#007A4D', '#FFB612'] },
   'coreia do sul':       { code: 'KR', colors: ['#C8102E', '#003478'] },
   'república tcheca':    { code: 'CZ', colors: ['#D7141A', '#11457E'] },
+  'tchéquia':            { code: 'CZ', colors: ['#D7141A', '#11457E'] },
   // ── Grupo B ──────────────────────────────────────────────────
   'canadá':              { code: 'CA', colors: ['#D80621', '#FFFFFF'] },
   'bósnia-herzegovina':  { code: 'BA', colors: ['#002395', '#FFCD00'] },
@@ -59,6 +60,7 @@ const DATA: Record<string, CountryInfo> = {
   // ── Grupo K ──────────────────────────────────────────────────
   'portugal':            { code: 'PT', colors: ['#006600', '#FF0000'] },
   'rd congo':            { code: 'CD', colors: ['#007FFF', '#F7D618'] },
+  'rep. dem. congo':     { code: 'CD', colors: ['#007FFF', '#F7D618'] },
   'uzbequistão':         { code: 'UZ', colors: ['#0099B5', '#1EB53A'] },
   'colômbia':            { code: 'CO', colors: ['#FCD116', '#003087'] },
   // ── Grupo L ──────────────────────────────────────────────────

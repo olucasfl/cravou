@@ -5,7 +5,6 @@ import s from './BottomNav.module.css'
 const items = [
   { to: '/home',    icon: Home,      label: 'Início' },
   { to: '/matches', icon: Calendar,  label: 'Jogos' },
-  { to: '/groups',  icon: Trophy,    label: 'Copa' },
   { to: '/ranking', icon: BarChart2, label: 'Ranking' },
   { to: '/profile', icon: User,      label: 'Perfil' },
 ]
@@ -30,6 +29,17 @@ export default function BottomNav() {
           )}
         </NavLink>
       ))}
+
+      {/* Copa — em desenvolvimento, sem navegação */}
+      <button className={`${s.item} ${s.itemDisabled}`} onClick={() => {}}>
+        <div className={s.icon}>
+          <Trophy size={22} strokeWidth={2} />
+        </div>
+        <span className={s.label}>
+          Copa
+          <span className={s.testeBadge}>Teste</span>
+        </span>
+      </button>
     </nav>
   )
 }
