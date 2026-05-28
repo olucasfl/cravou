@@ -1,12 +1,26 @@
 import api from './api'
+import { getCache, setCache, clearCache } from '@/utils/cache'
+
+// TTL por tipo de dado
+const TTL = {
+  matches:     30_000,  // 30s — socket events invalidam quando necessário
+  predictions: 30_000,  // 30s
+  ranking:     60_000,  // 1 min
+  groups:      60_000,  // 1 min
+  bracket:     60_000,  // 1 min
+}
 
 // ── Matches ──────────────────────────────────────────────────────────────────
 
 export async function getMatches(phase?: string, status?: string) {
+  const key = `matches-${phase ?? ''}-${status ?? ''}`
+  const cached = getCache<Match[]>(key, TTL.matches)
+  if (cached) return cached
   const params: Record<string, string> = {}
   if (phase) params.phase = phase
   if (status) params.status = status
   const { data } = await api.get('/cravou/matches', { params })
+  setCache(key, data)
   return data as Match[]
 }
 
@@ -21,52 +35,79 @@ export async function upsertPrediction(matchId: string, homeScore: number, awayS
   const body: Record<string, unknown> = { matchId, homeScore, awayScore }
   if (penaltyWinner) body.penaltyWinner = penaltyWinner
   const { data } = await api.post('/cravou/predictions', body)
+  clearCache('predictions') // palpite salvo → dados de predição ficam stale
   return data as Prediction
 }
 
 export async function getMyPredictions() {
+  const cached = getCache<Prediction[]>('predictions-my', TTL.predictions)
+  if (cached) return cached
   const { data } = await api.get('/cravou/predictions/my')
+  setCache('predictions-my', data)
   return data as Prediction[]
 }
 
 // ── Rankings ──────────────────────────────────────────────────────────────────
 
 export async function getRanking() {
+  const cached = getCache<RankingEntry[]>('ranking-pts', TTL.ranking)
+  if (cached) return cached
   const { data } = await api.get('/cravou/ranking')
+  setCache('ranking-pts', data)
   return data as RankingEntry[]
 }
 
 export async function getCravasRanking() {
+  const cached = getCache<RankingEntry[]>('ranking-cravadas', TTL.ranking)
+  if (cached) return cached
   const { data } = await api.get('/cravou/ranking/cravadas')
+  setCache('ranking-cravadas', data)
   return data as RankingEntry[]
 }
 
 // ── Copa standings ────────────────────────────────────────────────────────────
 
 export async function getAllGroups() {
+  const cached = getCache<GroupData[]>('groups-all', TTL.groups)
+  if (cached) return cached
   const { data } = await api.get('/cravou/copa/groups')
+  setCache('groups-all', data)
   return data as GroupData[]
 }
 
 export async function getGroup(letter: string) {
+  const key = `groups-${letter}`
+  const cached = getCache<{ group: string; standings: Standing[]; matches: Match[] }>(key, TTL.groups)
+  if (cached) return cached
   const { data } = await api.get(`/cravou/copa/groups/${letter}`)
+  setCache(key, data)
   return data as { group: string; standings: Standing[]; matches: Match[] }
 }
 
 export async function getThirdsRanking() {
+  const cached = getCache<Standing[]>('groups-thirds', TTL.groups)
+  if (cached) return cached
   const { data } = await api.get('/cravou/copa/standings/thirds')
+  setCache('groups-thirds', data)
   return data as Standing[]
 }
 
 // ── Bracket ───────────────────────────────────────────────────────────────────
 
 export async function getBracket() {
+  const cached = getCache<BracketSlot[]>('bracket-all', TTL.bracket)
+  if (cached) return cached
   const { data } = await api.get('/cravou/bracket')
+  setCache('bracket-all', data)
   return data as BracketSlot[]
 }
 
 export async function getBracketByRound(round: string) {
+  const key = `bracket-${round}`
+  const cached = getCache<BracketSlot[]>(key, TTL.bracket)
+  if (cached) return cached
   const { data } = await api.get(`/cravou/bracket/${round}`)
+  setCache(key, data)
   return data as BracketSlot[]
 }
 

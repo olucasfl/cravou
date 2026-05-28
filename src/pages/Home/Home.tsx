@@ -11,6 +11,7 @@ import {
   type Match, type Prediction,
 } from '@/services/cravouService'
 import { formatMatchDate, getPredCategory } from '@/utils/format'
+import { clearCache } from '@/utils/cache'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
@@ -46,29 +47,11 @@ export default function Home() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    async function init() {
-      const [u, all, preds, ranking] = await Promise.all([
-        getMe().catch(() => null),
-        getMatches().catch(() => []),
-        getMyPredictions().catch(() => []),
-        getRanking().catch(() => []),
-      ])
-      setUser(u)
-      setAllMatches(all)
-      setLive(all.filter((m) => m.status === 'live'))
-      setUpcoming(all.filter((m) => m.status === 'upcoming').slice(0, 5))
-      setMyPredictions(preds)
-      if (u) {
-        const entry = ranking.find((r) => r.userId === u.id)
-        setMyPosition(entry?.position ?? null)
-      }
-      setLoading(false)
-    }
-    init()
-  }, [])
-  useSocketEvent('match:updated', load)
-  useSocketEvent('match:locked', load)
+  useEffect(() => { load() }, [load])
+
+  // Socket: limpa cache dos dados afetados antes de recarregar
+  useSocketEvent('match:updated', useCallback(() => { clearCache('matches', 'ranking', 'predictions'); load() }, [load]))
+  useSocketEvent('match:locked',  useCallback(() => { clearCache('matches'); load() }, [load]))
 
   // ── Computed ─────────────────────────────────────────────
 

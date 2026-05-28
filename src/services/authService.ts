@@ -1,4 +1,5 @@
 import api from './api'
+import { getCache, setCache, clearCache } from '@/utils/cache'
 
 export interface User {
   id: string
@@ -18,18 +19,37 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(name: string, email: string, password: string) {
-  // Endpoint: POST /users → requer confirmPassword; header x-app: cravou auto-verifica
   const { data } = await api.post('/users', { name, email, password, confirmPassword: password })
   return data
 }
 
-export async function getMe(): Promise<User> {
-  // Endpoint: GET /users/me
-  const { data } = await api.get('/users/me')
+export async function checkVerification(email: string): Promise<{ verified: boolean }> {
+  const { data } = await api.get('/auth/check-verification', { params: { email } })
   return data
 }
 
+export async function getMe(): Promise<User> {
+  const cached = getCache<User>('me', 300_000) // 5 min
+  if (cached) return cached
+  const { data } = await api.get('/users/me')
+  setCache('me', data)
+  return data
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await api.post('/auth/forgot-password', { email })
+}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  await api.post('/auth/reset-password', { token, password })
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  await api.post('/auth/resend-verification', { email })
+}
+
 export async function logout() {
+  clearCache() // limpa todo o cache na saída
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   // Limpa cache do Service Worker para não servir dados da sessão anterior

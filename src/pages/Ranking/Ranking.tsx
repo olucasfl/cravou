@@ -3,6 +3,7 @@ import { Trophy, Crown, Target } from 'lucide-react'
 import { getRanking, type RankingEntry } from '@/services/cravouService'
 import { getMe } from '@/services/authService'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
+import { clearCache } from '@/utils/cache'
 import s from './Ranking.module.css'
 
 type Tab = 'pontos' | 'cravadas'
@@ -23,19 +24,8 @@ export default function Ranking() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    async function init() {
-      const [rPts, me] = await Promise.all([
-        getRanking().catch(() => []),
-        getMe().catch(() => null),
-      ])
-      setRankingPontos(rPts)
-      setMyId(me?.id ?? null)
-      setLoading(false)
-    }
-    init()
-  }, [])
-  useSocketEvent('ranking:updated', load)
+  useEffect(() => { load() }, [load])
+  useSocketEvent('ranking:updated', useCallback(() => { clearCache('ranking'); load() }, [load]))
 
   const rankingCravas = useMemo(() =>
     [...rankingPontos]

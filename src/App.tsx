@@ -7,6 +7,7 @@ import BottomNav from '@/components/BottomNav/BottomNav'
 
 import Login from '@/pages/Login/Login'
 import Register from '@/pages/Register/Register'
+import ResetPassword from '@/pages/ResetPassword/ResetPassword'
 import Home from '@/pages/Home/Home'
 import Matches from '@/pages/Matches/Matches'
 import MatchDetail from '@/pages/MatchDetail/MatchDetail'
@@ -17,7 +18,7 @@ import Admin from '@/pages/Admin/Admin'
 
 const APP_VERSION = 'v1'
 
-const PUBLIC_ROUTES = ['/login', '/register']
+const PUBLIC_ROUTES = ['/login', '/register', '/reset-password']
 
 function isPublicPath() {
   return PUBLIC_ROUTES.some((r) => window.location.pathname.startsWith(r))
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="/" element={<Navigate to="/home" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Rotas protegidas com BottomNav */}
       <Route path="/home" element={<Protected><Home /></Protected>} />

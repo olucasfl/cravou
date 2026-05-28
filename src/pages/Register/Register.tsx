@@ -1,30 +1,139 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
-import { register } from '@/services/authService'
+import { ArrowLeft, CheckCircle2, Mail, RefreshCw } from 'lucide-react'
+import { register, checkVerification, resendVerification } from '@/services/authService'
 import s from './Register.module.css'
 
-export default function Register() {
+function getRegisterError(err: unknown): string {
+  const msg: string = (err as any)?.response?.data?.message ?? ''
+  if (msg.includes('already exists') || msg.includes('already registered') || msg.toLowerCase().includes('email'))
+    return 'Este e-mail já está cadastrado. Tente fazer login.'
+  if (msg.toLowerCase().includes('password') || msg.toLowerCase().includes('senha'))
+    return 'A senha não atende aos requisitos mínimos.'
+  return 'Erro ao criar conta. Verifique os dados e tente novamente.'
+}
+
+// ── Tela de aguardando verificação ────────────────────────────────────────────
+
+function VerifyScreen({ email }: { email: string }) {
   const navigate = useNavigate()
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [verified, setVerified]       = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSent, setResendSent]   = useState(false)
+
+  // Polling a cada 3s
+  const poll = useCallback(async () => {
+    try {
+      const { verified: v } = await checkVerification(email)
+      if (v) setVerified(true)
+    } catch { /* ignora erros de rede no polling */ }
+  }, [email])
+
+  useEffect(() => {
+    if (verified) {
+      const t = setTimeout(() => navigate('/login'), 2000)
+      return () => clearTimeout(t)
+    }
+    poll() // primeira verificação imediata
+    const iv = setInterval(poll, 3000)
+    return () => clearInterval(iv)
+  }, [verified, poll, navigate])
+
+  async function handleResend() {
+    setResendLoading(true)
+    setResendSent(false)
+    try {
+      await resendVerification(email)
+      setResendSent(true)
+    } catch { /* ignora */ }
+    finally { setResendLoading(false) }
+  }
+
+  if (verified) return (
+    <div className={s.verifyBox}>
+      <CheckCircle2 size={56} color="var(--c-green)" strokeWidth={1.5} />
+      <div className={s.verifyTitle}>E-mail verificado!</div>
+      <div className={s.verifySub}>Levando você para o login…</div>
+      <div className={s.verifyDots}>
+        <span /><span /><span />
+      </div>
+    </div>
+  )
+
+  return (
+    <div className={s.verifyBox}>
+      <div className={s.mailIconWrap}>
+        <Mail size={32} color="var(--c-accent)" />
+        <span className={s.mailPulse} />
+      </div>
+      <div className={s.verifyTitle}>Verifique seu e-mail</div>
+      <div className={s.verifySub}>
+        Enviamos um link de verificação para<br />
+        <strong>{email}</strong>
+      </div>
+      <div className={s.verifyNote}>
+        Clique no link do e-mail para ativar sua conta.<br />
+        Esta tela atualiza automaticamente.
+      </div>
+
+      {!resendSent ? (
+        <button
+          className={s.resendBtn}
+          onClick={handleResend}
+          disabled={resendLoading}
+          type="button"
+        >
+          {resendLoading
+            ? <><RefreshCw size={14} className={s.spin} /> Enviando...</>
+            : <><Mail size={14} /> Reenviar e-mail</>
+          }
+        </button>
+      ) : (
+        <div className={s.resendOk}>
+          <CheckCircle2 size={14} /> E-mail reenviado! Verifique sua caixa de entrada.
+        </div>
+      )}
+
+      <Link to="/login" className={s.alreadyLink}>
+        Já verifiquei — fazer login
+      </Link>
+    </div>
+  )
+}
+
+// ── Formulário de cadastro ─────────────────────────────────────────────────────
+
+export default function Register() {
+  const [name, setName]         = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [confirm, setConfirm]   = useState('')
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [registered, setRegistered] = useState(false)
 
   async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault()
     setError('')
+    if (password !== confirm) { setError('As senhas não coincidem.'); return }
     setLoading(true)
     try {
       await register(name, email, password)
-      navigate('/login')
-    } catch {
-      setError('Erro ao criar conta. Verifique os dados e tente novamente.')
+      setRegistered(true)
+    } catch (err) {
+      setError(getRegisterError(err))
     } finally {
       setLoading(false)
     }
   }
+
+  if (registered) return (
+    <div className={s.page}>
+      <div className={s.card}>
+        <VerifyScreen email={email} />
+      </div>
+    </div>
+  )
 
   return (
     <div className={s.page}>
@@ -41,41 +150,39 @@ export default function Register() {
         <form className={s.form} onSubmit={handleSubmit}>
           <div>
             <label className={s.label}>Nome</label>
-            <input
-              className="input"
-              type="text"
-              placeholder="Seu nome"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={2}
-            />
+            <input className="input" type="text" placeholder="Seu nome"
+              value={name} onChange={(e) => setName(e.target.value)}
+              required minLength={2} autoComplete="name" />
           </div>
           <div>
             <label className={s.label}>E-mail</label>
-            <input
-              className="input"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input className="input" type="email" placeholder="seu@email.com"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              required autoComplete="email" />
           </div>
           <div>
             <label className={s.label}>Senha</label>
-            <input
-              className="input"
-              type="password"
-              placeholder="Mínimo 6 caracteres"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-            />
+            <input className="input" type="password" placeholder="Mínimo 6 caracteres"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+              required minLength={6} autoComplete="new-password" />
           </div>
-          <button className={`btn btn-primary ${s.submit}`} type="submit" disabled={loading}>
-            {loading ? 'Criando...' : 'Criar conta'}
+          <div>
+            <label className={s.label}>Confirmar senha</label>
+            <input
+              className={`input ${confirm && confirm !== password ? s.inputError : ''}`}
+              type="password" placeholder="Repita a senha"
+              value={confirm} onChange={(e) => setConfirm(e.target.value)}
+              required minLength={6} autoComplete="new-password" />
+            {confirm && confirm !== password && (
+              <div className={s.fieldError}>As senhas não coincidem</div>
+            )}
+          </div>
+          <button
+            className={`btn btn-primary ${s.submit}`}
+            type="submit"
+            disabled={loading || (!!confirm && confirm !== password)}
+          >
+            {loading ? 'Criando conta...' : 'Criar conta'}
           </button>
         </form>
 

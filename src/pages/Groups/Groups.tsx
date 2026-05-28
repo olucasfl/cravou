@@ -6,6 +6,7 @@ import {
 } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
+import { clearCache } from '@/utils/cache'
 import s from './Groups.module.css'
 
 type MainTab = 'grupos' | 'mata'
@@ -36,17 +37,8 @@ export default function Groups() {
   const [bracketRound, setBracketRound] = useState('round_of_32')
   const [loading, setLoading]   = useState(true)
 
-  const load = useCallback(() => {
-    Promise.all([
-      getAllGroups().catch(() => []),
-      getBracket().catch(() => []),
-    ]).then(([g, b]) => {
-      setGroups(g as GroupData[])
-      setBracket(b as BracketSlot[])
-    })
-  }, [])
-
-  useEffect(() => {
+  const load = useCallback((force = false) => {
+    if (force) clearCache('groups', 'bracket')
     Promise.all([
       getAllGroups().catch(() => []),
       getBracket().catch(() => []),
@@ -57,8 +49,10 @@ export default function Groups() {
     })
   }, [])
 
-  useSocketEvent('group:classified', load)
-  useSocketEvent('tournament:all-groups-complete', load)
+  useEffect(() => { load() }, [load])
+
+  useSocketEvent('group:classified',              useCallback(() => load(true), [load]))
+  useSocketEvent('tournament:all-groups-complete', useCallback(() => load(true), [load]))
 
   const bracketByRound = useMemo(() => {
     const map: Record<string, BracketSlot[]> = {}

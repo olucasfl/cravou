@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Lock, Zap, Clock, Target, CheckCircle2, XCircle } from 'lucide-react'
 import { getMatches, getMyPredictions, type Match, type Prediction } from '@/services/cravouService'
+import { clearCache } from '@/utils/cache'
 import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, type PredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
@@ -34,20 +35,9 @@ export default function Matches() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    async function init() {
-      const [all, preds] = await Promise.all([
-        getMatches().catch(() => []),
-        getMyPredictions().catch(() => []),
-      ])
-      setMatches(all)
-      setPredictions(new Map(preds.map((p) => [p.matchId, p])))
-      setLoading(false)
-    }
-    init()
-  }, [])
-  useSocketEvent('match:updated', load)
-  useSocketEvent('match:locked', load)
+  useEffect(() => { load() }, [load])
+  useSocketEvent('match:updated', useCallback(() => { clearCache('matches', 'predictions'); load() }, [load]))
+  useSocketEvent('match:locked',  useCallback(() => { clearCache('matches'); load() }, [load]))
 
   useEffect(() => {
     const iv = setInterval(() => setTick((t) => t + 1), 15_000)
