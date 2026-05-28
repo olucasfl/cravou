@@ -6,66 +6,66 @@ interface CountryInfo {
 }
 
 const DATA: Record<string, CountryInfo> = {
-  // Group A
-  mexico:              { code: 'MX', colors: ['#006847', '#CE1126'] },
-  'south africa':      { code: 'ZA', colors: ['#007A4D', '#FFB612'] },
-  'south korea':       { code: 'KR', colors: ['#C8102E', '#003478'] },
-  'czech republic':    { code: 'CZ', colors: ['#D7141A', '#11457E'] },
-  // Group B
-  canada:              { code: 'CA', colors: ['#D80621', '#FFFFFF'] },
-  'bosnia-herzegovina':{ code: 'BA', colors: ['#002395', '#FFCD00'] },
-  qatar:               { code: 'QA', colors: ['#8D1B3D', '#FFFFFF'] },
-  switzerland:         { code: 'CH', colors: ['#D52B1E', '#FFFFFF'] },
-  // Group C
-  brazil:              { code: 'BR', colors: ['#FFDF00', '#009C3B'] },
-  morocco:             { code: 'MA', colors: ['#C1272D', '#006233'] },
-  haiti:               { code: 'HT', colors: ['#00209F', '#D21034'] },
-  scotland:            { code: 'SC', colors: ['#003078', '#FFFFFF'] },
-  // Group D
-  usa:                 { code: 'US', colors: ['#B22234', '#3C3B6E'] },
-  paraguay:            { code: 'PY', colors: ['#D52B1E', '#002D62'] },
-  australia:           { code: 'AU', colors: ['#00843D', '#FFCD00'] },
-  turkey:              { code: 'TR', colors: ['#E30A17', '#FFFFFF'] },
-  // Group E
-  germany:             { code: 'DE', colors: ['#000000', '#DD0000'] },
-  curacao:             { code: 'CW', colors: ['#002B7F', '#F9E814'] },
-  'ivory coast':       { code: 'CI', colors: ['#F77F00', '#009A44'] },
-  ecuador:             { code: 'EC', colors: ['#FFD100', '#003087'] },
-  // Group F
-  netherlands:         { code: 'NL', colors: ['#FF6400', '#003DA5'] },
-  japan:               { code: 'JP', colors: ['#BC002D', '#FFFFFF'] },
-  sweden:              { code: 'SE', colors: ['#006AA7', '#FECC02'] },
-  tunisia:             { code: 'TN', colors: ['#E70013', '#FFFFFF'] },
-  // Group G
-  belgium:             { code: 'BE', colors: ['#1A1A1A', '#FAE042'] },
-  egypt:               { code: 'EG', colors: ['#CE1126', '#C09300'] },
-  iran:                { code: 'IR', colors: ['#239F40', '#DA0000'] },
-  'new zealand':       { code: 'NZ', colors: ['#00247D', '#CC142B'] },
-  // Group H
-  spain:               { code: 'ES', colors: ['#AA151B', '#F1BF00'] },
-  'cape verde':        { code: 'CV', colors: ['#003893', '#CF2027'] },
-  'saudi arabia':      { code: 'SA', colors: ['#006C35', '#FFFFFF'] },
-  uruguay:             { code: 'UY', colors: ['#75AADB', '#FFFFFF'] },
-  // Group I
-  france:              { code: 'FR', colors: ['#002395', '#ED2939'] },
-  senegal:             { code: 'SN', colors: ['#00853F', '#FDEF42'] },
-  iraq:                { code: 'IQ', colors: ['#CF0001', '#007A3D'] },
-  norway:              { code: 'NO', colors: ['#EF2B2D', '#002868'] },
-  // Group J
-  argentina:           { code: 'AR', colors: ['#74ACDF', '#FFFFFF'] },
-  algeria:             { code: 'DZ', colors: ['#006233', '#D21034'] },
-  austria:             { code: 'AT', colors: ['#ED2939', '#FFFFFF'] },
-  jordan:              { code: 'JO', colors: ['#007A3D', '#CE1126'] },
-  // Group K
-  portugal:            { code: 'PT', colors: ['#006600', '#FF0000'] },
-  'dr congo':          { code: 'CD', colors: ['#007FFF', '#F7D618'] },
-  uzbekistan:          { code: 'UZ', colors: ['#0099B5', '#1EB53A'] },
-  colombia:            { code: 'CO', colors: ['#FCD116', '#003087'] },
-  // Group L
-  england:             { code: 'EN', colors: ['#CF142B', '#FFFFFF'] },
-  croatia:             { code: 'HR', colors: ['#FF0000', '#003DA5'] },
-  ghana:               { code: 'GH', colors: ['#006B3F', '#FCD116'] },
-  panama:              { code: 'PA', colors: ['#DA121A', '#003580'] },
+  // ── Grupo A ──────────────────────────────────────────────────
+  'méxico':              { code: 'MX', colors: ['#006847', '#CE1126'] },
+  'áfrica do sul':       { code: 'ZA', colors: ['#007A4D', '#FFB612'] },
+  'coreia do sul':       { code: 'KR', colors: ['#C8102E', '#003478'] },
+  'república tcheca':    { code: 'CZ', colors: ['#D7141A', '#11457E'] },
+  // ── Grupo B ──────────────────────────────────────────────────
+  'canadá':              { code: 'CA', colors: ['#D80621', '#FFFFFF'] },
+  'bósnia-herzegovina':  { code: 'BA', colors: ['#002395', '#FFCD00'] },
+  'catar':               { code: 'QA', colors: ['#8D1B3D', '#FFFFFF'] },
+  'suíça':               { code: 'CH', colors: ['#D52B1E', '#FFFFFF'] },
+  // ── Grupo C ──────────────────────────────────────────────────
+  'brasil':              { code: 'BR', colors: ['#FFDF00', '#009C3B'] },
+  'marrocos':            { code: 'MA', colors: ['#C1272D', '#006233'] },
+  'haiti':               { code: 'HT', colors: ['#00209F', '#D21034'] },
+  'escócia':             { code: 'SC', colors: ['#003078', '#FFFFFF'] },
+  // ── Grupo D ──────────────────────────────────────────────────
+  'eua':                 { code: 'US', colors: ['#B22234', '#3C3B6E'] },
+  'paraguai':            { code: 'PY', colors: ['#D52B1E', '#002D62'] },
+  'austrália':           { code: 'AU', colors: ['#00843D', '#FFCD00'] },
+  'turquia':             { code: 'TR', colors: ['#E30A17', '#FFFFFF'] },
+  // ── Grupo E ──────────────────────────────────────────────────
+  'alemanha':            { code: 'DE', colors: ['#000000', '#DD0000'] },
+  'curaçao':             { code: 'CW', colors: ['#002B7F', '#F9E814'] },
+  'costa do marfim':     { code: 'CI', colors: ['#F77F00', '#009A44'] },
+  'equador':             { code: 'EC', colors: ['#FFD100', '#003087'] },
+  // ── Grupo F ──────────────────────────────────────────────────
+  'holanda':             { code: 'NL', colors: ['#FF6400', '#003DA5'] },
+  'japão':               { code: 'JP', colors: ['#BC002D', '#FFFFFF'] },
+  'suécia':              { code: 'SE', colors: ['#006AA7', '#FECC02'] },
+  'tunísia':             { code: 'TN', colors: ['#E70013', '#FFFFFF'] },
+  // ── Grupo G ──────────────────────────────────────────────────
+  'bélgica':             { code: 'BE', colors: ['#1A1A1A', '#FAE042'] },
+  'egito':               { code: 'EG', colors: ['#CE1126', '#C09300'] },
+  'irã':                 { code: 'IR', colors: ['#239F40', '#DA0000'] },
+  'nova zelândia':       { code: 'NZ', colors: ['#00247D', '#CC142B'] },
+  // ── Grupo H ──────────────────────────────────────────────────
+  'espanha':             { code: 'ES', colors: ['#AA151B', '#F1BF00'] },
+  'cabo verde':          { code: 'CV', colors: ['#003893', '#CF2027'] },
+  'arábia saudita':      { code: 'SA', colors: ['#006C35', '#FFFFFF'] },
+  'uruguai':             { code: 'UY', colors: ['#75AADB', '#FFFFFF'] },
+  // ── Grupo I ──────────────────────────────────────────────────
+  'frança':              { code: 'FR', colors: ['#002395', '#ED2939'] },
+  'senegal':             { code: 'SN', colors: ['#00853F', '#FDEF42'] },
+  'iraque':              { code: 'IQ', colors: ['#CF0001', '#007A3D'] },
+  'noruega':             { code: 'NO', colors: ['#EF2B2D', '#002868'] },
+  // ── Grupo J ──────────────────────────────────────────────────
+  'argentina':           { code: 'AR', colors: ['#74ACDF', '#FFFFFF'] },
+  'argélia':             { code: 'DZ', colors: ['#006233', '#D21034'] },
+  'áustria':             { code: 'AT', colors: ['#ED2939', '#FFFFFF'] },
+  'jordânia':            { code: 'JO', colors: ['#007A3D', '#CE1126'] },
+  // ── Grupo K ──────────────────────────────────────────────────
+  'portugal':            { code: 'PT', colors: ['#006600', '#FF0000'] },
+  'rd congo':            { code: 'CD', colors: ['#007FFF', '#F7D618'] },
+  'uzbequistão':         { code: 'UZ', colors: ['#0099B5', '#1EB53A'] },
+  'colômbia':            { code: 'CO', colors: ['#FCD116', '#003087'] },
+  // ── Grupo L ──────────────────────────────────────────────────
+  'inglaterra':          { code: 'EN', colors: ['#CF142B', '#FFFFFF'] },
+  'croácia':             { code: 'HR', colors: ['#FF0000', '#003DA5'] },
+  'gana':                { code: 'GH', colors: ['#006B3F', '#FCD116'] },
+  'panamá':              { code: 'PA', colors: ['#DA121A', '#003580'] },
 }
 
 function getTextColor(hex: string): string {

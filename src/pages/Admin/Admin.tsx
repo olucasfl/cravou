@@ -2,18 +2,21 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft, RefreshCw, Lock, Unlock, Check, Trophy, Flag,
-  Calendar, Building2, RotateCcw, AlertTriangle, ChevronDown,
-  ChevronUp, Zap, X, Save, Shield,
+  Calendar, RotateCcw, AlertTriangle, ChevronDown,
+  ChevronUp, Zap, X, Save, Shield, Pencil,
 } from 'lucide-react'
 import {
   adminGetMatches, adminUpdateScore, adminUpdateStatus, adminLockMatch,
   adminUnlockMatch, adminReprocessMatch, adminFinalizeMatch, adminUpdateDate,
-  adminMountR32, adminSetKnockoutResult, adminResetMatch, getBracket,
-  adminSyncR32Teams, adminResetSlotResult, adminOverrideSlotTeams,
+  adminResetMatch, getBracket,
+  adminOverrideSlotTeams,
+  adminCreateMatchFromSlot,
+  adminInitializeAllSlots,
   type Match, type BracketSlot,
 } from '@/services/cravouService'
 import { formatMatchDate, phaseLabel, statusLabel } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
+import { TeamSearchInput } from '@/components/TeamSearchInput/TeamSearchInput'
 import s from './Admin.module.css'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -41,6 +44,9 @@ const ROUND_LABELS: Record<string, string> = {
   third_place: '3º Lugar',
   final: 'Final',
 }
+const ROUND_SLOT_COUNT: Record<string, number> = {
+  round_of_32: 16, round_of_16: 8, quarterfinal: 4, semifinal: 2, third_place: 1, final: 1,
+}
 
 function toDatetimeLocal(dateStr: string): string {
   const d = new Date(dateStr)
@@ -65,13 +71,13 @@ export default function Admin() {
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
 
-  const [winnerInputs, setWinnerInputs] = useState<Record<string, string>>({})
   const [bracketMsg, setBracketMsg] = useState<Toast | null>(null)
-  const [mounting, setMounting] = useState(false)
-  const [syncing, setSyncing] = useState(false)
+  const [initializing, setInitializing] = useState(false)
   const [overrideOpen, setOverrideOpen] = useState<Set<string>>(new Set())
   const [overrideInputs, setOverrideInputs] = useState<Record<string, { home: string; away: string }>>({})
-  const [resettingSlots, setResettingSlots] = useState<Set<string>>(new Set())
+  const [bracketRound, setBracketRound] = useState('round_of_32')
+  const [slotDates, setSlotDates] = useState<Record<string, string>>({})
+  const [creatingMatch, setCreatingMatch] = useState<Set<string>>(new Set())
 
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
@@ -141,64 +147,80 @@ export default function Admin() {
 
   // ── Bracket actions ────────────────────────────────────────────────────────
 
-  function askMountR32() {
-    setConfirm({
-      title: 'Montar Round of 32',
-      matchLabel: 'Chaveamento completo',
-      consequences: [
-        'Serão criados 16 slots com os classificados',
-        'Os 8 melhores terceiros serão distribuídos',
-        'Grupos precisam estar todos finalizados',
-      ],
-      action: async () => {
-        setMounting(true)
-        try {
-          await adminMountR32()
-          setBracketMsg({ type: 'ok', text: 'R32 montado com sucesso!' })
-          await load(true)
-        } catch {
-          setBracketMsg({ type: 'err', text: 'Erro ao montar R32. Verifique se os grupos estão classificados.' })
-        } finally { setMounting(false) }
-      },
-    })
-  }
-
-  async function syncR32Teams() {
-    setSyncing(true)
+  async function initializeSlots() {
+    setInitializing(true)
     setBracketMsg(null)
     try {
-      await adminSyncR32Teams()
-      setBracketMsg({ type: 'ok', text: 'Times sincronizados com as standings!' })
+      const result = await adminInitializeAllSlots()
+      setBracketMsg({ type: 'ok', text: `Pronto! ${result.created} slots criados (${result.existing} já existiam).` })
       await load(true)
     } catch {
-      setBracketMsg({ type: 'err', text: 'Erro ao sincronizar times.' })
-    } finally { setSyncing(false) }
+      setBracketMsg({ type: 'err', text: 'Erro ao inicializar slots.' })
+    } finally { setInitializing(false) }
   }
 
-  async function resetWinner(slotId: string) {
-    setResettingSlots(prev => new Set([...prev, slotId]))
-    setBracketMsg(null)
-    try {
-      await adminResetSlotResult(slotId)
-      setBracketMsg({ type: 'ok', text: 'Resultado removido.' })
-      await load(true)
-    } catch {
-      setBracketMsg({ type: 'err', text: 'Erro ao remover resultado.' })
-    } finally {
-      setResettingSlots(prev => { const s = new Set(prev); s.delete(slotId); return s })
-    }
+  async function _commitOverrideTeams(slotId: string, newHome: string | undefined, newAway: string | undefined) {
+    await adminOverrideSlotTeams(slotId, newHome, newAway)
+    setBracketMsg({ type: 'ok', text: 'Times atualizados!' })
+    setOverrideInputs(prev => { const n = { ...prev }; delete n[slotId]; return n })
+    setOverrideOpen(prev => { const ns = new Set(prev); ns.delete(slotId); return ns })
+    await load(true)
   }
 
   async function saveOverrideTeams(slotId: string) {
     const inp = overrideInputs[slotId]
-    if (!inp?.home && !inp?.away) return
+    const newHome = inp?.home?.trim() || undefined
+    const newAway = inp?.away?.trim() || undefined
+    if (!newHome && !newAway) return
+
+    // Detect conflicts: same team already assigned to another slot in this round
+    type Conflict = { slotId: string; slotNumber: number; side: 'home' | 'away'; team: string }
+    const conflicts: Conflict[] = []
+    for (const other of bracketByRound[bracketRound] ?? []) {
+      if (other.id === slotId) continue
+      if (newHome) {
+        if (other.homeTeam?.toLowerCase() === newHome.toLowerCase())
+          conflicts.push({ slotId: other.id, slotNumber: other.slotNumber, side: 'home', team: newHome })
+        else if (other.awayTeam?.toLowerCase() === newHome.toLowerCase())
+          conflicts.push({ slotId: other.id, slotNumber: other.slotNumber, side: 'away', team: newHome })
+      }
+      if (newAway && newAway.toLowerCase() !== (newHome ?? '').toLowerCase()) {
+        if (other.homeTeam?.toLowerCase() === newAway.toLowerCase())
+          conflicts.push({ slotId: other.id, slotNumber: other.slotNumber, side: 'home', team: newAway })
+        else if (other.awayTeam?.toLowerCase() === newAway.toLowerCase())
+          conflicts.push({ slotId: other.id, slotNumber: other.slotNumber, side: 'away', team: newAway })
+      }
+    }
+
+    if (conflicts.length > 0) {
+      setConfirm({
+        title: 'Mover seleção',
+        matchLabel: [...new Set(conflicts.map(c => c.team))].join(' e '),
+        consequences: [
+          ...conflicts.map(c => `${c.team} será removida do Confronto #${c.slotNumber}`),
+          'A seleção será adicionada a este confronto',
+        ],
+        action: async () => {
+          try {
+            for (const c of conflicts) {
+              await adminOverrideSlotTeams(
+                c.slotId,
+                c.side === 'home' ? null : undefined,
+                c.side === 'away' ? null : undefined,
+              )
+            }
+            await _commitOverrideTeams(slotId, newHome, newAway)
+          } catch {
+            setBracketMsg({ type: 'err', text: 'Erro ao mover seleção.' })
+          }
+        },
+      })
+      return
+    }
+
     setBracketMsg(null)
     try {
-      await adminOverrideSlotTeams(slotId, inp.home || undefined, inp.away || undefined)
-      setBracketMsg({ type: 'ok', text: 'Times atualizados!' })
-      setOverrideInputs(prev => { const n = { ...prev }; delete n[slotId]; return n })
-      setOverrideOpen(prev => { const s = new Set(prev); s.delete(slotId); return s })
-      await load(true)
+      await _commitOverrideTeams(slotId, newHome, newAway)
     } catch {
       setBracketMsg({ type: 'err', text: 'Erro ao atualizar times.' })
     }
@@ -206,25 +228,27 @@ export default function Admin() {
 
   function toggleOverride(slotId: string) {
     setOverrideOpen(prev => {
-      const s = new Set(prev)
-      if (s.has(slotId)) { s.delete(slotId) } else { s.add(slotId) }
-      return s
+      const next = new Set(prev)
+      if (next.has(slotId)) {
+        next.delete(slotId)
+      } else {
+        next.add(slotId)
+        // Pre-fill inputs with current teams so search starts from current value
+        const slot = (bracketByRound[bracketRound] ?? []).find(b => b.id === slotId)
+        if (slot) {
+          setOverrideInputs(prevInp => ({
+            ...prevInp,
+            [slotId]: {
+              home: prevInp[slotId]?.home ?? slot.homeTeam ?? '',
+              away: prevInp[slotId]?.away ?? slot.awayTeam ?? '',
+            },
+          }))
+        }
+      }
+      return next
     })
   }
 
-  async function setWinner(slotId: string) {
-    const winner = winnerInputs[slotId]?.trim()
-    if (!winner) return
-    setBracketMsg(null)
-    try {
-      await adminSetKnockoutResult(slotId, winner)
-      setBracketMsg({ type: 'ok', text: `Vencedor definido: ${winner}` })
-      setWinnerInputs(prev => ({ ...prev, [slotId]: '' }))
-      await load(true)
-    } catch {
-      setBracketMsg({ type: 'err', text: 'Erro ao definir vencedor.' })
-    }
-  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -332,39 +356,77 @@ export default function Admin() {
               </div>
             )}
 
-            <div className={s.bracketHeader}>
-              <button className={`btn btn-outline ${s.mountBtn}`} onClick={askMountR32} disabled={mounting}>
-                <Trophy size={16} /> {mounting ? 'Montando...' : 'Montar R32'}
-              </button>
-              <button className={`btn btn-outline ${s.mountBtn}`} onClick={syncR32Teams} disabled={syncing}>
-                <RefreshCw size={16} /> {syncing ? 'Sincronizando...' : 'Sincronizar Times'}
-              </button>
-              <span className={s.bracketInfo}>{bracket.length} slots</span>
+            {/* Round sub-tabs */}
+            <div className={s.bracketRoundTabs}>
+              {ROUND_ORDER.map(r => (
+                <button
+                  key={r}
+                  className={`${s.bracketRoundTab} ${bracketRound === r ? s.bracketRoundTabActive : ''} ${r === 'final' ? s.bracketRoundTabFinal : ''}`}
+                  onClick={() => setBracketRound(r)}
+                >
+                  {ROUND_LABELS[r]}
+                </button>
+              ))}
             </div>
 
+            {/* Botão de inicializar — só aparece se não há NENHUM slot no banco */}
             {bracket.length === 0 && (
-              <div className={s.empty}>
-                <div className={s.emptyIcon}><Building2 size={40} /></div>
-                <div className={s.emptyTitle}>Chaveamento vazio</div>
-                <div className={s.emptySub}>Clique em "Montar R32" após todos os grupos serem finalizados</div>
+              <div className={s.initBanner}>
+                <div className={s.initBannerText}>
+                  <Trophy size={18} />
+                  <span>Inicialize o chaveamento para liberar todos os confrontos de todas as fases.</span>
+                </div>
+                <button className={`btn btn-primary ${s.initBannerBtn}`} onClick={initializeSlots} disabled={initializing}>
+                  <Zap size={14} /> {initializing ? 'Criando...' : 'Inicializar Chaveamento'}
+                </button>
               </div>
             )}
 
-            {ROUND_ORDER.filter(r => bracketByRound[r]).map(round => (
-              <div key={round} className={s.bracketRound}>
-                <div className={s.roundTitle}>{ROUND_LABELS[round]}</div>
-                {bracketByRound[round].sort((a, b) => a.slotNumber - b.slotNumber).map(slot => {
-                  const showOverride = overrideOpen.has(slot.id) || !slot.homeTeam || !slot.awayTeam
+            {/* Slots do round selecionado */}
+            <div className={s.bracketRound}>
+              <div className={s.roundTitle}>{ROUND_LABELS[bracketRound]}</div>
+              {(() => {
+                const realSlots = (bracketByRound[bracketRound] ?? []).sort((a, b) => a.slotNumber - b.slotNumber)
+                const count = ROUND_SLOT_COUNT[bracketRound] ?? 1
+                const slotsToShow: BracketSlot[] = realSlots.length > 0
+                  ? realSlots
+                  : Array.from({ length: count }, (_, i) => ({
+                      id: `placeholder-${bracketRound}-${i + 1}`,
+                      round: bracketRound,
+                      slotNumber: i + 1,
+                      homeDesc: 'A definir',
+                      awayDesc: 'A definir',
+                      homeTeam: null,
+                      awayTeam: null,
+                      winnerTeam: null,
+                      matchId: null,
+                    }))
+                return slotsToShow.map(slot => {
+                  const isPlaceholder = slot.id.startsWith('placeholder-')
+                  const showOverride = !isPlaceholder && (overrideOpen.has(slot.id) || !slot.homeTeam || !slot.awayTeam)
                   const ovr = overrideInputs[slot.id]
+                  const linkedMatch = matches.find(m => m.id === slot.matchId)
+                  const slotDate = slotDates[slot.id] ?? (linkedMatch ? toDatetimeLocal(linkedMatch.matchDate) : '')
+                  const isCreating = creatingMatch.has(slot.id)
+
                   return (
-                    <div key={slot.id} className={`${s.slotCard} ${slot.winnerTeam ? s.slotDone : ''}`}>
+                    <div key={slot.id} className={`${s.slotCard} ${slot.winnerTeam ? s.slotDone : ''} ${isPlaceholder ? s.slotPlaceholder : ''}`}>
                       <div className={s.slotHeader}>
                         <span className={s.slotNum}>#{slot.slotNumber}</span>
                         <div className={s.slotHeaderActions}>
-                          {slot.winnerTeam && <span className={s.winnerBadge}><Trophy size={12} /> {slot.winnerTeam}</span>}
-                          <button className={s.slotEditBtn} onClick={() => toggleOverride(slot.id)} title="Editar times">
-                            <Save size={11} />
-                          </button>
+                          {!isPlaceholder && slot.matchId && (
+                            <span className={s.matchLinkedBadge}><Check size={11} /> Partida criada</span>
+                          )}
+                          {!isPlaceholder && slot.winnerTeam && <span className={s.winnerBadge}><Trophy size={12} /> {slot.winnerTeam}</span>}
+                          {!isPlaceholder && (
+                            <button
+                              className={s.slotEditBtn}
+                              onClick={() => toggleOverride(slot.id)}
+                              title={overrideOpen.has(slot.id) ? 'Fechar edição' : 'Editar times'}
+                            >
+                              {overrideOpen.has(slot.id) ? <X size={11} /> : <Pencil size={11} />}
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -378,57 +440,81 @@ export default function Admin() {
                         </span>
                       </div>
 
-                      {!slot.winnerTeam && slot.homeTeam && slot.awayTeam && (
-                        <div className={s.winnerRow}>
-                          <select className={s.winnerSelect} value={winnerInputs[slot.id] ?? ''} onChange={e => setWinnerInputs(prev => ({ ...prev, [slot.id]: e.target.value }))}>
-                            <option value="">Selecionar vencedor...</option>
-                            <option value={slot.homeTeam}>{slot.homeTeam}</option>
-                            <option value={slot.awayTeam}>{slot.awayTeam}</option>
-                          </select>
-                          <button className={s.winnerBtn} onClick={() => setWinner(slot.id)} disabled={!winnerInputs[slot.id]}>
-                            <Check size={14} />
+                      {/* Override team names */}
+                      {showOverride && (
+                        <div className={s.overrideForm}>
+                          <div className={s.overrideLabel}>Mandante</div>
+                          <TeamSearchInput
+                            value={ovr?.home ?? slot.homeTeam ?? ''}
+                            onChange={v => setOverrideInputs(prev => ({
+                              ...prev,
+                              [slot.id]: { home: v, away: prev[slot.id]?.away ?? slot.awayTeam ?? '' },
+                            }))}
+                            placeholder={slot.homeDesc || 'Buscar mandante...'}
+                          />
+                          <div className={s.overrideLabel}>Visitante</div>
+                          <TeamSearchInput
+                            value={ovr?.away ?? slot.awayTeam ?? ''}
+                            onChange={v => setOverrideInputs(prev => ({
+                              ...prev,
+                              [slot.id]: { home: prev[slot.id]?.home ?? slot.homeTeam ?? '', away: v },
+                            }))}
+                            placeholder={slot.awayDesc || 'Buscar visitante...'}
+                          />
+                          <button
+                            className={s.overrideSaveBtn}
+                            onClick={() => saveOverrideTeams(slot.id)}
+                          >
+                            <Check size={13} /> Confirmar times
                           </button>
                         </div>
                       )}
 
-                      {slot.winnerTeam && (
-                        <button
-                          className={s.desfazerBtn}
-                          onClick={() => resetWinner(slot.id)}
-                          disabled={resettingSlots.has(slot.id)}
-                        >
-                          <RotateCcw size={11} /> {resettingSlots.has(slot.id) ? 'Removendo...' : 'Desfazer resultado'}
-                        </button>
+                      {/* Match date + create/update — não disponível em slots placeholder */}
+                      {isPlaceholder && (
+                        <div className={s.slotPending}>Inicialize o chaveamento para editar este confronto</div>
                       )}
+                      {!isPlaceholder && <div className={s.slotMatchRow}>
+                        <Calendar size={12} className={s.slotMatchIcon} />
+                        <input
+                          className={s.slotDateInput}
+                          type="datetime-local"
+                          value={slotDate}
+                          onChange={e => setSlotDates(prev => ({ ...prev, [slot.id]: e.target.value }))}
+                        />
+                        <button
+                          className={`${s.winnerBtn} ${slot.matchId ? s.winnerBtnUpdate : ''}`}
+                          onClick={async () => {
+                            if (!slotDate) return
+                            setCreatingMatch(prev => new Set([...prev, slot.id]))
+                            setBracketMsg(null)
+                            try {
+                              await adminCreateMatchFromSlot(slot.id, new Date(slotDate).toISOString())
+                              setBracketMsg({ type: 'ok', text: slot.matchId ? 'Partida atualizada!' : 'Partida criada com sucesso!' })
+                              await load(true)
+                            } catch (e: any) {
+                              setBracketMsg({ type: 'err', text: e?.response?.data?.message ?? 'Erro ao criar partida' })
+                            } finally {
+                              setCreatingMatch(prev => { const ns = new Set(prev); ns.delete(slot.id); return ns })
+                            }
+                          }}
+                          disabled={!slotDate || isCreating || !slot.homeTeam || !slot.awayTeam}
+                          title={!slot.homeTeam || !slot.awayTeam ? 'Defina os times primeiro' : slot.matchId ? 'Atualizar data da partida' : 'Criar partida'}
+                        >
+                          {isCreating ? <RefreshCw size={12} className={s.spin} /> : <Check size={12} />}
+                        </button>
+                      </div>}
 
-                      {showOverride && (
-                        <div className={s.overrideForm}>
-                          <input
-                            className={s.overrideInput}
-                            placeholder={slot.homeTeam ?? slot.homeDesc}
-                            value={ovr?.home ?? ''}
-                            onChange={e => setOverrideInputs(prev => ({ ...prev, [slot.id]: { home: e.target.value, away: prev[slot.id]?.away ?? '' } }))}
-                          />
-                          <input
-                            className={s.overrideInput}
-                            placeholder={slot.awayTeam ?? slot.awayDesc}
-                            value={ovr?.away ?? ''}
-                            onChange={e => setOverrideInputs(prev => ({ ...prev, [slot.id]: { home: prev[slot.id]?.home ?? '', away: e.target.value } }))}
-                          />
-                          <button
-                            className={s.winnerBtn}
-                            onClick={() => saveOverrideTeams(slot.id)}
-                            disabled={!ovr?.home && !ovr?.away}
-                          >
-                            <Save size={12} />
-                          </button>
+                      {!isPlaceholder && slot.winnerTeam && (
+                        <div className={s.winnerAutoNote}>
+                          <Trophy size={11} /> Vencedor definido automaticamente ao finalizar a partida
                         </div>
                       )}
                     </div>
                   )
-                })}
-              </div>
-            ))}
+                })
+              })()}
+            </div>
           </>
         )}
       </div>
@@ -485,17 +571,27 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
   const [editAway, setEditAway] = useState(m.awayScore !== null ? String(m.awayScore) : '')
   const [editStatus, setEditStatus] = useState(m.status)
   const [editDate, setEditDate] = useState(toDatetimeLocal(m.matchDate))
+  const [penaltyWinner, setPenaltyWinner] = useState(m.penaltyWinner ?? '')
   const [saving, setSaving] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const [savingDate, setSavingDate] = useState(false)
 
+  const isKnockout = m.phase !== 'group_stage'
+  const h = parseInt(editHome)
+  const a = parseInt(editAway)
+  const isTied = !isNaN(h) && !isNaN(a) && h === a
+
   async function doFinalize() {
-    const h = parseInt(editHome), a = parseInt(editAway)
-    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { onToast('err', 'Informe um placar válido.'); return }
+    const hv = parseInt(editHome), av = parseInt(editAway)
+    if (isNaN(hv) || isNaN(av) || hv < 0 || av < 0) { onToast('err', 'Informe um placar válido.'); return }
+    if (isKnockout && hv === av && !penaltyWinner) {
+      onToast('err', 'Empate em mata-mata: selecione o vencedor nos pênaltis.')
+      return
+    }
     setFinalizing(true)
     try {
-      await adminFinalizeMatch(m.id, h, a)
-      onToast('ok', `Resultado: ${m.homeTeam} ${h}×${a} ${m.awayTeam} — pontos calculados!`)
+      await adminFinalizeMatch(m.id, hv, av, isKnockout && hv === av ? penaltyWinner : undefined)
+      onToast('ok', `Resultado: ${m.homeTeam} ${hv}×${av} ${m.awayTeam} — pontos calculados!`)
       onToggle()
       await onReload()
     } catch { onToast('err', 'Erro ao finalizar partida.') }
@@ -695,6 +791,21 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
                   value={editAway} onChange={e => setEditAway(e.target.value)} />
               </div>
             </div>
+
+            {isKnockout && isTied && (
+              <div className={s.penaltyRow}>
+                <div className={s.penaltyLabel}><Zap size={11} /> Pênaltis — quem venceu?</div>
+                <select
+                  className={s.penaltySelect}
+                  value={penaltyWinner}
+                  onChange={e => setPenaltyWinner(e.target.value)}
+                >
+                  <option value="">Selecionar vencedor nos pênaltis…</option>
+                  <option value={m.homeTeam}>{m.homeTeam}</option>
+                  <option value={m.awayTeam}>{m.awayTeam}</option>
+                </select>
+              </div>
+            )}
 
             {m.status !== 'finished' && (
               <button className={s.finalizeBtn} onClick={doFinalize} disabled={finalizing}>

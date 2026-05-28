@@ -441,3 +441,87 @@
 .predBadgeLabel { font-size: 0.7rem; color: var(--c-text-3); text-transform: uppercase; letter-spacing: 0.5px; }
 .predBadgeScore { font-size: 0.88rem; color: var(--c-text-2); }
 .predBadgeScore strong { font-family: var(--font-display); font-size: 1.4rem; color: var(--c-gold); }
+.predBadgePenalty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--c-accent);
+  font-weight: 600;
+}
+
+/* ── Nota de eliminatória ── */
+.knockoutNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: rgba(0, 212, 255, 0.07);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  font-size: 0.75rem;
+  color: var(--c-accent);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ── Selector de pênaltis ── */
+.penaltyPickWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(249,115,22,0.06);
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: var(--r-md);
+}
+
+.penaltyPickLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f97316;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.penaltyBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.penaltyBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--c-border-2);
+  background: var(--c-surface-3);
+  color: var(--c-text-2);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+}
+.penaltyBtn:hover { border-color: #f97316; color: #f97316; }
+.penaltyBtnActive {
+  border-color: #f97316;
+  background: rgba(249,115,22,0.15);
+  color: #f97316;
+}
+
+/* ── Penalty winner no comparativo de resultado ── */
+.resultPenalty {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: var(--c-accent);
+  font-weight: 600;
+}

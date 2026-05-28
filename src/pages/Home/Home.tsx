@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X,
-  Lock, Clock, Target, CheckCircle2, XCircle,
+  Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
   Calendar, Flag, Timer, ChevronRight, Crown,
 } from 'lucide-react'
 import { getMe, type User } from '@/services/authService'
@@ -392,6 +392,33 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
                 <span className={s.tutExScore}>0 × 2</span>
                 <span className={s.tutExRed}><XCircle size={11} /> 0 pts</span>
                 <span className={s.tutExLabel}>errou tudo</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Eliminatórias — regras especiais</div>
+            <div className={s.tutRows}>
+              <div className={s.tutRow}>
+                <span className={s.tutIcon}><Target size={20} color="var(--c-accent)" /></span>
+                <div className={s.tutInfo}>
+                  <strong>CRAVOU! — 15 pts</strong>
+                  <span>Placar exato. Se empate, precisa acertar também quem passa nos pênaltis.</span>
+                </div>
+              </div>
+              <div className={s.tutRow}>
+                <span className={s.tutIcon}><CheckCircle2 size={20} color="#eab308" /></span>
+                <div className={s.tutInfo}>
+                  <strong>Resultado certo — 8 pts</strong>
+                  <span>Acertou a vitória ou o empate (mas não o placar exato). Empate com placar certo porém classificado errado também vale 8 pts.</span>
+                </div>
+              </div>
+              <div className={s.tutRow}>
+                <span className={s.tutIcon}><Trophy size={20} color="#f97316" /></span>
+                <div className={s.tutInfo}>
+                  <strong>Palpite de pênaltis</strong>
+                  <span>Ao prever empate em mata-mata, escolha quem passa nos pênaltis. Só conta o resultado em 90 min para a pontuação — os pênaltis determinam o classificado.</span>
+                </div>
               </div>
             </div>
           </div>

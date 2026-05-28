@@ -66,7 +66,7 @@ export function getPredCategory(points: number | null | undefined, hasPrediction
 export function phaseLabel(phase: string): string {
   const map: Record<string, string> = {
     group_stage: 'Fase de Grupos',
-    round_of_32: 'Oitavas de Final',
+    round_of_32: '16 Avos de Final',
     round_of_16: 'Oitavas de Final',
     quarterfinal: 'Quartas de Final',
     semifinal: 'Semifinal',

@@ -19,6 +19,15 @@ const ROUNDS = [
   { value: 'final',        label: 'Final',             short: 'Final' },
 ]
 
+const ROUND_SLOT_COUNTS: Record<string, number> = {
+  round_of_32: 16,
+  round_of_16: 8,
+  quarterfinal: 4,
+  semifinal: 2,
+  third_place: 1,
+  final: 1,
+}
+
 export default function Groups() {
   const [tab, setTab]           = useState<MainTab>('grupos')
   const [groups, setGroups]     = useState<GroupData[]>([])
@@ -61,7 +70,21 @@ export default function Groups() {
     return map
   }, [bracket])
 
-  const availableRounds = ROUNDS.filter((r) => (bracketByRound[r.value]?.length ?? 0) > 0)
+  const currentRoundSlots = useMemo((): BracketSlot[] => {
+    if ((bracketByRound[bracketRound]?.length ?? 0) > 0) return bracketByRound[bracketRound]
+    const count = ROUND_SLOT_COUNTS[bracketRound] ?? 1
+    return Array.from({ length: count }, (_, i) => ({
+      id: `placeholder-${bracketRound}-${i + 1}`,
+      round: bracketRound,
+      slotNumber: i + 1,
+      homeDesc: 'A definir',
+      awayDesc: 'A definir',
+      homeTeam: null,
+      awayTeam: null,
+      winnerTeam: null,
+      matchId: null,
+    }))
+  }, [bracketByRound, bracketRound])
 
   const rows: GroupData[][] = []
   for (let i = 0; i < groups.length; i += 2) rows.push(groups.slice(i, i + 2))
@@ -154,25 +177,17 @@ export default function Groups() {
               </div>
             )}
 
-            {!loading && bracket.length === 0 && (
-              <div className={s.empty}>
-                <Trophy size={40} className={s.emptyIcon} />
-                <div className={s.emptyTitle}>Chaveamento não disponível</div>
-                <div className={s.emptySub}>Disponível após a fase de grupos</div>
-              </div>
-            )}
-
-            {!loading && bracket.length > 0 && (
+            {!loading && (
               <>
-                {/* Round selector */}
+                {/* Round selector — todos os rounds, sempre visíveis */}
                 <div className={s.roundTabs}>
-                  {availableRounds.map((r) => (
+                  {ROUNDS.map((r) => (
                     <button
                       key={r.value}
                       className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
                       onClick={() => setBracketRound(r.value)}
                     >
-                      {r.label}
+                      {r.short}
                     </button>
                   ))}
                 </div>
@@ -182,14 +197,14 @@ export default function Groups() {
                   {ROUNDS.find((r) => r.value === bracketRound)?.label}
                   {bracketRound !== 'final' && bracketRound !== 'third_place' && (
                     <span className={s.roundCount}>
-                      {bracketByRound[bracketRound]?.length ?? 0} jogos
+                      {currentRoundSlots.length} jogos
                     </span>
                   )}
                 </div>
 
                 {/* Match cards */}
                 <div className={`${s.bracketGrid} ${bracketRound === 'final' || bracketRound === 'third_place' || bracketRound === 'semifinal' ? s.bracketGridSingle : ''}`}>
-                  {(bracketByRound[bracketRound] ?? []).map((slot) => (
+                  {currentRoundSlots.map((slot) => (
                     <BracketCard
                       key={slot.id}
                       slot={slot}

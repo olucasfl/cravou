@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+﻿import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost } from 'lucide-react'
+import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost, Trophy } from 'lucide-react'
 import { SoccerBall } from '@/components/icons/SoccerBall'
+import { CountryBadge } from '@/components/CountryBadge'
 import { getMatch, upsertPrediction, type Match, type Prediction } from '@/services/cravouService'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
 import {
@@ -14,7 +15,6 @@ import {
   getPredCategory,
   type PredCategory,
 } from '@/utils/format'
-import { CountryBadge } from '@/components/CountryBadge'
 import CravouCelebration from '@/components/CravouCelebration/CravouCelebration'
 import s from './MatchDetail.module.css'
 
@@ -24,6 +24,7 @@ export default function MatchDetail() {
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [home, setHome] = useState('')
   const [away, setAway] = useState('')
+  const [penaltyWinner, setPenaltyWinner] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -42,7 +43,11 @@ export default function MatchDetail() {
       .then(({ match: m, prediction: p }) => {
         setMatch(m)
         setPrediction(p)
-        if (p) { setHome(String(p.homeScore)); setAway(String(p.awayScore)) }
+        if (p) {
+          setHome(String(p.homeScore))
+          setAway(String(p.awayScore))
+          setPenaltyWinner(p.penaltyWinner ?? '')
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -69,9 +74,12 @@ export default function MatchDetail() {
       setMsg({ type: 'error', text: 'Informe um placar válido.' })
       return
     }
+    const isKnockout = match.phase !== 'group_stage'
+    const isTie = h === a
+    const pw = isKnockout && isTie && penaltyWinner ? penaltyWinner : undefined
     setSaving(true); setMsg(null)
     try {
-      const saved = await upsertPrediction(id, h, a)
+      const saved = await upsertPrediction(id, h, a, pw)
       setPrediction(saved)
       setMsg({ type: 'success', text: 'Palpite salvo!' })
     } catch {
@@ -95,6 +103,9 @@ export default function MatchDetail() {
   const isCalculating  = match.status === 'awaiting_result'
   const isFinished     = match.status === 'finished'
   const hasScore       = match.homeScore !== null && match.awayScore !== null
+  const isKnockout     = match.phase !== 'group_stage'
+  const predH = parseInt(home), predA = parseInt(away)
+  const isTiePred = !isNaN(predH) && !isNaN(predA) && predH === predA
 
   const closingSoon     = isOpen && isWithinMinutes(match.matchDate, 60)
   const closingVerySoon = isOpen && isWithinMinutes(match.matchDate, 30)
@@ -200,6 +211,12 @@ export default function MatchDetail() {
               </div>
             )}
 
+            {isKnockout && (
+              <div className={s.knockoutNote}>
+                <Trophy size={13} /> Eliminatória — pontuação conta apenas o resultado em 90 min
+              </div>
+            )}
+
             <div className={s.sectionTitle}>
               {prediction ? 'Atualizar palpite' : 'Fazer palpite'}
             </div>
@@ -208,15 +225,42 @@ export default function MatchDetail() {
               <div className={s.predInputGroup}>
                 <div className={s.predTeamLabel}>{match.homeTeam}</div>
                 <input className={s.scoreInput} type="number" min={0} max={20}
-                  value={home} onChange={(e) => setHome(e.target.value)} placeholder="0" />
+                  value={home} onChange={(e) => { setHome(e.target.value); if (parseInt(e.target.value) !== predA) setPenaltyWinner('') }} placeholder="0" />
               </div>
               <div className={s.predSep}>×</div>
               <div className={s.predInputGroup}>
                 <div className={s.predTeamLabel}>{match.awayTeam}</div>
                 <input className={s.scoreInput} type="number" min={0} max={20}
-                  value={away} onChange={(e) => setAway(e.target.value)} placeholder="0" />
+                  value={away} onChange={(e) => { setAway(e.target.value); if (parseInt(e.target.value) !== predH) setPenaltyWinner('') }} placeholder="0" />
               </div>
             </div>
+
+            {/* Selector de pênaltis — só aparece em mata-mata com empate previsto */}
+            {isKnockout && isTiePred && (
+              <div className={s.penaltyPickWrap}>
+                <div className={s.penaltyPickLabel}>
+                  <Zap size={12} /> Empate — quem você acha que passa nos pênaltis?
+                </div>
+                <div className={s.penaltyBtns}>
+                  <button
+                    type="button"
+                    className={`${s.penaltyBtn} ${penaltyWinner === match.homeTeam ? s.penaltyBtnActive : ''}`}
+                    onClick={() => setPenaltyWinner(penaltyWinner === match.homeTeam ? '' : match.homeTeam)}
+                  >
+                    <CountryBadge country={match.homeTeam} size="xs" />
+                    {match.homeTeam}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${s.penaltyBtn} ${penaltyWinner === match.awayTeam ? s.penaltyBtnActive : ''}`}
+                    onClick={() => setPenaltyWinner(penaltyWinner === match.awayTeam ? '' : match.awayTeam)}
+                  >
+                    <CountryBadge country={match.awayTeam} size="xs" />
+                    {match.awayTeam}
+                  </button>
+                </div>
+              </div>
+            )}
 
             <button className={`btn btn-primary ${s.submitBtn}`} onClick={handleSave} disabled={saving}>
               {saving ? 'Salvando...' : prediction ? 'Atualizar palpite' : 'Salvar palpite'}
@@ -225,12 +269,21 @@ export default function MatchDetail() {
             {msg && <div className={msg.type === 'success' ? s.msgOk : s.msgErr}>{msg.text}</div>}
 
             {/* Info pontuação */}
-            <div className={s.scoringGrid}>
-              <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>10 pts</b> placar exato</span></div>
-              <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>5 pts</b> vencedor certo</span></div>
-              <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time</span></div>
-              <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
-            </div>
+            {isKnockout ? (
+              <div className={s.scoringGrid}>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> placar exato (+ classificado se empate)</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> resultado certo (ou empate sem classificado)</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
+              </div>
+            ) : (
+              <div className={s.scoringGrid}>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>10 pts</b> placar exato</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>5 pts</b> vencedor certo</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
+              </div>
+            )}
           </div>
         )}
 
@@ -353,12 +406,22 @@ function PredBadge({ prediction, home, away }: { prediction: Prediction; home: s
       <span className={s.predBadgeScore}>
         {home} <strong>{prediction.homeScore} × {prediction.awayScore}</strong> {away}
       </span>
+      {prediction.penaltyWinner && (
+        <span className={s.predBadgePenalty}>
+          <Trophy size={11} /> Pênaltis: {prediction.penaltyWinner}
+        </span>
+      )}
     </div>
   )
 }
 
 function ResultCard({ prediction, match, cat }: { prediction: Prediction; match: Match; cat: PredCategory }) {
   const pts = prediction.points ?? 0
+  const isKnockout = match.phase !== 'group_stage'
+  const isExactDraw = cat === 'right' && isKnockout &&
+    prediction.homeScore === match.homeScore && prediction.awayScore === match.awayScore &&
+    match.homeScore === match.awayScore
+
   const catStyles: Record<PredCategory, string> = {
     exact:   s.resultExact,
     right:   s.resultRight,
@@ -373,30 +436,37 @@ function ResultCard({ prediction, match, cat }: { prediction: Prediction; match:
     wrong:   <XCircle size={40} strokeWidth={1.5} color="var(--c-red)" />,
     none:    null,
   } as const
-  const catMsg: Record<PredCategory, string> = {
-    exact:   'CRAVOU! Placar exato!',
-    right:   'Acertou o resultado!',
-    partial: 'Quase lá — gols de um time certos',
-    wrong:   'Dessa vez não — mais sorte no próximo!',
-    none:    '—',
-  }
+
+  let resultMsg = ''
+  if (cat === 'exact') resultMsg = 'CRAVOU! Placar exato' + (isKnockout && match.homeScore === match.awayScore ? ' + classificado!' : '!')
+  else if (isExactDraw) resultMsg = 'Placar certo, mas errou o classificado nos pênaltis'
+  else if (cat === 'right') resultMsg = 'Acertou o resultado!'
+  else if (cat === 'partial') resultMsg = 'Quase lá — gols de um time certos'
+  else resultMsg = 'Dessa vez não — mais sorte no próximo!'
 
   return (
     <div className={`${s.resultCard} ${catStyles[cat]}`}>
       <div className={s.resultEmoji}>{catIcon[cat]}</div>
-      <div className={s.resultMsg}>{catMsg[cat]}</div>
+      <div className={s.resultMsg}>{resultMsg}</div>
       <div className={s.resultPts}>+{pts} <span>pontos</span></div>
 
       <div className={s.resultComparison}>
         <div className={s.resultRow}>
           <span>Seu palpite</span>
           <strong>{prediction.homeScore} × {prediction.awayScore}</strong>
+          {prediction.penaltyWinner && (
+            <span className={s.resultPenalty}><Trophy size={10} /> {prediction.penaltyWinner}</span>
+          )}
         </div>
         <div className={s.resultRow}>
           <span>Resultado</span>
           <strong>{match.homeScore} × {match.awayScore}</strong>
+          {match.penaltyWinner && (
+            <span className={s.resultPenalty}><Trophy size={10} /> {match.penaltyWinner}</span>
+          )}
         </div>
       </div>
     </div>
   )
 }
+

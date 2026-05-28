@@ -17,8 +17,10 @@ export async function getMatch(id: string) {
 
 // ── Predictions ───────────────────────────────────────────────────────────────
 
-export async function upsertPrediction(matchId: string, homeScore: number, awayScore: number) {
-  const { data } = await api.post('/cravou/predictions', { matchId, homeScore, awayScore })
+export async function upsertPrediction(matchId: string, homeScore: number, awayScore: number, penaltyWinner?: string) {
+  const body: Record<string, unknown> = { matchId, homeScore, awayScore }
+  if (penaltyWinner) body.penaltyWinner = penaltyWinner
+  const { data } = await api.post('/cravou/predictions', body)
   return data as Prediction
 }
 
@@ -90,8 +92,8 @@ export async function adminLockMatch(matchId: string) {
   return data
 }
 
-export async function adminFinalizeMatch(matchId: string, homeScore: number, awayScore: number) {
-  const { data } = await api.post(`/cravou/admin/matches/${matchId}/finalize`, { homeScore, awayScore })
+export async function adminFinalizeMatch(matchId: string, homeScore: number, awayScore: number, penaltyWinner?: string) {
+  const { data } = await api.post(`/cravou/admin/matches/${matchId}/finalize`, { homeScore, awayScore, penaltyWinner })
   return data
 }
 
@@ -115,6 +117,11 @@ export async function adminUnlockMatch(matchId: string) {
   return data
 }
 
+export async function adminInitializeAllSlots() {
+  const { data } = await api.post('/cravou/admin/bracket/initialize-all')
+  return data as { created: number; existing: number }
+}
+
 export async function adminMountR32() {
   const { data } = await api.post('/cravou/admin/bracket/mount-r32')
   return data
@@ -125,8 +132,11 @@ export async function adminSetKnockoutResult(slotId: string, winnerTeam: string)
   return data
 }
 
-export async function adminOverrideSlotTeams(slotId: string, homeTeam?: string, awayTeam?: string) {
-  const { data } = await api.patch(`/cravou/admin/bracket/${slotId}/teams`, { homeTeam, awayTeam })
+export async function adminOverrideSlotTeams(slotId: string, homeTeam?: string | null, awayTeam?: string | null) {
+  const body: Record<string, string | null> = {}
+  if (homeTeam !== undefined) body.homeTeam = homeTeam
+  if (awayTeam !== undefined) body.awayTeam = awayTeam
+  const { data } = await api.patch(`/cravou/admin/bracket/${slotId}/teams`, body)
   return data
 }
 
@@ -138,6 +148,11 @@ export async function adminSyncR32Teams() {
 export async function adminResetSlotResult(slotId: string) {
   const { data } = await api.post(`/cravou/admin/bracket/${slotId}/reset-result`)
   return data
+}
+
+export async function adminCreateMatchFromSlot(slotId: string, matchDate: string) {
+  const { data } = await api.post(`/cravou/admin/bracket/${slotId}/create-match`, { matchDate })
+  return data as { match: Match; slot: BracketSlot }
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -163,6 +178,7 @@ export interface Prediction {
   matchId: string
   homeScore: number
   awayScore: number
+  penaltyWinner?: string | null
   points: number | null
 }
 
@@ -204,4 +220,5 @@ export interface BracketSlot {
   homeTeam: string | null
   awayTeam: string | null
   winnerTeam: string | null
+  matchId: string | null
 }
