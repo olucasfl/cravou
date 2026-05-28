@@ -11,6 +11,7 @@ import {
   adminResetMatch, getBracket,
   adminOverrideSlotTeams,
   adminCreateMatchFromSlot,
+  adminUnlinkMatchFromSlot,
   adminInitializeAllSlots,
   type Match, type BracketSlot,
 } from '@/services/cravouService'
@@ -468,6 +469,33 @@ export default function Admin() {
                             <Check size={13} /> Confirmar times
                           </button>
                         </div>
+                      )}
+
+                      {/* Resetar slot */}
+                      {!isPlaceholder && (slot.matchId || slot.homeTeam || slot.awayTeam || slot.winnerTeam) && (
+                        <button
+                          className={s.unlinkBtn}
+                          onClick={() => setConfirm({
+                            title: slot.matchId ? 'Desvincular partida' : 'Limpar slot',
+                            matchLabel: `Slot #${slot.slotNumber} — ${slot.homeTeam ?? 'A definir'} vs ${slot.awayTeam ?? 'A definir'}`,
+                            consequences: [
+                              ...(slot.matchId ? ['A partida será removida da aba Partidas', 'Palpites feitos nesta partida serão apagados'] : []),
+                              'Times e vencedor do slot serão apagados',
+                              'O slot volta para "A definir" e pode ser reconfigurado',
+                            ],
+                            action: async () => {
+                              try {
+                                await adminUnlinkMatchFromSlot(slot.id)
+                                setBracketMsg({ type: 'ok', text: 'Partida desvinculada! Slot voltou para "A definir".' })
+                                await load(true)
+                              } catch (e: any) {
+                                setBracketMsg({ type: 'err', text: e?.response?.data?.message ?? 'Erro ao desvincular partida.' })
+                              }
+                            },
+                          })}
+                        >
+                          <X size={11} /> {slot.matchId ? 'Desvincular partida' : 'Limpar slot'}
+                        </button>
                       )}
 
                       {/* Match date + create/update — não disponível em slots placeholder */}

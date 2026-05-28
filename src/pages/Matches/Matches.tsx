@@ -93,8 +93,18 @@ export default function Matches() {
         </div>
 
         <div className={s.list}>
-          {loading && [1,2,3,4].map((i) => (
-            <div key={i} className="skeleton" style={{ height: 130 }} />
+          {loading && [1,2,3,4,5].map((i) => (
+            <div key={i} style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--r-lg)', padding: '12px 14px', borderLeft: '3px solid var(--c-border)' }}>
+              <div className="skeleton" style={{ width: 80, height: 10, borderRadius: 99, marginBottom: 12 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="skeleton" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
+                <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                <div className="skeleton" style={{ width: 52, height: 28, borderRadius: 10, flexShrink: 0 }} />
+                <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                <div className="skeleton" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
+              </div>
+              <div className="skeleton" style={{ width: '50%', height: 10, borderRadius: 99, marginTop: 12 }} />
+            </div>
           ))}
           {!loading && filtered.length === 0 && (
             <div className={s.empty}>

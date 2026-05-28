@@ -133,7 +133,10 @@ export default function Home() {
           {/* Points + icon */}
           <div className={s.scoreRow}>
             <div className={s.scoreLeft}>
-              <div className={s.scoreValue}>{loading ? '—' : (user?.bolaoPoints ?? 0)}</div>
+              {loading
+                ? <div className="skeleton" style={{ width: 90, height: 44, borderRadius: 10, marginBottom: 4 }} />
+                : <div className={s.scoreValue}>{user?.bolaoPoints ?? 0}</div>
+              }
               <div className={s.scoreSub}>no bolão</div>
             </div>
             <div className={s.scoreIcon}>
@@ -144,7 +147,10 @@ export default function Home() {
           {/* Cravadas */}
           <div className={s.cravasRow}>
             <Target size={13} className={s.cravasIcon} />
-            <span className={s.cravasValue}>{loading ? '—' : (user?.cravadas ?? 0)}</span>
+            {loading
+              ? <div className="skeleton" style={{ width: 32, height: 16, borderRadius: 99, display: 'inline-block' }} />
+              : <span className={s.cravasValue}>{user?.cravadas ?? 0}</span>
+            }
             <span className={s.cravasLabel}>cravadas</span>
           </div>
 
@@ -192,13 +198,19 @@ export default function Home() {
             <span className={s.sectionTitle}>Próximos jogos</span>
             <Link to="/matches" className={s.seeAll}>Ver todos</Link>
           </div>
-          {loading && (
-            <>
-              <div className="skeleton" style={{ height: 100, marginBottom: 10 }} />
-              <div className="skeleton" style={{ height: 100, marginBottom: 10 }} />
-              <div className="skeleton" style={{ height: 100 }} />
-            </>
-          )}
+          {loading && [1,2,3].map(i => (
+            <div key={i} className={s.matchCardSkeleton}>
+              <div className="skeleton" style={{ width: 70, height: 10, borderRadius: 99, marginBottom: 10 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+                <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                <div className="skeleton" style={{ width: 44, height: 22, borderRadius: 8, flexShrink: 0 }} />
+                <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+              </div>
+              <div className="skeleton" style={{ width: '55%', height: 10, borderRadius: 99, marginTop: 10 }} />
+            </div>
+          ))}
           {!loading && upcoming.length === 0 && (
             <div className={s.empty}>
               <div className={s.emptyIcon}><SoccerBall size={36} /></div>

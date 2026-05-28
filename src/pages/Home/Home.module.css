@@ -336,6 +336,14 @@
   text-decoration: none;
 }
 
+.matchCardSkeleton {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
 /* Match card */
 .matchCard {
   background: var(--c-surface);

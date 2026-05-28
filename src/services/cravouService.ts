@@ -155,6 +155,11 @@ export async function adminCreateMatchFromSlot(slotId: string, matchDate: string
   return data as { match: Match; slot: BracketSlot }
 }
 
+export async function adminUnlinkMatchFromSlot(slotId: string) {
+  const { data } = await api.post(`/cravou/admin/bracket/${slotId}/unlink-match`)
+  return data as BracketSlot
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Match {

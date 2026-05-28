@@ -79,8 +79,16 @@ export default function Ranking() {
           </button>
         </div>
 
-        {loading && [1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="skeleton" style={{ height: 60, marginBottom: 8 }} />
+        {loading && [1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--r-lg)', padding: '10px 14px', marginBottom: 8 }}>
+            <div className="skeleton" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0 }} />
+            <div className="skeleton" style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div className="skeleton" style={{ width: i <= 3 ? '70%' : '55%', height: 13, borderRadius: 99, marginBottom: 6 }} />
+              <div className="skeleton" style={{ width: 50, height: 10, borderRadius: 99 }} />
+            </div>
+            <div className="skeleton" style={{ width: 44, height: 22, borderRadius: 99, flexShrink: 0 }} />
+          </div>
         ))}
 
         {!loading && ranking.length === 0 && (

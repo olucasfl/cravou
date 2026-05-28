@@ -90,9 +90,39 @@ export default function MatchDetail() {
   }
 
   if (loading) return (
-    <div className="app-layout"><div className="page">
-      <div className="skeleton" style={{ height: 240, marginBottom: 16 }} />
-      <div className="skeleton" style={{ height: 200 }} />
+    <div className="app-layout"><div className="page fade-up">
+      {/* Back link */}
+      <div className="skeleton" style={{ width: 70, height: 14, borderRadius: 99, marginBottom: 20 }} />
+      {/* Hero card */}
+      <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 20, padding: '24px 20px 20px', marginBottom: 14 }}>
+        <div className="skeleton" style={{ width: 80, height: 22, borderRadius: 99, margin: '0 auto 24px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1 }}>
+            <div className="skeleton" style={{ width: 56, height: 56, borderRadius: '50%' }} />
+            <div className="skeleton" style={{ width: 80, height: 13, borderRadius: 99 }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div className="skeleton" style={{ width: 64, height: 36, borderRadius: 10 }} />
+            <div className="skeleton" style={{ width: 90, height: 12, borderRadius: 99 }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flex: 1 }}>
+            <div className="skeleton" style={{ width: 56, height: 56, borderRadius: '50%' }} />
+            <div className="skeleton" style={{ width: 80, height: 13, borderRadius: 99 }} />
+          </div>
+        </div>
+        <div className="skeleton" style={{ width: 130, height: 12, borderRadius: 99, margin: '16px auto 0' }} />
+      </div>
+      {/* Prediction section */}
+      <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 16, padding: 20 }}>
+        <div className="skeleton" style={{ width: '100%', height: 14, borderRadius: 99, marginBottom: 16 }} />
+        <div className="skeleton" style={{ width: '80%', height: 14, borderRadius: 99, marginBottom: 20 }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 20 }}>
+          <div className="skeleton" style={{ width: 72, height: 72, borderRadius: 12 }} />
+          <div className="skeleton" style={{ width: 24, height: 24, borderRadius: 6 }} />
+          <div className="skeleton" style={{ width: 72, height: 72, borderRadius: 12 }} />
+        </div>
+        <div className="skeleton" style={{ width: '100%', height: 48, borderRadius: 12 }} />
+      </div>
     </div></div>
   )
   if (!match) return null
