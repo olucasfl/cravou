@@ -105,11 +105,6 @@ export default function Home() {
       .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()),
     [allMatches])
 
-  const finished = useMemo(() =>
-    allMatches
-      .filter(m => m.status === 'finished')
-      .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()),
-    [allMatches])
 
   const scoredPredictions = useMemo(() =>
     myPredictions
