@@ -13,3 +13,7 @@ export function getSocket(): Socket {
   }
   return socket
 }
+
+export function joinUserRoom(userId: string) {
+  getSocket().emit('join-user-room', userId)
+}

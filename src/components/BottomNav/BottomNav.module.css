@@ -68,24 +68,20 @@
   gap: 3px;
 }
 
-.itemDisabled {
-  background: none;
-  border: none;
-  opacity: 0.55;
-  cursor: default;
-}
-.itemDisabled:hover { color: var(--c-text-3); }
-
-.testeBadge {
-  display: inline-flex;
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--r-full);
+  background: var(--c-accent);
+  color: #000;
+  font-size: 0.55rem;
+  font-weight: 800;
+  display: flex;
   align-items: center;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: rgba(234, 179, 8, 0.2);
-  border: 1px solid rgba(234, 179, 8, 0.4);
-  color: #eab308;
-  font-size: 0.52rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
+  justify-content: center;
+  line-height: 1;
 }

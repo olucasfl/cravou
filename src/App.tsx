@@ -13,6 +13,8 @@ import Matches from '@/pages/Matches/Matches'
 import MatchDetail from '@/pages/MatchDetail/MatchDetail'
 import Ranking from '@/pages/Ranking/Ranking'
 import Groups from '@/pages/Groups/Groups'
+import Bolao from '@/pages/Bolao/Bolao'
+import BolaoDetail from '@/pages/Bolao/BolaoDetail'
 import Profile from '@/pages/Profile/Profile'
 import Admin from '@/pages/Admin/Admin'
 
@@ -62,6 +64,8 @@ export default function App() {
       <Route path="/matches/:id" element={<Protected><MatchDetail /></Protected>} />
       <Route path="/ranking" element={<Protected><Ranking /></Protected>} />
       <Route path="/groups" element={<Protected><Groups /></Protected>} />
+      <Route path="/bolao" element={<Protected><Bolao /></Protected>} />
+      <Route path="/bolao/:id" element={<Protected><BolaoDetail /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/admin" element={<Protected><Admin /></Protected>} />
 

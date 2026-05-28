@@ -1,15 +1,19 @@
 import { NavLink } from 'react-router-dom'
-import { Home, Calendar, Trophy, BarChart2, User } from 'lucide-react'
+import { Home, Calendar, BarChart2, User, Users } from 'lucide-react'
+import { usePendingInviteCount } from '@/hooks/usePendingInviteCount'
 import s from './BottomNav.module.css'
 
 const items = [
   { to: '/home',    icon: Home,      label: 'Início' },
+  { to: '/bolao',   icon: Users,     label: 'Grupos' },
   { to: '/matches', icon: Calendar,  label: 'Jogos' },
   { to: '/ranking', icon: BarChart2, label: 'Ranking' },
   { to: '/profile', icon: User,      label: 'Perfil' },
 ]
 
 export default function BottomNav() {
+  const { count } = usePendingInviteCount()
+
   return (
     <nav className={s.nav}>
       {items.map(({ to, icon: Icon, label }) => (
@@ -23,23 +27,15 @@ export default function BottomNav() {
               <div className={s.icon}>
                 <Icon size={22} strokeWidth={2} />
                 {isActive && <span className={s.dot} />}
+                {to === '/bolao' && count > 0 && (
+                  <span className={s.badge}>{count > 9 ? '9+' : count}</span>
+                )}
               </div>
               <span className={s.label}>{label}</span>
             </>
           )}
         </NavLink>
       ))}
-
-      {/* Copa — em desenvolvimento, sem navegação */}
-      <button className={`${s.item} ${s.itemDisabled}`} onClick={() => {}}>
-        <div className={s.icon}>
-          <Trophy size={22} strokeWidth={2} />
-        </div>
-        <span className={s.label}>
-          Copa
-          <span className={s.testeBadge}>Teste</span>
-        </span>
-      </button>
     </nav>
   )
 }
