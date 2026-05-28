@@ -5,8 +5,8 @@ import s from './BottomNav.module.css'
 
 const items = [
   { to: '/home',    icon: Home,      label: 'Início' },
-  { to: '/bolao',   icon: Users,     label: 'Grupos' },
   { to: '/matches', icon: Calendar,  label: 'Jogos' },
+  { to: '/bolao',   icon: Users,     label: 'Grupos' },
   { to: '/ranking', icon: BarChart2, label: 'Ranking' },
   { to: '/profile', icon: User,      label: 'Perfil' },
 ]
