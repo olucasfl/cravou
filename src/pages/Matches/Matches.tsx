@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Lock, Zap, Clock, Target, CheckCircle2, XCircle } from 'lucide-react'
+import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X } from 'lucide-react'
 import { getMatches, getMyPredictions, type Match, type Prediction } from '@/services/cravouService'
 import { clearCache } from '@/utils/cache'
 import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, type PredCategory } from '@/utils/format'
@@ -34,6 +34,9 @@ export default function Matches() {
   const [catFilter, setCatFilter]     = useState('')
   const [loading, setLoading]         = useState(true)
   const [, setTick]                   = useState(0)
+  const [searchOpen, setSearchOpen]   = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchRef                     = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
     const [all, preds] = await Promise.all([
@@ -66,14 +69,18 @@ export default function Matches() {
     return () => clearInterval(iv)
   }, [])
 
+  const q = searchQuery.trim().toLowerCase()
+
   const sorted = [...matches]
     .filter((m) => {
+      if (q) return m.homeTeam.toLowerCase().includes(q) || m.awayTeam.toLowerCase().includes(q)
       if (statusFilter === 'upcoming')        return m.status === 'upcoming'
       if (statusFilter === 'awaiting_result') return m.status === 'awaiting_result'
       if (statusFilter === 'finished')        return m.status === 'finished'
       return true
     })
     .filter((m) => {
+      if (q) return true
       if (catFilter === 'group_stage') return m.phase === 'group_stage'
       if (catFilter === 'knockout')    return m.phase !== 'group_stage'
       if (catFilter === 'live')        return m.status === 'live'
@@ -86,6 +93,16 @@ export default function Matches() {
       if (a.status === 'finished') return new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()
       return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
     })
+
+  function openSearch() {
+    setSearchOpen(true)
+    setTimeout(() => searchRef.current?.focus(), 50)
+  }
+
+  function closeSearch() {
+    setSearchQuery('')
+    setSearchOpen(false)
+  }
 
   const liveCount = matches.filter((m) => m.status === 'live').length
   const calcCount = matches.filter((m) => m.status === 'awaiting_result').length
@@ -102,63 +119,90 @@ export default function Matches() {
     <div className="app-layout">
       <div className="page">
         <div className={s.header}>
-          <div className={s.title}>Jogos</div>
-
-          {/* ── Linha 1: Condição ── */}
-          <div className={s.statusRow}>
-            {STATUS_TABS.map((t) => {
-              const isCalc = t.value === 'awaiting_result'
-              const count  = isCalc ? calcCount : 0
-              const alert  = count > 0 && statusFilter !== t.value
-              return (
-                <button
-                  key={t.value}
-                  className={[
-                    s.statusTab,
-                    statusFilter === t.value ? s.statusTabActive : '',
-                    isCalc && alert ? s.statusTabCalc : '',
-                  ].filter(Boolean).join(' ')}
-                  onClick={() => toggleStatus(t.value)}
-                >
-                  {t.label}
-                  {isCalc && count > 0 && <span className={`${s.statusBadge} ${s.statusBadgeCalc}`}>{count}</span>}
+          {/* Título + ícone busca */}
+          <div className={s.titleRow}>
+            {searchOpen ? (
+              <div className={s.searchBar}>
+                <Search size={15} className={s.searchIcon} />
+                <input
+                  ref={searchRef}
+                  className={s.searchInput}
+                  placeholder="Buscar por país..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button className={s.searchClose} onClick={closeSearch}>
+                  <X size={16} />
                 </button>
-              )
-            })}
+              </div>
+            ) : (
+              <>
+                <div className={s.title}>Jogos</div>
+                <button className={s.searchToggle} onClick={openSearch}>
+                  <Search size={18} />
+                </button>
+              </>
+            )}
           </div>
 
-          {/* ── Linha 2: Filtros ── */}
-          <div className={s.catRow}>
-            {CAT_CHIPS.map((c) => {
-              const isLive = c.value === 'live'
-              const isPalp = c.value === 'palpitei'
-              const count  = isLive ? liveCount : isPalp ? predCount : 0
-              const active = catFilter === c.value
-              return (
-                <button
-                  key={c.value}
-                  className={[
-                    s.catChip,
-                    active && isLive  ? s.catChipActiveLive : '',
-                    active && isPalp  ? s.catChipActivePalp : '',
-                    active && !isLive && !isPalp ? s.catChipActive : '',
-                    !active && isLive && liveCount > 0 ? s.catChipLiveAlert : '',
-                  ].filter(Boolean).join(' ')}
-                  onClick={() => toggleCat(c.value)}
-                >
-                  {isLive && liveCount > 0 && !active && <span className={s.liveDot} />}
-                  {c.label}
-                  {count > 0 && (
-                    <span className={[
-                      s.catBadge,
-                      isLive ? s.catBadgeLive : '',
-                      isPalp ? s.catBadgePalp : '',
-                    ].filter(Boolean).join(' ')}>{count}</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
+          {/* ── Filtros (ocultos durante busca) ── */}
+          {!searchOpen && (
+            <>
+              <div className={s.statusRow}>
+                {STATUS_TABS.map((t) => {
+                  const isCalc = t.value === 'awaiting_result'
+                  const count  = isCalc ? calcCount : 0
+                  const alert  = count > 0 && statusFilter !== t.value
+                  return (
+                    <button
+                      key={t.value}
+                      className={[
+                        s.statusTab,
+                        statusFilter === t.value ? s.statusTabActive : '',
+                        isCalc && alert ? s.statusTabCalc : '',
+                      ].filter(Boolean).join(' ')}
+                      onClick={() => toggleStatus(t.value)}
+                    >
+                      {t.label}
+                      {isCalc && count > 0 && <span className={`${s.statusBadge} ${s.statusBadgeCalc}`}>{count}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className={s.catRow}>
+                {CAT_CHIPS.map((c) => {
+                  const isLive = c.value === 'live'
+                  const isPalp = c.value === 'palpitei'
+                  const count  = isLive ? liveCount : isPalp ? predCount : 0
+                  const active = catFilter === c.value
+                  return (
+                    <button
+                      key={c.value}
+                      className={[
+                        s.catChip,
+                        active && isLive  ? s.catChipActiveLive : '',
+                        active && isPalp  ? s.catChipActivePalp : '',
+                        active && !isLive && !isPalp ? s.catChipActive : '',
+                        !active && isLive && liveCount > 0 ? s.catChipLiveAlert : '',
+                      ].filter(Boolean).join(' ')}
+                      onClick={() => toggleCat(c.value)}
+                    >
+                      {isLive && liveCount > 0 && !active && <span className={s.liveDot} />}
+                      {c.label}
+                      {count > 0 && (
+                        <span className={[
+                          s.catBadge,
+                          isLive ? s.catBadgeLive : '',
+                          isPalp ? s.catBadgePalp : '',
+                        ].filter(Boolean).join(' ')}>{count}</span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         <div className={s.list}>
