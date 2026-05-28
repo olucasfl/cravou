@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Copy, Check, Crown, Search, UserPlus, LogOut, Trash2, X, Trophy, TrendingUp, Users, Target } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Crown, Search, UserPlus, LogOut, Trash2, X, Trophy, TrendingUp, Users, Target, Pencil } from 'lucide-react'
 import {
   getBolaoGroupDetail,
   leaveBolaoGroup,
   removeBolaoMember,
   searchBolaoUsers,
   sendBolaoInvite,
+  editBolaoGroup,
+  deleteBolaoGroup,
   type GroupDetail,
   type GroupRankingEntry,
   type UserSearchResult,
@@ -37,7 +39,9 @@ export default function BolaoDetail() {
   const [loading, setLoading] = useState(true)
   const [codeCopied, setCodeCopied] = useState(false)
   const [showInvitePanel, setShowInvitePanel] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [leaveLoading, setLeaveLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -76,6 +80,18 @@ export default function BolaoDetail() {
       const err = e as { response?: { data?: { message?: string } } }
       alert(err.response?.data?.message ?? 'Erro ao sair do grupo')
       setLeaveLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!id || !group) return
+    if (!confirm(`Excluir o grupo "${group.name}"? Esta ação não pode ser desfeita.`)) return
+    setDeleteLoading(true)
+    try {
+      await deleteBolaoGroup(id)
+      navigate('/bolao')
+    } catch {
+      setDeleteLoading(false)
     }
   }
 
@@ -120,9 +136,14 @@ export default function BolaoDetail() {
             {group.description && <p className={s.groupDesc}>{group.description}</p>}
           </div>
           {isOwner && (
-            <button className={s.inviteBtn} onClick={() => setShowInvitePanel(true)}>
-              <UserPlus size={18} />
-            </button>
+            <div className={s.headerActions}>
+              <button className={s.iconBtn} onClick={() => setShowEditModal(true)} title="Editar grupo">
+                <Pencil size={17} />
+              </button>
+              <button className={s.inviteBtn} onClick={() => setShowInvitePanel(true)} title="Convidar membros">
+                <UserPlus size={18} />
+              </button>
+            </div>
           )}
         </div>
 
@@ -234,11 +255,16 @@ export default function BolaoDetail() {
               </div>
             ))}
 
-            {/* Leave group (non-owner) */}
             {!isOwner && (
               <button className={s.leaveBtn} onClick={handleLeave} disabled={leaveLoading}>
                 <LogOut size={15} />
                 {leaveLoading ? 'Saindo...' : 'Sair do grupo'}
+              </button>
+            )}
+            {isOwner && (
+              <button className={s.deleteBtn} onClick={handleDelete} disabled={deleteLoading}>
+                <Trash2 size={15} />
+                {deleteLoading ? 'Excluindo...' : 'Excluir grupo'}
               </button>
             )}
           </div>
@@ -251,6 +277,20 @@ export default function BolaoDetail() {
       {/* ── Invite Panel ── */}
       {showInvitePanel && id && (
         <InvitePanel groupId={id} onClose={() => setShowInvitePanel(false)} />
+      )}
+
+      {/* ── Edit Modal ── */}
+      {showEditModal && id && group && (
+        <EditGroupModal
+          groupId={id}
+          initialName={group.name}
+          initialDescription={group.description ?? ''}
+          onClose={() => setShowEditModal(false)}
+          onSaved={(name, description) => {
+            setDetail((prev) => prev ? { ...prev, group: { ...prev.group, name, description: description || null } } : prev)
+            setShowEditModal(false)
+          }}
+        />
       )}
     </div>
   )
@@ -335,6 +375,77 @@ function StatCard({
         <div className={s.statTitle}>{title}</div>
         <div className={s.statValue}>{value}</div>
         <div className={s.statSub}>{sub}</div>
+      </div>
+    </div>
+  )
+}
+
+// ── Edit Group Modal ───────────────────────────────────────────────────────────
+
+function EditGroupModal({
+  groupId,
+  initialName,
+  initialDescription,
+  onClose,
+  onSaved,
+}: {
+  groupId: string
+  initialName: string
+  initialDescription: string
+  onClose: () => void
+  onSaved: (name: string, description: string) => void
+}) {
+  const [name, setName] = useState(initialName)
+  const [description, setDescription] = useState(initialDescription)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSave() {
+    if (name.trim().length < 3) { setError('O nome precisa ter ao menos 3 caracteres'); return }
+    setLoading(true)
+    setError('')
+    try {
+      await editBolaoGroup(groupId, name.trim(), description.trim() || undefined)
+      onSaved(name.trim(), description.trim())
+    } catch (e) {
+      const err = e as { response?: { data?: { message?: string } } }
+      setError(err.response?.data?.message ?? 'Erro ao salvar')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className={s.overlay} onClick={onClose}>
+      <div className={s.panel} onClick={(e) => e.stopPropagation()} style={{ maxHeight: 'none' }}>
+        <div className={s.panelHeader}>
+          <h2 className={s.panelTitle}>Editar Grupo</h2>
+          <button className={s.panelClose} onClick={onClose}><X size={20} /></button>
+        </div>
+        <div className={s.editBody}>
+          <label className={s.fieldLabel}>Nome do grupo *</label>
+          <input
+            className={s.fieldInput}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={50}
+            autoFocus
+          />
+          <label className={s.fieldLabel}>Descrição (opcional)</label>
+          <input
+            className={s.fieldInput}
+            placeholder="Ex: Copa do Mundo 2026"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxLength={200}
+          />
+          {error && <div className={s.fieldError}>{error}</div>}
+        </div>
+        <div className={s.editFooter}>
+          <button className={s.btnCancel} onClick={onClose}>Cancelar</button>
+          <button className={s.btnSave} onClick={handleSave} disabled={loading || !name.trim()}>
+            {loading ? 'Salvando...' : 'Salvar'}
+          </button>
+        </div>
       </div>
     </div>
   )

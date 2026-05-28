@@ -81,6 +81,11 @@ export async function leaveBolaoGroup(id: string) {
   return data
 }
 
+export async function deleteBolaoGroup(id: string) {
+  const { data } = await api.delete(`/cravou/groups/${id}`)
+  return data
+}
+
 export async function removeBolaoMember(groupId: string, userId: string) {
   const { data } = await api.delete(`/cravou/groups/${groupId}/members/${userId}`)
   return data
