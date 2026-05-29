@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   ArrowLeft, RefreshCw, Lock, Unlock, Check, Trophy, Flag,
   Calendar, RotateCcw, AlertTriangle, ChevronDown,
-  ChevronUp, Zap, X, Save, Shield, Pencil,
+  ChevronUp, Zap, X, Save, Shield, Pencil, Search,
 } from 'lucide-react'
 import {
   adminGetMatches, adminUpdateScore, adminUpdateStatus, adminLockMatch,
@@ -66,6 +66,7 @@ export default function Admin() {
 
   const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [toast, setToast] = useState<Toast | null>(null)
@@ -129,13 +130,14 @@ export default function Admin() {
     finished: matches.filter(m => m.status === 'finished').length,
   }), [matches])
 
-  const filtered = useMemo(() =>
-    matches
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return matches
       .filter(m => phaseFilter === 'all' || (phaseFilter === 'group_stage' ? m.phase === 'group_stage' : m.phase !== 'group_stage'))
       .filter(m => statusFilter === 'all' || m.status === statusFilter)
-      .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()),
-    [matches, phaseFilter, statusFilter]
-  )
+      .filter(m => !q || m.homeTeam.toLowerCase().includes(q) || m.awayTeam.toLowerCase().includes(q))
+      .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime())
+  }, [matches, phaseFilter, statusFilter, searchQuery])
 
   const bracketByRound = useMemo(() => {
     const rounds: Record<string, BracketSlot[]> = {}
@@ -327,6 +329,20 @@ export default function Admin() {
                     {f === 'all' ? 'Todos' : statusLabel(f)}
                   </button>
                 ))}
+              </div>
+              <div className={s.searchRow}>
+                <Search size={14} className={s.searchIcon} />
+                <input
+                  className={s.searchInput}
+                  placeholder="Buscar por país..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button className={s.searchClear} onClick={() => setSearchQuery('')}>
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
 

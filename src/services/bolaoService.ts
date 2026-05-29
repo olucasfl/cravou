@@ -11,6 +11,7 @@ export interface BolaoGroup {
   memberCount: number
   myPoints: number
   myPosition: number
+  brazilOnly: boolean
 }
 
 export interface GroupDetail {
@@ -22,6 +23,7 @@ export interface GroupDetail {
     ownerId: string
     memberCount: number
     isOwner: boolean
+    brazilOnly: boolean
   }
   ranking: GroupRankingEntry[]
 }
@@ -57,8 +59,8 @@ export async function getMyBolaoGroups() {
   return data as BolaoGroup[]
 }
 
-export async function createBolaoGroup(name: string, description?: string) {
-  const { data } = await api.post('/cravou/groups', { name, description })
+export async function createBolaoGroup(name: string, description?: string, brazilOnly?: boolean) {
+  const { data } = await api.post('/cravou/groups', { name, description, brazilOnly })
   return data as BolaoGroup
 }
 

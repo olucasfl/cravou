@@ -176,6 +176,53 @@
   color: #000;
 }
 
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 36px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  transition: border-color var(--transition);
+}
+.searchRow:focus-within {
+  border-color: var(--c-accent);
+}
+
+.searchIcon {
+  color: var(--c-text-3);
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+.searchRow:focus-within .searchIcon {
+  color: var(--c-accent);
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--c-text);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+}
+.searchInput::placeholder { color: var(--c-text-3); }
+
+.searchClear {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--c-text-3);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.searchClear:hover { color: var(--c-text); }
+
 .matchCount {
   font-size: 0.75rem;
   color: var(--c-text-3);

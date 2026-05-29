@@ -169,6 +169,17 @@ export default function BolaoDetail() {
           </button>
         )}
 
+        {/* Brasil Edition banner */}
+        {group.brazilOnly && (
+          <div className={s.brazilBanner}>
+            <span className={s.brazilBannerFlag}>🇧🇷</span>
+            <div className={s.brazilBannerText}>
+              <span className={s.brazilBannerTitle}>Brasil Edition</span>
+              <span className={s.brazilBannerSub}>Apenas os jogos do Brasil contam neste bolão</span>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className={s.tabs}>
           {(['ranking', 'membros', 'stats'] as Tab[]).map((t) => (

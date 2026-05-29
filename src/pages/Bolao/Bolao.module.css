@@ -450,6 +450,74 @@
   margin-top: 8px;
 }
 
+/* ── Mode Toggle (Brasil Edition) ──────────────────────── */
+.modeToggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.modeBtn {
+  flex: 1;
+  padding: 10px 8px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-3);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+.modeBtn:hover { border-color: var(--c-border-2); color: var(--c-text-2); }
+
+.modeBtnActive {
+  background: var(--c-surface-3);
+  border-color: var(--c-border-2);
+  color: var(--c-text);
+}
+
+.modeBtnBrasil {
+  background: rgba(0, 156, 59, 0.12);
+  border-color: rgba(0, 156, 59, 0.5);
+  color: #4ade80;
+}
+
+.modeHint {
+  font-size: 0.75rem;
+  color: #4ade80;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: rgba(0, 156, 59, 0.08);
+  border: 1px solid rgba(0, 156, 59, 0.2);
+  border-radius: var(--r-md);
+}
+
+/* ── Group Name Row (badge inline) ─────────────────────── */
+.groupNameRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.brazilBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: rgba(0, 156, 59, 0.12);
+  border: 1px solid rgba(0, 156, 59, 0.35);
+  color: #4ade80;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .modalFooter {
   display: flex;
   gap: 10px;
