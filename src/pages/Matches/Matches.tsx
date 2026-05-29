@@ -88,9 +88,12 @@ export default function Matches() {
       return true
     })
     .sort((a, b) => {
+      // Tab "Todos": ordenar sempre por data independente de chip de categoria
+      const isAllFilter = !q && statusFilter === ''
+      if (isAllFilter) return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
+      // Filtro específico: prioriza status (ao vivo primeiro), depois data
       const so = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
       if (so !== 0) return so
-      if (a.status === 'finished') return new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()
       return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
     })
 

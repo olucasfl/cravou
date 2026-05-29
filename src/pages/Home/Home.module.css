@@ -348,6 +348,8 @@
 .matchCard {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
+  border-left-width: 3px;
+  border-left-color: var(--c-border);
   border-radius: var(--r-lg);
   padding: 14px 16px;
   margin-bottom: 10px;
@@ -361,6 +363,55 @@
   border-color: var(--c-border-2);
   background: var(--c-surface-2);
 }
+
+.cardBorderLive   { border-left-color: #ef4444; box-shadow: 0 0 14px rgba(239,68,68,0.1); }
+.cardBorderCalc   { border-left-color: #eab308; }
+.cardBorderLocked { border-left-color: var(--c-border-2); }
+
+/* Status chips */
+.chipLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.chipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse 1.2s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.chipCalc {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #eab308;
+  letter-spacing: 0.3px;
+}
+.chipWaiting {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--c-text-3);
+}
+.chipClosing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #f97316;
+}
+
+.scoreNumLive { color: #ef4444; }
 
 .matchMeta {
   display: flex;

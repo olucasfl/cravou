@@ -11,6 +11,8 @@ const DATA: Record<string, CountryInfo> = {
   'áfrica do sul':       { code: 'ZA', colors: ['#007A4D', '#FFB612'] },
   'coreia do sul':       { code: 'KR', colors: ['#C8102E', '#003478'] },
   'república tcheca':    { code: 'CZ', colors: ['#D7141A', '#11457E'] },
+  'tchequia':            { code: 'CZ', colors: ['#D7141A', '#11457E'] },
+  'tchéquia':            { code: 'CZ', colors: ['#D7141A', '#11457E'] },
   // ── Grupo B ──────────────────────────────────────────────────
   'canadá':              { code: 'CA', colors: ['#D80621', '#FFFFFF'] },
   'bósnia-herzegovina':  { code: 'BA', colors: ['#002395', '#FFCD00'] },

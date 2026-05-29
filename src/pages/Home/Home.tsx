@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react'
+﻿import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
@@ -9,7 +9,7 @@ import {
   getMatches, getMyPredictions, getRanking, getAllGroups, getBracket,
   type Match, type Prediction, type GroupData, type Standing, type BracketSlot,
 } from '@/services/cravouService'
-import { formatMatchDate, getPredCategory } from '@/utils/format'
+import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory } from '@/utils/format'
 import { clearCache } from '@/utils/cache'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
@@ -42,6 +42,7 @@ export default function Home() {
   const [loading, setLoading]         = useState(true)
   const [showTutorial, setShowTutorial]     = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [, setTick] = useState(0)
 
   const [mainTab, setMainTab]         = useState<MainTab>('jogos')
   const [copaTab, setCopaTab]         = useState<CopaTab>('grupos')
@@ -67,6 +68,10 @@ export default function Home() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    const iv = setInterval(() => setTick(t => t + 1), 15_000)
+    return () => clearInterval(iv)
+  }, [])
 
   useSocketEvent('match:updated',               useCallback(() => { clearCache('matches','ranking','predictions'); load() }, [load]))
   useSocketEvent('match:locked',                useCallback(() => { clearCache('matches'); load() }, [load]))
@@ -78,12 +83,17 @@ export default function Home() {
   const predMap  = useMemo(() => new Map(myPredictions.map(p => [p.matchId, p])), [myPredictions])
   const matchMap = useMemo(() => new Map(allMatches.map(m => [m.id, m])), [allMatches])
 
-  const live = useMemo(() => allMatches.filter(m => m.status === 'live'), [allMatches])
+  const STATUS_ORDER: Record<string, number> = { live: 0, awaiting_result: 1, locked: 2, upcoming: 3 }
 
-  const upcoming = useMemo(() =>
+  const visibleMatches = useMemo(() =>
     allMatches
-      .filter(m => m.status === 'upcoming')
-      .sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()),
+      .filter(m => m.status !== 'finished')
+      .sort((a, b) => {
+        const oa = STATUS_ORDER[a.status] ?? 3
+        const ob = STATUS_ORDER[b.status] ?? 3
+        if (oa !== ob) return oa - ob
+        return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
+      }),
     [allMatches])
 
 
@@ -185,17 +195,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* Live */}
-        {live.length > 0 && (
-          <div className={s.section}>
-            <div className={s.sectionHeader}>
-              <span className={s.sectionTitle}>Ao vivo agora</span>
-              <span className={s.live}><span className={s.liveDot} /> Live</span>
-            </div>
-            {live.map(m => <MatchCard key={m.id} match={m} pred={predMap.get(m.id)} />)}
-          </div>
-        )}
-
         {/* ── Main Tabs ───────────────────────────────────────── */}
         <div className={s.mainTabs}>
           <button
@@ -228,15 +227,15 @@ export default function Home() {
               </div>
             ))}
 
-            {!loading && upcoming.length === 0 && (
-              <div className={s.empty}><div className={s.emptyIcon}><SoccerBall size={36} /></div>Nenhum jogo agendado</div>
+            {!loading && visibleMatches.length === 0 && (
+              <div className={s.empty}><div className={s.emptyIcon}><SoccerBall size={36} /></div>Nenhum jogo ativo</div>
             )}
 
-            {!loading && upcoming.slice(0, 6).map(m => (
-              <MatchCard key={m.id} match={m} pred={predMap.get(m.id)} />
+            {!loading && visibleMatches.slice(0, 8).map(m => (
+              <MatchCard key={`${m.id}-${m.status}`} match={m} pred={predMap.get(m.id)} />
             ))}
 
-            {!loading && upcoming.length > 0 && (
+            {!loading && visibleMatches.length > 0 && (
               <Link to="/matches" className={s.verMaisBtn}>
                 Ver todos os jogos <ChevronRight size={15} />
               </Link>
@@ -324,13 +323,39 @@ export default function Home() {
 // ── MatchCard ─────────────────────────────────────────────────────────────────
 
 function MatchCard({ match: m, pred }: { match: Match; pred?: Prediction }) {
+  const isLive        = m.status === 'live'
+  const isCalc        = m.status === 'awaiting_result'
+  const isWaiting     = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
+  const isOpen        = m.status === 'upcoming' && !m.predictionsLocked
+  const closeAt       = new Date(m.matchDate).getTime() - 30 * 60_000
+  const closeAlreadyPassed = isOpen && closeAt <= Date.now()
+  const closingSoon   = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 60)
+  const hasScore      = m.homeScore !== null && m.awayScore !== null
+
+  const borderCls = isLive ? s.cardBorderLive
+    : isCalc ? s.cardBorderCalc
+    : isWaiting ? s.cardBorderLocked
+    : ''
+
+  let statusChip: React.ReactNode = null
+  if (isLive)
+    statusChip = <span className={s.chipLive}><span className={s.chipDot} /> Ao vivo</span>
+  else if (isCalc)
+    statusChip = <span className={s.chipCalc}>Calculando...</span>
+  else if (isWaiting)
+    statusChip = <span className={s.chipWaiting}><Lock size={10} /> Aguardando início</span>
+  else if (closingSoon)
+    statusChip = <span className={s.chipClosing}><Clock size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
+  else
+    statusChip = <span className={s.matchDate}>{formatMatchDate(m.matchDate)}</span>
+
   return (
-    <Link to={`/matches/${m.id}`} className={s.matchCard}>
+    <Link to={`/matches/${m.id}`} className={`${s.matchCard} ${borderCls}`}>
       <div className={s.matchMeta}>
         <span className={s.matchGroup}>
-          {m.groupName ? `Grupo ${m.groupName}` : m.phase.replace(/_/g, ' ')}
+          {m.groupName ? `Grupo ${m.groupName}` : phaseLabel(m.phase)}
         </span>
-        <span className={s.matchDate}>{formatMatchDate(m.matchDate)}</span>
+        {statusChip}
       </div>
       <div className={s.matchTeams}>
         <div className={s.team}>
@@ -338,11 +363,11 @@ function MatchCard({ match: m, pred }: { match: Match; pred?: Prediction }) {
           <div className={s.teamName}>{m.homeTeam}</div>
         </div>
         <div className={s.score}>
-          {m.status === 'finished' || m.status === 'live' ? (
+          {hasScore ? (
             <>
-              <span className={s.scoreNum}>{m.homeScore ?? 0}</span>
+              <span className={`${s.scoreNum} ${isLive ? s.scoreNumLive : ''}`}>{m.homeScore}</span>
               <span className={s.scoreSep}>-</span>
-              <span className={s.scoreNum}>{m.awayScore ?? 0}</span>
+              <span className={`${s.scoreNum} ${isLive ? s.scoreNumLive : ''}`}>{m.awayScore}</span>
             </>
           ) : (
             <span className={s.vs}>VS</span>
@@ -611,3 +636,6 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
+
+
+
