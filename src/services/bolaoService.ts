@@ -47,6 +47,7 @@ export interface PendingInvite {
 export interface UserSearchResult {
   id: string
   name: string
+  status: 'available' | 'pending' | 'member'
 }
 
 // ── Grupos ────────────────────────────────────────────────────────────────────

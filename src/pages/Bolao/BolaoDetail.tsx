@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Copy, Check, Crown, Search, UserPlus, LogOut, Trash2, X, Trophy, TrendingUp, Users, Target, Pencil } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Crown, Search, UserPlus, LogOut, Trash2, X, Trophy, TrendingUp, Users, Target, Pencil, Clock, UserCheck } from 'lucide-react'
 import {
   getBolaoGroupDetail,
   leaveBolaoGroup,
@@ -44,22 +44,22 @@ export default function BolaoDetail() {
   const [leaveLoading, setLeaveLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
-  const load = useCallback(async () => {
-    if (!id) return
-    try {
-      const data = await getBolaoGroupDetail(id)
-      setDetail(data)
-    } catch {
-      navigate('/bolao')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let active = true
+    async function init() {
+      if (!id) return
+      try {
+        const data = await getBolaoGroupDetail(id)
+        if (active) setDetail(data)
+      } catch { if (active) navigate('/bolao') }
+      finally  { if (active) setLoading(false) }
     }
+    init()
+    return () => { active = false }
   }, [id, navigate])
 
-  useEffect(() => { load() }, [load])
-
   const group = detail?.group
-  const ranking = detail?.ranking ?? []
+  const ranking = useMemo(() => detail?.ranking ?? [], [detail])
   const isOwner = group?.ownerId === myId
 
   const rankingCravas = useMemo(() =>
@@ -118,7 +118,7 @@ export default function BolaoDetail() {
             }
           : prev
       )
-    } catch {}
+    } catch { void 0 }
   }
 
   if (loading) {
@@ -490,15 +490,13 @@ function InvitePanel({ groupId, onClose }: { groupId: string; onClose: () => voi
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<UserSearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  const [invited, setInvited] = useState<Set<string>>(new Set())
+  // Mapa local de overrides de status (após convite enviado na sessão)
+  const [statusOverride, setStatusOverride] = useState<Map<string, UserSearchResult['status']>>(new Map())
   const [sending, setSending] = useState<Set<string>>(new Set())
   const [inviteError, setInviteError] = useState('')
 
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([])
-      return
-    }
+    if (query.trim().length < 2) return
     const timer = setTimeout(async () => {
       setSearching(true)
       try {
@@ -513,18 +511,25 @@ function InvitePanel({ groupId, onClose }: { groupId: string; onClose: () => voi
     return () => clearTimeout(timer)
   }, [query, groupId])
 
+  // Limpa resultados quando query fica curta (sem setState no effect)
+  const displayResults = query.trim().length >= 2 ? results : []
+
   async function handleInvite(user: UserSearchResult) {
     setInviteError('')
     setSending((prev) => new Set(prev).add(user.id))
     try {
       await sendBolaoInvite(groupId, user.id)
-      setInvited((prev) => new Set(prev).add(user.id))
+      setStatusOverride((prev) => new Map(prev).set(user.id, 'pending'))
     } catch (e) {
       const err = e as { response?: { data?: { message?: string } } }
       setInviteError(err.response?.data?.message ?? 'Erro ao enviar convite')
     } finally {
       setSending((prev) => { const s = new Set(prev); s.delete(user.id); return s })
     }
+  }
+
+  function getStatus(u: UserSearchResult): UserSearchResult['status'] {
+    return statusOverride.get(u.id) ?? u.status
   }
 
   return (
@@ -550,30 +555,49 @@ function InvitePanel({ groupId, onClose }: { groupId: string; onClose: () => voi
 
         <div className={s.searchResults}>
           {searching && <div className={s.searchHint}>Buscando...</div>}
-          {!searching && query.trim().length >= 2 && results.length === 0 && (
+          {!searching && query.trim().length >= 2 && displayResults.length === 0 && (
             <div className={s.searchHint}>Nenhum usuário encontrado</div>
           )}
           {!searching && query.trim().length < 2 && (
             <div className={s.searchHint}>Digite ao menos 2 caracteres para buscar</div>
           )}
-          {results.map((u) => (
-            <div key={u.id} className={s.searchRow}>
-              <div className={s.searchAvatar}>{u.name.charAt(0).toUpperCase()}</div>
-              <span className={s.searchName}>{u.name}</span>
-              <button
-                className={`${s.inviteSendBtn} ${invited.has(u.id) ? s.inviteSent : ''} ${sending.has(u.id) ? s.inviteLoading : ''}`}
-                onClick={() => !invited.has(u.id) && !sending.has(u.id) && handleInvite(u)}
-                disabled={invited.has(u.id) || sending.has(u.id)}
-              >
-                {invited.has(u.id)
-                  ? <><Check size={13} /> Enviado</>
-                  : sending.has(u.id)
-                  ? <span className={s.spinner} />
-                  : <><UserPlus size={13} /> Convidar</>
-                }
-              </button>
-            </div>
-          ))}
+          {displayResults.map((u) => {
+            const status = getStatus(u)
+            const isSending = sending.has(u.id)
+            return (
+              <div key={u.id} className={s.searchRow}>
+                <div className={s.searchAvatar}>{u.name.charAt(0).toUpperCase()}</div>
+                <div className={s.searchUserInfo}>
+                  <span className={s.searchName}>{u.name}</span>
+                  {status === 'member' && (
+                    <span className={s.searchStatusMember}>Já no grupo</span>
+                  )}
+                  {status === 'pending' && (
+                    <span className={s.searchStatusPending}>Convite pendente</span>
+                  )}
+                </div>
+
+                {status === 'member' && (
+                  <span className={s.inviteTagMember}><UserCheck size={12} /> Membro</span>
+                )}
+                {status === 'pending' && (
+                  <span className={s.inviteTagPending}><Clock size={12} /> Aguardando</span>
+                )}
+                {status === 'available' && (
+                  <button
+                    className={`${s.inviteSendBtn} ${isSending ? s.inviteLoading : ''}`}
+                    onClick={() => !isSending && handleInvite(u)}
+                    disabled={isSending}
+                  >
+                    {isSending
+                      ? <span className={s.spinner} />
+                      : <><UserPlus size={13} /> Convidar</>
+                    }
+                  </button>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
