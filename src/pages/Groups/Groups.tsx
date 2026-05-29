@@ -231,7 +231,7 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
       </div>
 
       {/* Home team */}
-      <div className={`${s.bTeam} ${homeWon ? s.bWinner : ''} ${!slot.homeTeam ? s.bTbd : ''}`}>
+      <div className={`${s.bTeam} ${homeWon ? s.bWinner : ''} ${settled && !homeWon ? s.bLoser : ''} ${!slot.homeTeam ? s.bTbd : ''}`}>
         {slot.homeTeam ? (
           <>
             <CountryBadge country={slot.homeTeam} size="sm" />
@@ -240,13 +240,13 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
         ) : (
           <span className={s.bDesc}>{slot.homeDesc || '—'}</span>
         )}
-        {homeWon && <Trophy size={11} className={s.bTrophy} />}
+        {homeWon && <span className={s.bAdvancesBadge}>Avança</span>}
       </div>
 
       <div className={s.bDivider} />
 
       {/* Away team */}
-      <div className={`${s.bTeam} ${awayWon ? s.bWinner : ''} ${!slot.awayTeam ? s.bTbd : ''}`}>
+      <div className={`${s.bTeam} ${awayWon ? s.bWinner : ''} ${settled && !awayWon ? s.bLoser : ''} ${!slot.awayTeam ? s.bTbd : ''}`}>
         {slot.awayTeam ? (
           <>
             <CountryBadge country={slot.awayTeam} size="sm" />
@@ -255,7 +255,7 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
         ) : (
           <span className={s.bDesc}>{slot.awayDesc || '—'}</span>
         )}
-        {awayWon && <Trophy size={11} className={s.bTrophy} />}
+        {awayWon && <span className={s.bAdvancesBadge}>Avança</span>}
       </div>
     </div>
   )

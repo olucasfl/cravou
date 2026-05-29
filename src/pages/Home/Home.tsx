@@ -66,26 +66,7 @@ export default function Home() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    async function init() {
-      const [u, all, preds, ranking, g, b] = await Promise.all([
-        getMe().catch(() => null),
-        getMatches().catch(() => []),
-        getMyPredictions().catch(() => []),
-        getRanking().catch(() => []),
-        getAllGroups().catch(() => []),
-        getBracket().catch(() => []),
-      ])
-      setUser(u)
-      setAllMatches(all)
-      setMyPredictions(preds)
-      setGroups(g as GroupData[])
-      setBracket(b as BracketSlot[])
-      if (u) setMyPosition(ranking.find(r => r.userId === u.id)?.position ?? null)
-      setLoading(false)
-    }
-    init()
-  }, [])
+  useEffect(() => { load() }, [load])
 
   useSocketEvent('match:updated',               useCallback(() => { clearCache('matches','ranking','predictions'); load() }, [load]))
   useSocketEvent('match:locked',                useCallback(() => { clearCache('matches'); load() }, [load]))
@@ -142,9 +123,6 @@ export default function Home() {
     }))
   }, [bracketByRound, bracketRound])
 
-  const finishedCount = allMatches.filter(m => m.status === 'finished').length
-  const totalMatches  = allMatches.length
-  const progressPct   = totalMatches > 0 ? Math.round((finishedCount / totalMatches) * 100) : 0
   const initials      = user?.name?.slice(0, 2).toUpperCase() ?? '?'
 
   return (
@@ -206,19 +184,6 @@ export default function Home() {
             </button>
           )}
         </div>
-
-        {/* Progress */}
-        {!loading && totalMatches > 0 && (
-          <div className={s.progress}>
-            <div className={s.progressHeader}>
-              <span className={s.progressLabel}>Copa do Mundo 2026</span>
-              <span className={s.progressCount}>{finishedCount} / {totalMatches} jogos</span>
-            </div>
-            <div className={s.progressBar}>
-              <div className={s.progressFill} style={{ width: `${progressPct}%` }} />
-            </div>
-          </div>
-        )}
 
         {/* Live */}
         {live.length > 0 && (

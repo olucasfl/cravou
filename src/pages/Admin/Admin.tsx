@@ -432,11 +432,11 @@ export default function Admin() {
                       </div>
 
                       <div className={s.slotTeams}>
-                        <span className={`${s.slotTeam} ${slot.winnerTeam === slot.homeTeam ? s.slotWinner : ''}`}>
+                        <span className={`${s.slotTeam} ${slot.winnerTeam === slot.homeTeam ? s.slotWinner : ''} ${slot.winnerTeam && slot.winnerTeam !== slot.homeTeam ? s.slotLoser : ''}`}>
                           {slot.homeTeam ?? <span className={s.slotTbd}>{slot.homeDesc}</span>}
                         </span>
                         <span className={s.slotVs}>vs</span>
-                        <span className={`${s.slotTeam} ${slot.winnerTeam === slot.awayTeam ? s.slotWinner : ''}`}>
+                        <span className={`${s.slotTeam} ${slot.winnerTeam === slot.awayTeam ? s.slotWinner : ''} ${slot.winnerTeam && slot.winnerTeam !== slot.awayTeam ? s.slotLoser : ''}`}>
                           {slot.awayTeam ?? <span className={s.slotTbd}>{slot.awayDesc}</span>}
                         </span>
                       </div>

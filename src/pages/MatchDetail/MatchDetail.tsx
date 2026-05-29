@@ -137,8 +137,10 @@ export default function MatchDetail() {
   const predH = parseInt(home), predA = parseInt(away)
   const isTiePred = !isNaN(predH) && !isNaN(predA) && predH === predA
 
-  const closingSoon     = isOpen && isWithinMinutes(match.matchDate, 60)
-  const closingVerySoon = isOpen && isWithinMinutes(match.matchDate, 30)
+  const closeAt = new Date(match.matchDate).getTime() - 30 * 60_000
+  const closeAlreadyPassed = isOpen && closeAt <= Date.now()
+  // closingSoon: entre 30min e 60min antes do jogo (janela de aviso)
+  const closingSoon = isOpen && !closeAlreadyPassed && isWithinMinutes(match.matchDate, 60)
 
   const elapsed = isLive ? minutesElapsed(match.matchDate) : 0
   const phase = getMatchPhase(elapsed)
@@ -227,9 +229,9 @@ export default function MatchDetail() {
         {/* 1. ABERTO — palpites disponíveis */}
         {isOpen && (
           <div className={s.section}>
-            {closingVerySoon ? (
-              <div className={s.bannerUrgent}>
-                <Zap size={14} /> ÚLTIMO MOMENTO! Palpites fecham em {formatTimeUntilClose(match.matchDate)}
+            {closeAlreadyPassed ? (
+              <div className={s.bannerWarn}>
+                <Lock size={14} /> Palpites encerrados — jogo começa em breve
               </div>
             ) : closingSoon ? (
               <div className={s.bannerWarn}>
@@ -396,7 +398,7 @@ export default function MatchDetail() {
 
       <CravouCelebration
         show={showCelebration}
-        points={prediction?.points ?? 10}
+        points={prediction?.points ?? 0}
         onDismiss={() => setShowCelebration(false)}
       />
     </div>

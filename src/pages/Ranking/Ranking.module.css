@@ -233,12 +233,4 @@
   color: var(--c-accent) !important;
 }
 
-.me {
-  border-color: var(--c-gold);
-  background: var(--c-gold-glow);
-}
 
-.meCravas {
-  border-color: var(--c-accent);
-  background: var(--c-accent-glow);
-}

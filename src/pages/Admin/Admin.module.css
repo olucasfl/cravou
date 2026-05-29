@@ -801,8 +801,9 @@
 }
 
 .slotDone {
-  border-color: var(--c-green);
-  background: var(--c-green-glow);
+  border-left: 3px solid var(--c-green);
+  background: rgba(34,197,94,0.04);
+  box-shadow: 0 0 14px rgba(34,197,94,0.08);
 }
 
 .slotHeader {
@@ -847,7 +848,15 @@
 
 .slotTeam:last-child { text-align: right; }
 
-.slotWinner { color: var(--c-green); }
+.slotWinner {
+  color: var(--c-green);
+  font-weight: 700;
+}
+
+.slotLoser {
+  opacity: 0.38;
+  color: var(--c-text-3);
+}
 
 .slotVs {
   font-size: 0.7rem;
