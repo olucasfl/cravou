@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
-  Calendar, Flag, Timer, ChevronRight, Crown,
+  Calendar, Flag, Timer, ChevronRight, Crown, Zap,
 } from 'lucide-react'
 import { getMe, type User } from '@/services/authService'
 import {
@@ -323,31 +323,35 @@ export default function Home() {
 // ── MatchCard ─────────────────────────────────────────────────────────────────
 
 function MatchCard({ match: m, pred }: { match: Match; pred?: Prediction }) {
-  const isLive        = m.status === 'live'
-  const isCalc        = m.status === 'awaiting_result'
-  const isWaiting     = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
-  const isOpen        = m.status === 'upcoming' && !m.predictionsLocked
-  const closeAt       = new Date(m.matchDate).getTime() - 30 * 60_000
+  const isLive             = m.status === 'live'
+  const isCalc             = m.status === 'awaiting_result'
+  const isWaiting          = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
+  const isOpen             = m.status === 'upcoming' && !m.predictionsLocked
+  const closeAt            = new Date(m.matchDate).getTime() - 30 * 60_000
   const closeAlreadyPassed = isOpen && closeAt <= Date.now()
-  const closingSoon   = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 60)
-  const hasScore      = m.homeScore !== null && m.awayScore !== null
+  const closingVerySoon    = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 30)
+  const closingSoon        = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 60)
+  const hasScore           = m.homeScore !== null && m.awayScore !== null
 
-  const borderCls = isLive ? s.cardBorderLive
-    : isCalc ? s.cardBorderCalc
-    : isWaiting ? s.cardBorderLocked
+  const borderCls = isLive        ? s.cardBorderLive
+    : isCalc                      ? s.cardBorderCalc
+    : isWaiting                   ? s.cardBorderLocked
+    : closingVerySoon             ? s.cardUrgent
     : ''
 
   let statusChip: React.ReactNode = null
   if (isLive)
-    statusChip = <span className={s.chipLive}><span className={s.chipDot} /> Ao vivo</span>
+    statusChip = <span className={`${s.chip} ${s.chipLive}`}><span className={s.chipDot} /> Ao vivo</span>
   else if (isCalc)
-    statusChip = <span className={s.chipCalc}>Calculando...</span>
+    statusChip = <span className={`${s.chip} ${s.chipCalc}`}><span className={s.chipSpinner} /> Calculando</span>
   else if (isWaiting)
-    statusChip = <span className={s.chipWaiting}><Lock size={10} /> Aguardando início</span>
+    statusChip = <span className={`${s.chip} ${s.chipLocked}`}><Lock size={10} /> Aguardando início</span>
+  else if (closingVerySoon)
+    statusChip = <span className={`${s.chip} ${s.chipUrgent}`}><Zap size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
   else if (closingSoon)
-    statusChip = <span className={s.chipClosing}><Clock size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
+    statusChip = <span className={`${s.chip} ${s.chipWarn}`}><Clock size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
   else
-    statusChip = <span className={s.matchDate}>{formatMatchDate(m.matchDate)}</span>
+    statusChip = <span className={`${s.chip} ${s.chipDefault}`}>Agendado</span>
 
   return (
     <Link to={`/matches/${m.id}`} className={`${s.matchCard} ${borderCls}`}>
@@ -362,16 +366,19 @@ function MatchCard({ match: m, pred }: { match: Match; pred?: Prediction }) {
           <CountryBadge country={m.homeTeam} size="sm" />
           <div className={s.teamName}>{m.homeTeam}</div>
         </div>
-        <div className={s.score}>
-          {hasScore ? (
-            <>
-              <span className={`${s.scoreNum} ${isLive ? s.scoreNumLive : ''}`}>{m.homeScore}</span>
-              <span className={s.scoreSep}>-</span>
-              <span className={`${s.scoreNum} ${isLive ? s.scoreNumLive : ''}`}>{m.awayScore}</span>
-            </>
-          ) : (
-            <span className={s.vs}>VS</span>
-          )}
+        <div className={s.middle}>
+          <div className={s.score}>
+            {hasScore ? (
+              <>
+                <span className={`${s.scoreNum} ${isLive ? s.scoreNumLive : ''}`}>{m.homeScore}</span>
+                <span className={s.scoreSep}>-</span>
+                <span className={`${s.scoreNum} ${isLive ? s.scoreNumLive : ''}`}>{m.awayScore}</span>
+              </>
+            ) : (
+              <span className={s.vs}>VS</span>
+            )}
+          </div>
+          <div className={s.matchDateTime}>{formatMatchDate(m.matchDate)}</div>
         </div>
         <div className={s.team}>
           <CountryBadge country={m.awayTeam} size="sm" />
@@ -561,72 +568,156 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
           <button className={s.modalClose} onClick={onClose}><X size={18} /></button>
         </div>
         <div className={s.modalBody}>
+
+          {/* ── Como participar ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Como participar</div>
+            <div className={s.tutSteps}>
+              <div className={s.tutStep}>
+                <span className={s.tutStepNum}>1</span>
+                <div className={s.tutStepText}>
+                  <strong>Escolha um jogo</strong>
+                  <span>Acesse a aba <em>Jogos</em> e toque em qualquer partida agendada.</span>
+                </div>
+              </div>
+              <div className={s.tutStep}>
+                <span className={s.tutStepNum}>2</span>
+                <div className={s.tutStepText}>
+                  <strong>Palpite no placar</strong>
+                  <span>Digite quantos gols cada time vai fazer e confirme.</span>
+                </div>
+              </div>
+              <div className={s.tutStep}>
+                <span className={s.tutStepNum}>3</span>
+                <div className={s.tutStepText}>
+                  <strong>Ganhe pontos</strong>
+                  <span>Após o apito final, os pontos são calculados automaticamente.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Pontuação ── */}
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Pontuação</div>
-            <div className={s.tutRows}>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><Target size={20} color="var(--c-accent)" /></span>
-                <div className={s.tutInfo}><strong>CRAVOU! — Placar exato</strong><span>10 pts (grupos) · 15 pts (mata-mata)</span></div>
+            <div className={s.tutScoreGrid}>
+              <div className={s.tutScoreHeader}>
+                <span />
+                <span className={s.tutScorePhase}>Grupos</span>
+                <span className={s.tutScorePhase}>Mata-mata</span>
               </div>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><CheckCircle2 size={20} color="#eab308" /></span>
-                <div className={s.tutInfo}><strong>Resultado certo</strong><span>5 pts (grupos) · 8 pts (mata-mata)</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
+                <div className={s.tutScoreLabel}>
+                  <Target size={13} />
+                  <span>CRAVOU! — placar exato</span>
+                </div>
+                <span className={s.tutScorePts}>10 pts</span>
+                <span className={s.tutScorePts}>15 pts</span>
               </div>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><SoccerBall size={20} color="#f97316" /></span>
-                <div className={s.tutInfo}><strong>Gols de um time certos</strong><span>2 pts em qualquer fase</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreRight}`}>
+                <div className={s.tutScoreLabel}>
+                  <CheckCircle2 size={13} />
+                  <span>Resultado certo</span>
+                </div>
+                <span className={s.tutScorePts}>5 pts</span>
+                <span className={s.tutScorePts}>8 pts</span>
               </div>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><XCircle size={20} color="var(--c-red)" /></span>
-                <div className={s.tutInfo}><strong>Errou tudo</strong><span>0 pts</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
+                <div className={s.tutScoreLabel}>
+                  <SoccerBall size={13} />
+                  <span>Gols de um time certos</span>
+                </div>
+                <span className={s.tutScorePts}>2 pts</span>
+                <span className={s.tutScorePts}>2 pts</span>
               </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreWrong}`}>
+                <div className={s.tutScoreLabel}>
+                  <XCircle size={13} />
+                  <span>Errou tudo</span>
+                </div>
+                <span className={s.tutScorePts}>0 pts</span>
+                <span className={s.tutScorePts}>0 pts</span>
+              </div>
+            </div>
+            <div className={s.tutNote}>
+              Apenas <strong>uma categoria</strong> é aplicada por palpite — sempre a de maior pontuação.
             </div>
           </div>
 
+          {/* ── Exemplo ── */}
           <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Exemplo — Brasil 2 × 1 Argentina</div>
+            <div className={s.tutSectionTitle}>Exemplo — Brasil 2 × 1 Argentina (grupos)</div>
             <div className={s.tutExamples}>
-              <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> +10 pts</span><span className={s.tutExLabel}>CRAVOU!</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>3 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> +5 pts</span><span className={s.tutExLabel}>Brasil venceu</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>2 × 2</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>gols do Brasil certos</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>0 × 2</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> +10 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>3 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> +5 pts</span><span className={s.tutExLabel}>Brasil venceu ✓</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>2 × 0</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>2 gols do Brasil ✓</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
             </div>
           </div>
 
+          {/* ── Mata-mata: pênaltis ── */}
           <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Eliminatórias — regras especiais</div>
-            <div className={s.tutRows}>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><Target size={20} color="var(--c-accent)" /></span>
-                <div className={s.tutInfo}><strong>CRAVOU! — 15 pts</strong><span>Placar exato. Se empate, precisa acertar também quem passa nos pênaltis.</span></div>
-              </div>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><CheckCircle2 size={20} color="#eab308" /></span>
-                <div className={s.tutInfo}><strong>Resultado certo — 8 pts</strong><span>Acertou a vitória ou o empate.</span></div>
-              </div>
-              <div className={s.tutRow}>
-                <span className={s.tutIcon}><Trophy size={20} color="#f97316" /></span>
-                <div className={s.tutInfo}><strong>Palpite de pênaltis</strong><span>Ao prever empate em mata-mata, escolha quem passa nos pênaltis.</span></div>
-              </div>
-            </div>
-          </div>
-
-          <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Regras de tempo</div>
+            <div className={s.tutSectionTitle}>Mata-mata — Regra dos pênaltis</div>
             <div className={s.tutCard}>
-              <div className={s.tutCardRow}><Lock size={14} /><span>Palpites <strong>bloqueiam 30 minutos</strong> antes do início</span></div>
-              <div className={s.tutCardRow}><Clock size={14} /><span>Horário sempre no fuso de <strong>Brasília (BRT)</strong></span></div>
+              <div className={s.tutCardRow}>
+                <Trophy size={14} color="#f97316" />
+                <span>Ao palpitar <strong>empate</strong> em jogo de mata-mata, você deve escolher também <strong>qual time passa nos pênaltis</strong>.</span>
+              </div>
+              <div className={s.tutCardRow}>
+                <Target size={14} color="var(--c-accent)" />
+                <span>Para ganhar <strong>CRAVOU! (15 pts)</strong> no mata-mata, precisa acertar o placar <strong>e</strong> o time que avança nos pênaltis (se houver).</span>
+              </div>
+              <div className={s.tutCardRow}>
+                <CheckCircle2 size={14} color="#eab308" />
+                <span>Acertou o empate mas errou quem passa nos pênaltis? Você ainda ganha <strong>8 pts</strong> (resultado certo).</span>
+              </div>
             </div>
           </div>
 
+          {/* ── Prazo ── */}
           <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Estados do jogo</div>
+            <div className={s.tutSectionTitle}>Prazo dos palpites</div>
             <div className={s.tutCard}>
-              <div className={s.tutCardRow}><Calendar size={14} /><span><strong>Agendado</strong> — palpites abertos</span></div>
-              <div className={s.tutCardRow}><Lock size={14} /><span><strong>Aguardando início</strong> — palpites fechados</span></div>
-              <div className={s.tutCardRow}><span className={s.liveDotInline} /><span><strong>Ao vivo</strong> — jogo em andamento</span></div>
-              <div className={s.tutCardRow}><Timer size={14} /><span><strong>Calculando</strong> — admin confirmando placar</span></div>
-              <div className={s.tutCardRow}><Flag size={14} /><span><strong>Finalizado</strong> — pontos distribuídos</span></div>
+              <div className={s.tutCardRow}><Lock size={14} /><span>Palpites <strong>bloqueiam 30 minutos</strong> antes do início da partida.</span></div>
+              <div className={s.tutCardRow}><Clock size={14} /><span>Você pode alterar seu palpite <strong>quantas vezes quiser</strong> antes do bloqueio.</span></div>
+              <div className={s.tutCardRow}><Calendar size={14} /><span>Todos os horários são no fuso de <strong>Brasília (BRT / UTC-3)</strong>.</span></div>
+            </div>
+          </div>
+
+          {/* ── Status ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Status das partidas</div>
+            <div className={s.tutStatusList}>
+              <div className={s.tutStatusRow}>
+                <span className={`${s.tutStatusBadge} ${s.tutStatusOpen}`}>Agendado</span>
+                <span>Palpites <strong>abertos</strong> — você pode palpitar ou editar.</span>
+              </div>
+              <div className={s.tutStatusRow}>
+                <span className={`${s.tutStatusBadge} ${s.tutStatusLocked}`}>Aguardando</span>
+                <span>Palpites <strong>bloqueados</strong> — jogo prestes a começar.</span>
+              </div>
+              <div className={s.tutStatusRow}>
+                <span className={`${s.tutStatusBadge} ${s.tutStatusLive}`}><span className={s.liveDotInline} /> Ao vivo</span>
+                <span>Partida em andamento.</span>
+              </div>
+              <div className={s.tutStatusRow}>
+                <span className={`${s.tutStatusBadge} ${s.tutStatusCalc}`}>Calculando</span>
+                <span>Placar sendo <strong>confirmado</strong> pelo administrador.</span>
+              </div>
+              <div className={s.tutStatusRow}>
+                <span className={`${s.tutStatusBadge} ${s.tutStatusDone}`}>Encerrado</span>
+                <span>Pontos <strong>distribuídos</strong> — resultado final.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Ranking ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Ranking</div>
+            <div className={s.tutCard}>
+              <div className={s.tutCardRow}><Trophy size={14} color="#eab308" /><span>O ranking geral é ordenado pelos <strong>pontos totais</strong> acumulados em todas as partidas.</span></div>
+              <div className={s.tutCardRow}><Target size={14} color="var(--c-accent)" /><span>Existe também um ranking de <strong>Cravadas</strong> — quantos placares exatos você acertou.</span></div>
+              <div className={s.tutCardRow}><Flag size={14} /><span>Em caso de empate de pontos, quem tiver mais cravadas fica melhor posicionado.</span></div>
             </div>
           </div>
 
