@@ -1,8 +1,8 @@
-﻿import React, { useCallback, useEffect, useState, useMemo } from 'react'
+﻿import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
-  Calendar, Flag, Timer, ChevronRight, Crown, Zap,
+  Calendar, Flag, ChevronRight, Crown, Zap,
 } from 'lucide-react'
 import { getMe, type User } from '@/services/authService'
 import {
@@ -32,6 +32,8 @@ const ROUND_SLOT_COUNTS: Record<string, number> = {
   round_of_32: 16, round_of_16: 8, quarterfinal: 4, semifinal: 2, third_place: 1, final: 1,
 }
 
+const STATUS_ORDER: Record<string, number> = { live: 0, awaiting_result: 1, locked: 2, upcoming: 3 }
+
 export default function Home() {
   const [user, setUser]               = useState<User | null>(null)
   const [allMatches, setAllMatches]   = useState<Match[]>([])
@@ -42,36 +44,55 @@ export default function Home() {
   const [loading, setLoading]         = useState(true)
   const [showTutorial, setShowTutorial]     = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
-  const [, setTick] = useState(0)
+  const [nowMs, setNowMs] = useState(Date.now)
 
   const [mainTab, setMainTab]         = useState<MainTab>('jogos')
   const [copaTab, setCopaTab]         = useState<CopaTab>('grupos')
   const [bracketRound, setBracketRound] = useState('round_of_32')
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    const [u, all, preds, ranking, g, b] = await Promise.all([
-      getMe().catch(() => null),
-      getMatches().catch(() => []),
-      getMyPredictions().catch(() => []),
-      getRanking().catch(() => []),
-      getAllGroups().catch(() => []),
-      getBracket().catch(() => []),
-    ])
+  const applyData = useCallback((u: User | null, all: Match[], preds: Prediction[], ranking: { userId: string; position: number }[], g: GroupData[], b: BracketSlot[]) => {
     setUser(u)
     setAllMatches(all)
     setMyPredictions(preds)
-    setGroups(g as GroupData[])
-    setBracket(b as BracketSlot[])
+    setGroups(g)
+    setBracket(b)
     if (u) setMyPosition(ranking.find(r => r.userId === u.id)?.position ?? null)
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  const load = useCallback(async () => {
+    const [u, all, preds, ranking, g, b] = await Promise.all([
+      getMe().catch(() => null),
+      getMatches().catch(() => [] as Match[]),
+      getMyPredictions().catch(() => [] as Prediction[]),
+      getRanking().catch(() => []),
+      getAllGroups().catch(() => [] as GroupData[]),
+      getBracket().catch(() => [] as BracketSlot[]),
+    ])
+    applyData(u, all, preds, ranking, g, b)
+  }, [applyData])
+
   useEffect(() => {
-    const iv = setInterval(() => setTick(t => t + 1), 15_000)
+    let active = true
+    async function init() {
+      const [u, all, preds, ranking, g, b] = await Promise.all([
+        getMe().catch(() => null),
+        getMatches().catch(() => [] as Match[]),
+        getMyPredictions().catch(() => [] as Prediction[]),
+        getRanking().catch(() => []),
+        getAllGroups().catch(() => [] as GroupData[]),
+        getBracket().catch(() => [] as BracketSlot[]),
+      ])
+      if (active) applyData(u, all, preds, ranking, g, b)
+    }
+    init()
+    return () => { active = false }
+  }, [applyData])
+  useEffect(() => {
+    const iv = setInterval(() => setNowMs(Date.now()), 15_000)
     return () => clearInterval(iv)
-  }, [])
+  }, [setNowMs])
 
   useSocketEvent('match:updated',               useCallback(() => { clearCache('matches','ranking','predictions'); load() }, [load]))
   useSocketEvent('match:locked',                useCallback(() => { clearCache('matches'); load() }, [load]))
@@ -82,8 +103,6 @@ export default function Home() {
 
   const predMap  = useMemo(() => new Map(myPredictions.map(p => [p.matchId, p])), [myPredictions])
   const matchMap = useMemo(() => new Map(allMatches.map(m => [m.id, m])), [allMatches])
-
-  const STATUS_ORDER: Record<string, number> = { live: 0, awaiting_result: 1, locked: 2, upcoming: 3 }
 
   const visibleMatches = useMemo(() =>
     allMatches
@@ -232,7 +251,7 @@ export default function Home() {
             )}
 
             {!loading && visibleMatches.slice(0, 8).map(m => (
-              <MatchCard key={`${m.id}-${m.status}`} match={m} pred={predMap.get(m.id)} />
+              <MatchCard key={`${m.id}-${m.status}`} match={m} pred={predMap.get(m.id)} nowMs={nowMs} />
             ))}
 
             {!loading && visibleMatches.length > 0 && (
@@ -322,13 +341,13 @@ export default function Home() {
 
 // ── MatchCard ─────────────────────────────────────────────────────────────────
 
-function MatchCard({ match: m, pred }: { match: Match; pred?: Prediction }) {
+function MatchCard({ match: m, pred, nowMs }: { match: Match; pred?: Prediction; nowMs: number }) {
   const isLive             = m.status === 'live'
   const isCalc             = m.status === 'awaiting_result'
   const isWaiting          = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
   const isOpen             = m.status === 'upcoming' && !m.predictionsLocked
   const closeAt            = new Date(m.matchDate).getTime() - 30 * 60_000
-  const closeAlreadyPassed = isOpen && closeAt <= Date.now()
+  const closeAlreadyPassed = isOpen && closeAt <= nowMs
   const closingVerySoon    = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 30)
   const closingSoon        = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 60)
   const hasScore           = m.homeScore !== null && m.awayScore !== null
@@ -339,19 +358,17 @@ function MatchCard({ match: m, pred }: { match: Match; pred?: Prediction }) {
     : closingVerySoon             ? s.cardUrgent
     : ''
 
-  let statusChip: React.ReactNode = null
-  if (isLive)
-    statusChip = <span className={`${s.chip} ${s.chipLive}`}><span className={s.chipDot} /> Ao vivo</span>
-  else if (isCalc)
-    statusChip = <span className={`${s.chip} ${s.chipCalc}`}><span className={s.chipSpinner} /> Calculando</span>
-  else if (isWaiting)
-    statusChip = <span className={`${s.chip} ${s.chipLocked}`}><Lock size={10} /> Aguardando início</span>
-  else if (closingVerySoon)
-    statusChip = <span className={`${s.chip} ${s.chipUrgent}`}><Zap size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
-  else if (closingSoon)
-    statusChip = <span className={`${s.chip} ${s.chipWarn}`}><Clock size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
-  else
-    statusChip = <span className={`${s.chip} ${s.chipDefault}`}>Agendado</span>
+  const statusChip = isLive
+    ? <span className={`${s.chip} ${s.chipLive}`}><span className={s.chipDot} /> Ao vivo</span>
+    : isCalc
+    ? <span className={`${s.chip} ${s.chipCalc}`}><span className={s.chipSpinner} /> Calculando</span>
+    : isWaiting
+    ? <span className={`${s.chip} ${s.chipLocked}`}><Lock size={10} /> Aguardando início</span>
+    : closingVerySoon
+    ? <span className={`${s.chip} ${s.chipUrgent}`}><Zap size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
+    : closingSoon
+    ? <span className={`${s.chip} ${s.chipWarn}`}><Clock size={10} /> Fecha em {formatTimeUntilClose(m.matchDate)}</span>
+    : <span className={`${s.chip} ${s.chipDefault}`}>Agendado</span>
 
   return (
     <Link to={`/matches/${m.id}`} className={`${s.matchCard} ${borderCls}`}>
