@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Copy, Check, Crown, Search, UserPlus, LogOut, Trash2, X, Trophy, TrendingUp, Users, Target, Pencil, Clock, UserCheck } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Crown, Search, UserPlus, LogOut, Trash2, X, Trophy, TrendingUp, Users, Target, Pencil, Clock, UserCheck, Eye, ChevronRight } from 'lucide-react'
 import {
   getBolaoGroupDetail,
   leaveBolaoGroup,
@@ -179,6 +179,16 @@ export default function BolaoDetail() {
             </div>
           </div>
         )}
+
+        {/* Ver palpites do grupo */}
+        <button
+          className={s.palpitesBtn}
+          onClick={() => navigate(`/bolao/${id}/palpites`, { state: { groupName: group.name } })}
+        >
+          <Eye size={16} />
+          <span>Ver palpites do grupo</span>
+          <ChevronRight size={15} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+        </button>
 
         {/* Tabs */}
         <div className={s.tabs}>

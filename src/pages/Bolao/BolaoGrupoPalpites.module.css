@@ -1,0 +1,346 @@
+/* ── Header ────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  color: var(--c-text-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.headerInfo { flex: 1; min-width: 0; }
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0 0 2px;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--c-text-3);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Match selector chips ──────────────────────────────────── */
+.chipWrapper {
+  overflow: hidden;
+  margin: 0 -16px 14px;
+}
+
+.chipScroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 16px 10px;
+  scrollbar-width: none;
+}
+.chipScroll::-webkit-scrollbar { display: none; }
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.chip:hover { border-color: var(--c-border-2); }
+
+.chipActive {
+  background: var(--c-accent-glow);
+  border-color: rgba(0, 212, 255, 0.45);
+}
+
+.chipScore {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--c-text-2);
+  letter-spacing: 0.5px;
+}
+.chipActive .chipScore { color: var(--c-accent); }
+
+/* ── Match info bar ────────────────────────────────────────── */
+.matchBar {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.matchBarTeams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.matchBarScore {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--c-text);
+  letter-spacing: 2px;
+}
+
+.matchBarMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.matchBarTeamNames {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--c-text);
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.matchBarInfo {
+  font-size: 0.7rem;
+  color: var(--c-text-3);
+  text-transform: capitalize;
+}
+
+.matchBarPen {
+  color: var(--c-gold);
+}
+
+/* ── Predictions view ──────────────────────────────────────── */
+.palpitesView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 28px;
+}
+
+/* ── Summary strip ─────────────────────────────────────────── */
+.summaryStrip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stripChip {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  border-radius: var(--r-full);
+  padding: 4px 11px;
+  font-size: 0.75rem;
+  border: 1px solid transparent;
+}
+
+.stripNum  { font-weight: 700; }
+.stripLabel { opacity: 0.6; font-size: 0.68rem; }
+
+.chip_cravou    { background: rgba(34, 197, 94, 0.12);  color: var(--c-green);  border-color: rgba(34, 197, 94, 0.2); }
+.chip_resultado { background: rgba(245, 158, 11, 0.12); color: var(--c-gold);   border-color: rgba(245, 158, 11, 0.2); }
+.chip_parcial   { background: rgba(0, 212, 255, 0.08);  color: var(--c-accent); border-color: rgba(0, 212, 255, 0.2); }
+.chip_errou     { background: rgba(255, 59, 48, 0.08);  color: var(--c-red);    border-color: rgba(255, 59, 48, 0.18); }
+.chip_sempal    { background: var(--c-surface-2);       color: var(--c-text-3); border-color: var(--c-border); }
+
+/* ── Category section ──────────────────────────────────────── */
+.catSection {}
+
+.catHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: var(--r-md);
+  margin-bottom: 8px;
+}
+
+.catHeader_cravou    { background: rgba(34, 197, 94, 0.08);  border: 1px solid rgba(34, 197, 94, 0.18); }
+.catHeader_resultado { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.18); }
+.catHeader_parcial   { background: rgba(0, 212, 255, 0.06);  border: 1px solid rgba(0, 212, 255, 0.15); }
+.catHeader_errou     { background: rgba(255, 59, 48, 0.06);  border: 1px solid rgba(255, 59, 48, 0.15); }
+.catHeader_sempal    { background: var(--c-surface);         border: 1px solid var(--c-border); }
+
+.catTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.catHeader_cravou    .catTitle { color: var(--c-green); }
+.catHeader_resultado .catTitle { color: var(--c-gold); }
+.catHeader_parcial   .catTitle { color: var(--c-accent); }
+.catHeader_errou     .catTitle { color: var(--c-red); }
+.catHeader_sempal    .catTitle { color: var(--c-text-3); }
+
+.catPts {
+  font-size: 0.68rem;
+  color: var(--c-text-3);
+  font-weight: 500;
+}
+
+.catCount {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 1px 7px;
+  color: var(--c-text-2);
+}
+
+/* ── Card grid (2-col) ─────────────────────────────────────── */
+.cardGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+@media (max-width: 360px) {
+  .cardGrid { grid-template-columns: 1fr; }
+}
+
+/* ── Member card ───────────────────────────────────────────── */
+.card {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  border-left-width: 3px;
+  min-width: 0;
+}
+
+.card_cravou    { border-left-color: var(--c-green); }
+.card_resultado { border-left-color: var(--c-gold); }
+.card_parcial   { border-left-color: var(--c-accent); }
+.card_errou     { border-left-color: var(--c-red); }
+.card_sempal    { border-left-color: var(--c-border); }
+
+.cardAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cardName {
+  flex: 1;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.cardRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cardScore {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  color: var(--c-text-2);
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.cardBadge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: var(--r-full);
+  padding: 1px 5px;
+  line-height: 1.4;
+}
+
+.badge_cravou    { background: rgba(34, 197, 94, 0.15);  color: var(--c-green); }
+.badge_resultado { background: rgba(245, 158, 11, 0.15); color: var(--c-gold); }
+.badge_parcial   { background: rgba(0, 212, 255, 0.10);  color: var(--c-accent); }
+.badge_errou     { background: rgba(255, 59, 48, 0.10);  color: var(--c-red); }
+.badge_sempal    { background: var(--c-surface-2);       color: var(--c-text-3); border: 1px solid var(--c-border); }
+
+/* ── Loading skeleton ──────────────────────────────────────── */
+.loadingPalpites {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.loadingBar {
+  height: 44px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--c-surface) 0%,
+    var(--c-surface-2) 50%,
+    var(--c-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--r-md);
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Empty / misc ──────────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--c-text-3);
+}
+.emptyState p    { margin: 0; font-size: 0.95rem; color: var(--c-text-2); font-weight: 500; }
+.emptyState span { font-size: 0.8rem; }
+
+.loadingPage {
+  text-align: center;
+  color: var(--c-text-3);
+  margin-top: 60px;
+}

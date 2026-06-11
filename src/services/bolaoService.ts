@@ -115,3 +115,43 @@ export async function respondToInvite(inviteId: string, status: 'accepted' | 'de
   const { data } = await api.patch(`/cravou/groups/invites/${inviteId}`, { status })
   return data as { message: string; groupId?: string }
 }
+
+// ── Palpites do grupo ─────────────────────────────────────────────────────────
+
+export interface GroupFinishedMatch {
+  id: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number
+  awayScore: number
+  matchDate: string
+  phase: string
+  penaltyWinner: string | null
+}
+
+export type PalpiteCategory = 'cravou' | 'resultado_certo' | 'parcial' | 'errou' | 'sem_palpite'
+
+export interface MemberPalpite {
+  userId: string
+  name: string
+  homeScore: number | null
+  awayScore: number | null
+  penaltyWinner: string | null
+  points: number | null
+  category: PalpiteCategory
+}
+
+export interface GroupMatchPalpites {
+  match: GroupFinishedMatch
+  palpites: MemberPalpite[]
+}
+
+export async function getGroupFinishedMatches(groupId: string) {
+  const { data } = await api.get(`/cravou/groups/${groupId}/finished-matches`)
+  return data as { matches: GroupFinishedMatch[] }
+}
+
+export async function getGroupMatchPalpites(groupId: string, matchId: string) {
+  const { data } = await api.get(`/cravou/groups/${groupId}/matches/${matchId}/palpites`)
+  return data as GroupMatchPalpites
+}

@@ -78,6 +78,28 @@
 }
 .inviteBtn:hover { background: rgba(0, 212, 255, 0.2); }
 
+/* ── Palpites button ───────────────────────────────────── */
+.palpitesBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  width: 100%;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  color: var(--c-text-2);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 12px;
+}
+.palpitesBtn:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+
 /* ── Invite Code ───────────────────────────────────────── */
 .codeBar {
   display: flex;

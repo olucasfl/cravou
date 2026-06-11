@@ -15,6 +15,7 @@ import Ranking from '@/pages/Ranking/Ranking'
 import Groups from '@/pages/Groups/Groups'
 import Bolao from '@/pages/Bolao/Bolao'
 import BolaoDetail from '@/pages/Bolao/BolaoDetail'
+import BolaoGrupoPalpites from '@/pages/Bolao/BolaoGrupoPalpites'
 import Profile from '@/pages/Profile/Profile'
 import Admin from '@/pages/Admin/Admin'
 
@@ -66,6 +67,7 @@ export default function App() {
       <Route path="/groups" element={<Protected><Groups /></Protected>} />
       <Route path="/bolao" element={<Protected><Bolao /></Protected>} />
       <Route path="/bolao/:id" element={<Protected><BolaoDetail /></Protected>} />
+      <Route path="/bolao/:id/palpites" element={<Protected><BolaoGrupoPalpites /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
       <Route path="/admin" element={<Protected><Admin /></Protected>} />
 
