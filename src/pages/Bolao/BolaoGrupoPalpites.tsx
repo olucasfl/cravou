@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Target } from 'lucide-react'
+import { ArrowLeft, Target, Search, X } from 'lucide-react'
 import {
   getGroupFinishedMatches,
   getGroupMatchPalpites,
@@ -38,6 +38,15 @@ function avatarColor(userId: string) {
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
 }
 
+function normalize(s: string) {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
+function matchesSearch(m: GroupFinishedMatch, q: string) {
+  const nq = normalize(q.trim())
+  return normalize(m.homeTeam).includes(nq) || normalize(m.awayTeam).includes(nq)
+}
+
 // ── category config ───────────────────────────────────────────────────────────
 
 const CAT_CONFIG: Record<PalpiteCategory, { label: string; pts: string; css: string }> = {
@@ -72,11 +81,7 @@ function MemberCard({ p }: { p: MemberPalpite }) {
   )
 }
 
-interface PalpitesViewProps {
-  data: GroupMatchPalpites
-}
-
-function PalpitesView({ data }: PalpitesViewProps) {
+function PalpitesView({ data }: { data: GroupMatchPalpites }) {
   const groups = CAT_ORDER.map((cat) => ({
     cat,
     cfg: CAT_CONFIG[cat],
@@ -124,14 +129,14 @@ function PalpitesView({ data }: PalpitesViewProps) {
 export default function BolaoGrupoPalpites() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const chipListRef = useRef<HTMLDivElement>(null)
 
-  const [matches, setMatches]               = useState<GroupFinishedMatch[]>([])
-  const [selectedId, setSelectedId]         = useState<string | null>(null)
-  const [palpites, setPalpites]             = useState<GroupMatchPalpites | null>(null)
-  const [loadingMatches, setLoadingMatches] = useState(true)
+  const [matches, setMatches]                 = useState<GroupFinishedMatch[]>([])
+  const [selectedId, setSelectedId]           = useState<string | null>(null)
+  const [palpites, setPalpites]               = useState<GroupMatchPalpites | null>(null)
+  const [loadingMatches, setLoadingMatches]   = useState(true)
   const [loadingPalpites, setLoadingPalpites] = useState(false)
-  const [groupName, setGroupName]           = useState('')
+  const [groupName, setGroupName]             = useState('')
+  const [search, setSearch]                   = useState('')
   const cacheRef = useRef<Record<string, GroupMatchPalpites>>({})
 
   useEffect(() => {
@@ -175,7 +180,21 @@ export default function BolaoGrupoPalpites() {
     return () => { active = false }
   }, [id, navigate, selectMatch])
 
+  // filtered list based on search
+  const filtered = search.trim() ? matches.filter((m) => matchesSearch(m, search)) : matches
+  const latestMatchId = matches[0]?.id ?? null
+
+  // when filter changes, auto-select first visible match if current is hidden
+  useEffect(() => {
+    if (!search.trim()) return
+    if (filtered.length > 0 && !filtered.find((m) => m.id === selectedId)) {
+      selectMatch(filtered[0].id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
   const selectedMatch = matches.find((m) => m.id === selectedId)
+  const isLatest = selectedId === latestMatchId
 
   if (loadingMatches) {
     return (
@@ -210,22 +229,45 @@ export default function BolaoGrupoPalpites() {
           </div>
         ) : (
           <>
-            {/* Match selector chips */}
-            <div className={s.chipWrapper}>
-              <div className={s.chipScroll} ref={chipListRef}>
-                {matches.map((m) => (
-                  <button
-                    key={m.id}
-                    className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''}`}
-                    onClick={() => selectMatch(m.id)}
-                  >
-                    <CountryBadge country={m.homeTeam} size="xs" />
-                    <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
-                    <CountryBadge country={m.awayTeam} size="xs" />
-                  </button>
-                ))}
-              </div>
+            {/* Search */}
+            <div className={s.searchRow}>
+              <Search size={15} className={s.searchIcon} />
+              <input
+                className={s.searchInput}
+                placeholder="Buscar seleção..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button className={s.searchClear} onClick={() => setSearch('')}>
+                  <X size={14} />
+                </button>
+              )}
             </div>
+
+            {/* Match selector chips */}
+            {filtered.length === 0 ? (
+              <p className={s.searchEmpty}>Nenhum jogo encontrado para "{search}"</p>
+            ) : (
+              <div className={s.chipWrapper}>
+                <div className={s.chipScroll}>
+                  {filtered.map((m) => (
+                    <button
+                      key={m.id}
+                      className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''}`}
+                      onClick={() => selectMatch(m.id)}
+                    >
+                      {m.id === latestMatchId && (
+                        <span className={s.latestDot} title="Último jogo" />
+                      )}
+                      <CountryBadge country={m.homeTeam} size="xs" />
+                      <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
+                      <CountryBadge country={m.awayTeam} size="xs" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Selected match info bar */}
             {selectedMatch && (
@@ -238,9 +280,14 @@ export default function BolaoGrupoPalpites() {
                   <CountryBadge country={selectedMatch.awayTeam} size="sm" />
                 </div>
                 <div className={s.matchBarMeta}>
-                  <span className={s.matchBarTeamNames}>
-                    {selectedMatch.homeTeam} &nbsp;·&nbsp; {selectedMatch.awayTeam}
-                  </span>
+                  <div className={s.matchBarNameRow}>
+                    <span className={s.matchBarTeamNames}>
+                      {selectedMatch.homeTeam} · {selectedMatch.awayTeam}
+                    </span>
+                    {isLatest && (
+                      <span className={s.latestBadge}>Último jogo</span>
+                    )}
+                  </div>
                   <span className={s.matchBarInfo}>
                     {phaseLabel(selectedMatch.phase)} · {shortDate(selectedMatch.matchDate)}
                     {selectedMatch.penaltyWinner && (

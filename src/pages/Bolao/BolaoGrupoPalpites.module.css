@@ -39,6 +39,53 @@
   text-overflow: ellipsis;
 }
 
+/* ── Search ────────────────────────────────────────────────── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s ease;
+}
+.searchRow:focus-within { border-color: var(--c-border-2); }
+
+.searchIcon { color: var(--c-text-3); flex-shrink: 0; }
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.88rem;
+  color: var(--c-text);
+}
+.searchInput::placeholder { color: var(--c-text-3); }
+
+.searchClear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-surface-2);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  color: var(--c-text-3);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.searchEmpty {
+  font-size: 0.82rem;
+  color: var(--c-text-3);
+  text-align: center;
+  padding: 20px 0 12px;
+}
+
 /* ── Match selector chips ──────────────────────────────────── */
 .chipWrapper {
   overflow: hidden;
@@ -71,6 +118,16 @@
 .chipActive {
   background: var(--c-accent-glow);
   border-color: rgba(0, 212, 255, 0.45);
+}
+
+/* green dot on the latest match chip */
+.latestDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-green);
+  flex-shrink: 0;
+  box-shadow: 0 0 4px var(--c-green);
 }
 
 .chipScore {
@@ -112,6 +169,26 @@
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  flex: 1;
+}
+
+.matchBarNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.latestBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--c-green);
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: var(--r-full);
+  padding: 1px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .matchBarTeamNames {
