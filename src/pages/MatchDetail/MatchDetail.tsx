@@ -137,9 +137,9 @@ export default function MatchDetail() {
   const predH = parseInt(home), predA = parseInt(away)
   const isTiePred = !isNaN(predH) && !isNaN(predA) && predH === predA
 
-  const closeAt = new Date(match.matchDate).getTime() - 30 * 60_000
+  const closeAt = new Date(match.matchDate).getTime() - 10 * 60_000
   const closeAlreadyPassed = isOpen && closeAt <= Date.now()
-  // closingSoon: entre 30min e 60min antes do jogo (janela de aviso)
+  // closingSoon: entre 10min e 60min antes do jogo (janela de aviso)
   const closingSoon = isOpen && !closeAlreadyPassed && isWithinMinutes(match.matchDate, 60)
 
   const elapsed = isLive ? minutesElapsed(match.matchDate) : 0
@@ -239,7 +239,7 @@ export default function MatchDetail() {
               </div>
             ) : (
               <div className={s.bannerInfo}>
-                <Lock size={14} /> Palpites bloqueiam 30min antes do início
+                <Lock size={14} /> Palpites bloqueiam 10min antes do início
               </div>
             )}
 

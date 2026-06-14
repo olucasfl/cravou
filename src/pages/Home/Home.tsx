@@ -346,9 +346,9 @@ function MatchCard({ match: m, pred, nowMs }: { match: Match; pred?: Prediction;
   const isCalc             = m.status === 'awaiting_result'
   const isWaiting          = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
   const isOpen             = m.status === 'upcoming' && !m.predictionsLocked
-  const closeAt            = new Date(m.matchDate).getTime() - 30 * 60_000
+  const closeAt            = new Date(m.matchDate).getTime() - 10 * 60_000
   const closeAlreadyPassed = isOpen && closeAt <= nowMs
-  const closingVerySoon    = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 30)
+  const closingVerySoon    = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 10)
   const closingSoon        = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 60)
   const hasScore           = m.homeScore !== null && m.awayScore !== null
 
@@ -695,7 +695,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Prazo dos palpites</div>
             <div className={s.tutCard}>
-              <div className={s.tutCardRow}><Lock size={14} /><span>Palpites <strong>bloqueiam 30 minutos</strong> antes do início da partida.</span></div>
+              <div className={s.tutCardRow}><Lock size={14} /><span>Palpites <strong>bloqueiam 10 minutos</strong> antes do início da partida.</span></div>
               <div className={s.tutCardRow}><Clock size={14} /><span>Você pode alterar seu palpite <strong>quantas vezes quiser</strong> antes do bloqueio.</span></div>
               <div className={s.tutCardRow}><Calendar size={14} /><span>Todos os horários são no fuso de <strong>Brasília (BRT / UTC-3)</strong>.</span></div>
             </div>

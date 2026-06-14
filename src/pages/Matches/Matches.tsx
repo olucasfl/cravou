@@ -248,7 +248,7 @@ function MatchCard({ match: m, prediction: pred }: { match: Match; prediction?: 
   const isFinished = m.status === 'finished'
 
   const closingSoon     = isOpen && isWithinMinutes(m.matchDate, 60)
-  const closingVerySoon = isOpen && isWithinMinutes(m.matchDate, 30)
+  const closingVerySoon = isOpen && isWithinMinutes(m.matchDate, 10)
 
   const cat: PredCategory = isFinished
     ? getPredCategory(pred?.points, !!pred)
