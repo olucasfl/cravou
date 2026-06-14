@@ -639,6 +639,14 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
                 <span className={s.tutScorePts}>5 pts</span>
                 <span className={s.tutScorePts}>8 pts</span>
               </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
+                <div className={s.tutScoreLabel}>
+                  <Zap size={13} />
+                  <span>Resultado + bônus de gols</span>
+                </div>
+                <span className={s.tutScorePts}>7 pts</span>
+                <span className={s.tutScorePts}>10 pts</span>
+              </div>
               <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
                 <div className={s.tutScoreLabel}>
                   <SoccerBall size={13} />
@@ -657,7 +665,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <div className={s.tutNote}>
-              Apenas <strong>uma categoria</strong> é aplicada por palpite — sempre a de maior pontuação.
+              O bônus se <strong>soma</strong> ao resultado certo — acertou o vencedor <strong>e</strong> os gols de um time? Ganha resultado + 2 de bônus ao mesmo tempo.
             </div>
           </div>
 
@@ -666,9 +674,29 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             <div className={s.tutSectionTitle}>Exemplo — Brasil 2 × 1 Argentina (grupos)</div>
             <div className={s.tutExamples}>
               <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> +10 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>3 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> +5 pts</span><span className={s.tutExLabel}>Brasil venceu ✓</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>2 × 0</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>2 gols do Brasil ✓</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>3 × 1</span><span className={s.tutExLime}><Zap size={11} /> +7 pts</span><span className={s.tutExLabel}>Brasil venceu + 1 gol da Argentina ✓</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>3 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> +5 pts</span><span className={s.tutExLabel}>Brasil venceu (sem gols certos)</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>1 gol da Argentina ✓ (errou resultado)</span></div>
               <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
+            </div>
+          </div>
+
+          {/* ── Bônus de gols ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Bônus de gols (+2 pts)</div>
+            <div className={s.tutCard}>
+              <div className={s.tutCardRow}>
+                <Zap size={14} color="#84cc16" />
+                <span>Acertou o <strong>resultado</strong> (quem ganhou ou empate) <strong>e</strong> a quantidade de gols de um time? Os +2 de bônus se <strong>somam</strong> ao resultado certo.</span>
+              </div>
+              <div className={s.tutCardRow}>
+                <CheckCircle2 size={14} color="#84cc16" />
+                <span>Grupos: <strong>5 + 2 = 7 pts</strong> · Mata-mata: <strong>8 + 2 = 10 pts</strong></span>
+              </div>
+              <div className={s.tutCardRow}>
+                <XCircle size={14} color="var(--c-text-3)" />
+                <span>O bônus <strong>não</strong> vale se errar o resultado — acertar gols de um time sem acertar quem ganhou vale apenas 2 pts (parcial).</span>
+              </div>
             </div>
           </div>
 

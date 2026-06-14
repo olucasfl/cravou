@@ -693,6 +693,7 @@
 .tutExScore  { font-family: var(--font-display); font-size: 1rem; color: var(--c-text); min-width: 46px; }
 .tutExLabel  { font-size: 0.72rem; color: var(--c-text-3); }
 .tutExGreen  { font-weight: 700; color: var(--c-green); min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
+.tutExLime   { font-weight: 700; color: #84cc16; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExYellow { font-weight: 700; color: #eab308; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExOrange { font-weight: 700; color: #f97316; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExRed    { font-weight: 700; color: var(--c-red); min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
@@ -837,6 +838,10 @@
 .tutScorePartial { background: rgba(249,115,22,0.06); }
 .tutScorePartial .tutScoreLabel { color: #f97316; }
 .tutScorePartial .tutScorePts   { color: #f97316; }
+
+.tutScoreBonus { background: rgba(132,204,22,0.06); }
+.tutScoreBonus .tutScoreLabel { color: #84cc16; }
+.tutScoreBonus .tutScorePts   { color: #84cc16; }
 
 .tutScoreWrong { }
 .tutScoreWrong .tutScoreLabel { color: var(--c-text-3); }
