@@ -251,7 +251,7 @@ function MatchCard({ match: m, prediction: pred }: { match: Match; prediction?: 
   const closingVerySoon = isOpen && isWithinMinutes(m.matchDate, 10)
 
   const cat: PredCategory = isFinished
-    ? getPredCategory(pred?.points, !!pred)
+    ? getPredCategory(pred?.points, !!pred, m.phase)
     : 'none'
 
   const cardExtra = [
@@ -259,6 +259,7 @@ function MatchCard({ match: m, prediction: pred }: { match: Match; prediction?: 
     isCalc     ? s.cardCalc     : '',
     isWaiting  ? s.cardWaiting  : '',
     isFinished && cat === 'exact'   ? s.cardExact   : '',
+    isFinished && cat === 'bonus'   ? s.cardBonus   : '',
     isFinished && cat === 'right'   ? s.cardRight   : '',
     isFinished && cat === 'partial' ? s.cardPartial : '',
     isFinished && cat === 'wrong'   ? s.cardWrong   : '',
@@ -337,12 +338,13 @@ function StatusChip({ match: m, closingSoon, closingVerySoon }: { match: Match; 
 function PredRow({ match: m, pred, cat, isCalc }: { match: Match; pred?: Prediction; cat: PredCategory; isCalc: boolean }) {
   const finished = m.status === 'finished' && !!pred
 
-  const rowBg: Record<PredCategory, string>    = { exact: s.rowExact, right: s.rowRight, partial: s.rowPartial, wrong: s.rowWrong, none: '' }
-  const scoreCol: Record<PredCategory, string> = { exact: s.predScoreExact, right: s.predScoreRight, partial: s.predScorePartial, wrong: s.predScoreWrong, none: '' }
-  const ptsCol: Record<PredCategory, string>   = { exact: s.predPtsExact,   right: s.predPtsRight,   partial: s.predPtsPartial,   wrong: s.predPtsWrong,   none: '' }
+  const rowBg: Record<PredCategory, string>    = { exact: s.rowExact, bonus: s.rowBonus, right: s.rowRight, partial: s.rowPartial, wrong: s.rowWrong, none: '' }
+  const scoreCol: Record<PredCategory, string> = { exact: s.predScoreExact, bonus: s.predScoreBonus, right: s.predScoreRight, partial: s.predScorePartial, wrong: s.predScoreWrong, none: '' }
+  const ptsCol: Record<PredCategory, string>   = { exact: s.predPtsExact,   bonus: s.predPtsBonus,   right: s.predPtsRight,   partial: s.predPtsPartial,   wrong: s.predPtsWrong,   none: '' }
 
   const catIcon: Record<PredCategory, React.ReactNode> = {
     exact:   <Target size={11} />,
+    bonus:   <Zap size={11} />,
     right:   <CheckCircle2 size={11} />,
     partial: <SoccerBall size={11} />,
     wrong:   <XCircle size={11} />,
@@ -357,11 +359,15 @@ function PredRow({ match: m, pred, cat, isCalc }: { match: Match; pred?: Predict
           <span className={`${s.predScore} ${finished ? scoreCol[cat] : ''}`}>
             {pred.homeScore} × {pred.awayScore}
           </span>
-          {finished && pred.points !== null && (
+          {finished && pred.points !== null && cat === 'bonus' ? (
+            <span className={`${s.predPts} ${ptsCol[cat]}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              {catIcon[cat]} +{pred.points} pts <span className={s.bonusTag}>+2</span>
+            </span>
+          ) : finished && pred.points !== null ? (
             <span className={`${s.predPts} ${ptsCol[cat]}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
               {catIcon[cat]} {pred.points > 0 ? `+${pred.points} pts` : '0 pts'}
             </span>
-          )}
+          ) : null}
           {isCalc && pred.points === null && (
             <span className={s.predCalcText}>calculando...</span>
           )}

@@ -51,12 +51,19 @@ export function isWithinHours(dateStr: string, hours: number): boolean {
 }
 
 // Categoria do resultado de um palpite finalizado
-export type PredCategory = 'exact' | 'right' | 'partial' | 'wrong' | 'none'
+export type PredCategory = 'exact' | 'bonus' | 'right' | 'partial' | 'wrong' | 'none'
 
-export function getPredCategory(points: number | null | undefined, hasPrediction: boolean): PredCategory {
+export function getPredCategory(points: number | null | undefined, hasPrediction: boolean, phase?: string): PredCategory {
   if (!hasPrediction) return 'none'
   if (points === null || points === undefined) return 'none'
-  if (points >= 10) return 'exact'
+  if (points >= 15) return 'exact'
+  if (phase !== undefined) {
+    if (points === 10 && phase === 'group_stage') return 'exact'
+    if (points === 7 || points === 10) return 'bonus'
+  } else {
+    // sem phase: comportamento antigo (10 = exact)
+    if (points >= 10) return 'exact'
+  }
   if (points >= 5) return 'right'
   if (points >= 2) return 'partial'
   return 'wrong'

@@ -373,11 +373,12 @@
   border: 1px solid;
   text-align: center;
 }
-.resultExact   { background: var(--c-green-glow); border-color: var(--c-green); }
-.resultRight   { background: rgba(234,179,8,0.1);  border-color: #eab308; }
-.resultPartial { background: rgba(249,115,22,0.08); border-color: #f97316; }
-.resultWrong   { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.4); }
-.resultNone    { background: rgba(107,114,128,0.06); border-color: var(--c-border-2); }
+.resultExact   { background: var(--c-green-glow);      border-color: var(--c-green); }
+.resultBonus   { background: rgba(132,204,22,0.07);   border-color: #84cc16; }
+.resultRight   { background: rgba(234,179,8,0.1);     border-color: #eab308; }
+.resultPartial { background: rgba(249,115,22,0.08);   border-color: #f97316; }
+.resultWrong   { background: rgba(239,68,68,0.06);    border-color: rgba(239,68,68,0.4); }
+.resultNone    { background: rgba(107,114,128,0.06);  border-color: var(--c-border-2); }
 
 .resultEmoji { display: flex; justify-content: center; }
 .resultMsg   { font-size: 0.95rem; font-weight: 700; color: var(--c-text); }
@@ -389,10 +390,40 @@
   margin: 4px 0;
 }
 .resultExact   .resultPts { color: var(--c-green); text-shadow: var(--shadow-green); }
+.resultBonus   .resultPts { color: #84cc16; }
 .resultRight   .resultPts { color: #eab308; }
 .resultPartial .resultPts { color: #f97316; }
 .resultWrong   .resultPts { color: var(--c-text-3); }
 .resultPts span { font-size: 1rem; color: var(--c-text-3); font-family: var(--font-body); }
+
+/* ── Bonus breakdown ─────────────────────────────────────────── */
+.resultBonusBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.resultBonusBreakdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resultBonusBase {
+  font-size: 0.72rem;
+  color: var(--c-text-3);
+}
+
+.resultBonusPill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(132, 204, 22, 0.2);
+  color: #84cc16;
+  border-radius: 99px;
+  padding: 2px 9px;
+  letter-spacing: 0.3px;
+}
 
 .resultComparison {
   margin-top: 6px;

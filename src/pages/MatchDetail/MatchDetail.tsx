@@ -59,7 +59,7 @@ export default function MatchDetail() {
   useEffect(() => {
     if (!match || !prediction) return
     if (match.status !== 'finished') return
-    const category = getPredCategory(prediction.points, true)
+    const category = getPredCategory(prediction.points, true, match.phase)
     if (category === 'exact' && !celebratedRef.current) {
       celebratedRef.current = true
       const t = setTimeout(() => setShowCelebration(true), 900)
@@ -144,7 +144,7 @@ export default function MatchDetail() {
 
   const elapsed = isLive ? minutesElapsed(match.matchDate) : 0
   const phase = getMatchPhase(elapsed)
-  const cat: PredCategory = getPredCategory(prediction?.points, !!prediction)
+  const cat: PredCategory = getPredCategory(prediction?.points, !!prediction, match.phase)
 
   return (
     <div className="app-layout">
@@ -456,31 +456,46 @@ function ResultCard({ prediction, match, cat }: { prediction: Prediction; match:
 
   const catStyles: Record<PredCategory, string> = {
     exact:   s.resultExact,
+    bonus:   s.resultBonus,
     right:   s.resultRight,
     partial: s.resultPartial,
     wrong:   s.resultWrong,
     none:    s.resultNone,
   }
   const catIcon = {
-    exact:   <Target  size={40} strokeWidth={1.5} color="var(--c-green)" />,
+    exact:   <Target      size={40} strokeWidth={1.5} color="var(--c-green)" />,
+    bonus:   <Zap         size={40} strokeWidth={1.5} color="#84cc16" />,
     right:   <CheckCircle2 size={40} strokeWidth={1.5} color="#eab308" />,
-    partial: <SoccerBall size={40} color="#f97316" />,
-    wrong:   <XCircle size={40} strokeWidth={1.5} color="var(--c-red)" />,
+    partial: <SoccerBall  size={40} color="#f97316" />,
+    wrong:   <XCircle     size={40} strokeWidth={1.5} color="var(--c-red)" />,
     none:    null,
   } as const
 
   let resultMsg = ''
   if (cat === 'exact') resultMsg = 'CRAVOU! Placar exato' + (isKnockout && match.homeScore === match.awayScore ? ' + classificado!' : '!')
   else if (isExactDraw) resultMsg = 'Placar certo, mas errou o classificado nos pênaltis'
+  else if (cat === 'bonus') resultMsg = 'Resultado certo e gols de um time!'
   else if (cat === 'right') resultMsg = 'Acertou o resultado!'
   else if (cat === 'partial') resultMsg = 'Quase lá — gols de um time certos'
   else resultMsg = 'Dessa vez não — mais sorte no próximo!'
+
+  const basePoints = cat === 'bonus' ? pts - 2 : null
 
   return (
     <div className={`${s.resultCard} ${catStyles[cat]}`}>
       <div className={s.resultEmoji}>{catIcon[cat]}</div>
       <div className={s.resultMsg}>{resultMsg}</div>
-      <div className={s.resultPts}>+{pts} <span>pontos</span></div>
+      {cat === 'bonus' ? (
+        <div className={s.resultBonusBlock}>
+          <div className={s.resultPts}>+{pts} <span>pontos</span></div>
+          <div className={s.resultBonusBreakdown}>
+            <span className={s.resultBonusBase}>+{basePoints} resultado</span>
+            <span className={s.resultBonusPill}>+2 bônus</span>
+          </div>
+        </div>
+      ) : (
+        <div className={s.resultPts}>+{pts} <span>pontos</span></div>
+      )}
 
       <div className={s.resultComparison}>
         <div className={s.resultRow}>

@@ -129,7 +129,7 @@ export interface GroupFinishedMatch {
   penaltyWinner: string | null
 }
 
-export type PalpiteCategory = 'cravou' | 'resultado_certo' | 'parcial' | 'errou' | 'sem_palpite'
+export type PalpiteCategory = 'cravou' | 'resultado_bonus' | 'resultado_certo' | 'parcial' | 'errou' | 'sem_palpite'
 
 export interface MemberPalpite {
   userId: string

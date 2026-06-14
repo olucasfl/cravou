@@ -50,19 +50,23 @@ function matchesSearch(m: GroupFinishedMatch, q: string) {
 // ── category config ───────────────────────────────────────────────────────────
 
 const CAT_CONFIG: Record<PalpiteCategory, { label: string; pts: string; css: string }> = {
-  cravou:          { label: 'Cravou!',          pts: '10–15 pts', css: 'cravou' },
-  resultado_certo: { label: 'Resultado Certo',  pts: '5–8 pts',   css: 'resultado' },
-  parcial:         { label: 'Gols de um time',  pts: '2 pts',     css: 'parcial' },
-  errou:           { label: 'Errou tudo',        pts: '0 pts',     css: 'errou' },
-  sem_palpite:     { label: 'Sem palpite',       pts: '—',         css: 'sempal' },
+  cravou:           { label: 'Cravou!',               pts: '10–15 pts', css: 'cravou'    },
+  resultado_bonus:  { label: 'Resultado + Bônus',      pts: '7–10 pts',  css: 'bonus'     },
+  resultado_certo:  { label: 'Resultado Certo',        pts: '5–8 pts',   css: 'resultado' },
+  parcial:          { label: 'Gols de um time',        pts: '2 pts',     css: 'parcial'   },
+  errou:            { label: 'Errou tudo',              pts: '0 pts',     css: 'errou'     },
+  sem_palpite:      { label: 'Sem palpite',             pts: '—',         css: 'sempal'    },
 }
 
-const CAT_ORDER: PalpiteCategory[] = ['cravou', 'resultado_certo', 'parcial', 'errou', 'sem_palpite']
+const CAT_ORDER: PalpiteCategory[] = ['cravou', 'resultado_bonus', 'resultado_certo', 'parcial', 'errou', 'sem_palpite']
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
 function MemberCard({ p }: { p: MemberPalpite }) {
   const css = CAT_CONFIG[p.category].css
+  const isBonus = p.category === 'resultado_bonus'
+  const basePoints = isBonus && p.points !== null ? p.points - 2 : null
+
   return (
     <div className={`${s.card} ${s[`card_${css}`]}`}>
       <div className={s.cardAvatar} style={{ background: avatarColor(p.userId) }}>
@@ -73,9 +77,16 @@ function MemberCard({ p }: { p: MemberPalpite }) {
         <span className={s.cardScore}>
           {p.homeScore !== null && p.awayScore !== null ? `${p.homeScore}×${p.awayScore}` : '—'}
         </span>
-        <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>
-          {p.points !== null ? `+${p.points}` : '—'}
-        </span>
+        {isBonus && p.points !== null ? (
+          <div className={s.cardBonusRow}>
+            <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>{`+${basePoints}`}</span>
+            <span className={s.bonusPill}>+2★</span>
+          </div>
+        ) : (
+          <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>
+            {p.points !== null ? `+${p.points}` : '—'}
+          </span>
+        )}
       </div>
     </div>
   )
