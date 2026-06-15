@@ -1,0 +1,95 @@
+.wrapper {
+  position: relative;
+}
+
+/* ── Indicator container ── */
+.indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* ── Pill ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px 8px 14px;
+  background: var(--c-surface, #1a1a2e);
+  border: 1px solid var(--c-border, rgba(255,255,255,0.08));
+  border-radius: 999px;
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    0 1px 6px rgba(0,0,0,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  color: var(--c-text-2, rgba(255,255,255,0.55));
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.pillReady {
+  background: color-mix(in srgb, var(--c-accent, #6c63ff) 14%, var(--c-surface, #1a1a2e));
+  border-color: color-mix(in srgb, var(--c-accent, #6c63ff) 45%, transparent);
+  color: var(--c-accent, #6c63ff);
+  box-shadow:
+    0 4px 24px color-mix(in srgb, var(--c-accent, #6c63ff) 30%, transparent),
+    0 1px 6px rgba(0,0,0,0.25);
+}
+
+.pillRefreshing {
+  background: color-mix(in srgb, var(--c-accent, #6c63ff) 14%, var(--c-surface, #1a1a2e));
+  border-color: color-mix(in srgb, var(--c-accent, #6c63ff) 45%, transparent);
+  color: var(--c-accent, #6c63ff);
+  box-shadow:
+    0 4px 24px color-mix(in srgb, var(--c-accent, #6c63ff) 30%, transparent),
+    0 1px 6px rgba(0,0,0,0.25);
+}
+
+/* ── Arrow ── */
+.arrowWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s;
+  color: inherit;
+}
+
+/* ── Spinner ── */
+.spinner {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, var(--c-accent, #6c63ff) 25%, transparent);
+  border-top-color: var(--c-accent, #6c63ff);
+  animation: ptr-spin 0.65s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Label ── */
+.label {
+  transition: opacity 0.15s;
+}
+
+/* ── Content ── */
+.content {
+  will-change: transform;
+}

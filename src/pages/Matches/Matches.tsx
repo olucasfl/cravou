@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X } from 'lucide-react'
-import { getMatches, getMyPredictions, type Match, type Prediction } from '@/services/cravouService'
-import { clearCache } from '@/utils/cache'
+import { type Match, type Prediction } from '@/services/cravouService'
 import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, type PredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
-import { useSocketEvent } from '@/hooks/useSocketEvent'
+import { useAppData } from '@/context/AppDataContext'
+import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import s from './Matches.module.css'
 
 const STATUS_TABS = [
@@ -28,46 +28,15 @@ const STATUS_ORDER: Record<string, number> = {
 }
 
 export default function Matches() {
-  const [matches, setMatches]         = useState<Match[]>([])
-  const [predictions, setPredictions] = useState<Map<string, Prediction>>(new Map())
+  const { matches, predictions: predList, loading, refresh } = useAppData()
+
+  const predictions = new Map(predList.map((p) => [p.matchId, p]))
+
   const [statusFilter, setStatusFilter] = useState('')
-  const [catFilter, setCatFilter]     = useState('')
-  const [loading, setLoading]         = useState(true)
-  const [, setTick]                   = useState(0)
-  const [searchOpen, setSearchOpen]   = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const searchRef                     = useRef<HTMLInputElement>(null)
-
-  const load = useCallback(async () => {
-    const [all, preds] = await Promise.all([
-      getMatches().catch(() => []),
-      getMyPredictions().catch(() => []),
-    ])
-    setMatches(all)
-    setPredictions(new Map(preds.map((p) => [p.matchId, p])))
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    async function init() {
-      const [all, preds] = await Promise.all([
-        getMatches().catch(() => []),
-        getMyPredictions().catch(() => []),
-      ])
-      setMatches(all)
-      setPredictions(new Map(preds.map((p) => [p.matchId, p])))
-      setLoading(false)
-    }
-    init()
-  }, [])
-
-  useSocketEvent('match:updated', useCallback(() => { clearCache('matches', 'predictions'); load() }, [load]))
-  useSocketEvent('match:locked',  useCallback(() => { clearCache('matches'); load() }, [load]))
-
-  useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), 15_000)
-    return () => clearInterval(iv)
-  }, [])
+  const [catFilter, setCatFilter]       = useState('')
+  const [searchOpen, setSearchOpen]     = useState(false)
+  const [searchQuery, setSearchQuery]   = useState('')
+  const searchRef                       = useRef<HTMLInputElement>(null)
 
   const q = searchQuery.trim().toLowerCase()
 
@@ -88,10 +57,8 @@ export default function Matches() {
       return true
     })
     .sort((a, b) => {
-      // Tab "Todos": ordenar sempre por data independente de chip de categoria
       const isAllFilter = !q && statusFilter === ''
       if (isAllFilter) return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
-      // Filtro específico: prioriza status (ao vivo primeiro), depois data
       const so = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
       if (so !== 0) return so
       return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
@@ -119,121 +86,123 @@ export default function Matches() {
   }
 
   return (
-    <div className="app-layout">
-      <div className="page">
-        <div className={s.header}>
-          {/* Título + ícone busca */}
-          <div className={s.titleRow}>
-            {searchOpen ? (
-              <div className={s.searchBar}>
-                <Search size={15} className={s.searchIcon} />
-                <input
-                  ref={searchRef}
-                  className={s.searchInput}
-                  placeholder="Buscar por país..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button className={s.searchClose} onClick={closeSearch}>
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
+    <PullToRefresh onRefresh={refresh}>
+      <div className="app-layout">
+        <div className="page">
+          <div className={s.header}>
+            {/* Título + ícone busca */}
+            <div className={s.titleRow}>
+              {searchOpen ? (
+                <div className={s.searchBar}>
+                  <Search size={15} className={s.searchIcon} />
+                  <input
+                    ref={searchRef}
+                    className={s.searchInput}
+                    placeholder="Buscar por país..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <button className={s.searchClose} onClick={closeSearch}>
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={s.title}>Jogos</div>
+                  <button className={s.searchToggle} onClick={openSearch}>
+                    <Search size={18} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* ── Filtros (ocultos durante busca) ── */}
+            {!searchOpen && (
               <>
-                <div className={s.title}>Jogos</div>
-                <button className={s.searchToggle} onClick={openSearch}>
-                  <Search size={18} />
-                </button>
+                <div className={s.statusRow}>
+                  {STATUS_TABS.map((t) => {
+                    const isCalc = t.value === 'awaiting_result'
+                    const count  = isCalc ? calcCount : 0
+                    const alert  = count > 0 && statusFilter !== t.value
+                    return (
+                      <button
+                        key={t.value}
+                        className={[
+                          s.statusTab,
+                          statusFilter === t.value ? s.statusTabActive : '',
+                          isCalc && alert ? s.statusTabCalc : '',
+                        ].filter(Boolean).join(' ')}
+                        onClick={() => toggleStatus(t.value)}
+                      >
+                        {t.label}
+                        {isCalc && count > 0 && <span className={`${s.statusBadge} ${s.statusBadgeCalc}`}>{count}</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className={s.catRow}>
+                  {CAT_CHIPS.map((c) => {
+                    const isLive = c.value === 'live'
+                    const isPalp = c.value === 'palpitei'
+                    const count  = isLive ? liveCount : isPalp ? predCount : 0
+                    const active = catFilter === c.value
+                    return (
+                      <button
+                        key={c.value}
+                        className={[
+                          s.catChip,
+                          active && isLive  ? s.catChipActiveLive : '',
+                          active && isPalp  ? s.catChipActivePalp : '',
+                          active && !isLive && !isPalp ? s.catChipActive : '',
+                          !active && isLive && liveCount > 0 ? s.catChipLiveAlert : '',
+                        ].filter(Boolean).join(' ')}
+                        onClick={() => toggleCat(c.value)}
+                      >
+                        {isLive && liveCount > 0 && !active && <span className={s.liveDot} />}
+                        {c.label}
+                        {count > 0 && (
+                          <span className={[
+                            s.catBadge,
+                            isLive ? s.catBadgeLive : '',
+                            isPalp ? s.catBadgePalp : '',
+                          ].filter(Boolean).join(' ')}>{count}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
               </>
             )}
           </div>
 
-          {/* ── Filtros (ocultos durante busca) ── */}
-          {!searchOpen && (
-            <>
-              <div className={s.statusRow}>
-                {STATUS_TABS.map((t) => {
-                  const isCalc = t.value === 'awaiting_result'
-                  const count  = isCalc ? calcCount : 0
-                  const alert  = count > 0 && statusFilter !== t.value
-                  return (
-                    <button
-                      key={t.value}
-                      className={[
-                        s.statusTab,
-                        statusFilter === t.value ? s.statusTabActive : '',
-                        isCalc && alert ? s.statusTabCalc : '',
-                      ].filter(Boolean).join(' ')}
-                      onClick={() => toggleStatus(t.value)}
-                    >
-                      {t.label}
-                      {isCalc && count > 0 && <span className={`${s.statusBadge} ${s.statusBadgeCalc}`}>{count}</span>}
-                    </button>
-                  )
-                })}
+          <div className={s.list}>
+            {loading && [1,2,3,4,5].map((i) => (
+              <div key={i} style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--r-lg)', padding: '12px 14px', borderLeft: '3px solid var(--c-border)' }}>
+                <div className="skeleton" style={{ width: 80, height: 10, borderRadius: 99, marginBottom: 12 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div className="skeleton" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
+                  <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                  <div className="skeleton" style={{ width: 52, height: 28, borderRadius: 10, flexShrink: 0 }} />
+                  <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                  <div className="skeleton" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
+                </div>
+                <div className="skeleton" style={{ width: '50%', height: 10, borderRadius: 99, marginTop: 12 }} />
               </div>
-
-              <div className={s.catRow}>
-                {CAT_CHIPS.map((c) => {
-                  const isLive = c.value === 'live'
-                  const isPalp = c.value === 'palpitei'
-                  const count  = isLive ? liveCount : isPalp ? predCount : 0
-                  const active = catFilter === c.value
-                  return (
-                    <button
-                      key={c.value}
-                      className={[
-                        s.catChip,
-                        active && isLive  ? s.catChipActiveLive : '',
-                        active && isPalp  ? s.catChipActivePalp : '',
-                        active && !isLive && !isPalp ? s.catChipActive : '',
-                        !active && isLive && liveCount > 0 ? s.catChipLiveAlert : '',
-                      ].filter(Boolean).join(' ')}
-                      onClick={() => toggleCat(c.value)}
-                    >
-                      {isLive && liveCount > 0 && !active && <span className={s.liveDot} />}
-                      {c.label}
-                      {count > 0 && (
-                        <span className={[
-                          s.catBadge,
-                          isLive ? s.catBadgeLive : '',
-                          isPalp ? s.catBadgePalp : '',
-                        ].filter(Boolean).join(' ')}>{count}</span>
-                      )}
-                    </button>
-                  )
-                })}
+            ))}
+            {!loading && sorted.length === 0 && (
+              <div className={s.empty}>
+                <div className={s.emptyIcon}><SoccerBall size={40} /></div>
+                Nenhum jogo encontrado
               </div>
-            </>
-          )}
-        </div>
-
-        <div className={s.list}>
-          {loading && [1,2,3,4,5].map((i) => (
-            <div key={i} style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--r-lg)', padding: '12px 14px', borderLeft: '3px solid var(--c-border)' }}>
-              <div className="skeleton" style={{ width: 80, height: 10, borderRadius: 99, marginBottom: 12 }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div className="skeleton" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
-                <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
-                <div className="skeleton" style={{ width: 52, height: 28, borderRadius: 10, flexShrink: 0 }} />
-                <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
-                <div className="skeleton" style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0 }} />
-              </div>
-              <div className="skeleton" style={{ width: '50%', height: 10, borderRadius: 99, marginTop: 12 }} />
-            </div>
-          ))}
-          {!loading && sorted.length === 0 && (
-            <div className={s.empty}>
-              <div className={s.emptyIcon}><SoccerBall size={40} /></div>
-              Nenhum jogo encontrado
-            </div>
-          )}
-          {sorted.map((m) => (
-            <MatchCard key={m.id} match={m} prediction={predictions.get(m.id)} />
-          ))}
+            )}
+            {sorted.map((m) => (
+              <MatchCard key={m.id} match={m} prediction={predictions.get(m.id)} />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </PullToRefresh>
   )
 }
 

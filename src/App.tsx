@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 
 import Splash from '@/components/Splash/Splash'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import BottomNav from '@/components/BottomNav/BottomNav'
+import { AppDataProvider } from '@/context/AppDataContext'
 
 import Login from '@/pages/Login/Login'
 import Register from '@/pages/Register/Register'
@@ -43,7 +44,7 @@ export default function App() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true
 
     if (isStandalone && !isPublicPath()) {
-      const t = setTimeout(() => setLoading(false), 2500)
+      const t = setTimeout(() => setLoading(false), 800)
       return () => clearTimeout(t)
     }
 
@@ -59,28 +60,32 @@ export default function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Rotas protegidas com BottomNav */}
-      <Route path="/home" element={<Protected><Home /></Protected>} />
-      <Route path="/matches" element={<Protected><Matches /></Protected>} />
-      <Route path="/matches/:id" element={<Protected><MatchDetail /></Protected>} />
-      <Route path="/ranking" element={<Protected><Ranking /></Protected>} />
-      <Route path="/groups" element={<Protected><Groups /></Protected>} />
-      <Route path="/bolao" element={<Protected><Bolao /></Protected>} />
-      <Route path="/bolao/:id" element={<Protected><BolaoDetail /></Protected>} />
-      <Route path="/bolao/:id/palpites" element={<Protected><BolaoGrupoPalpites /></Protected>} />
-      <Route path="/profile" element={<Protected><Profile /></Protected>} />
-      <Route path="/admin" element={<Protected><Admin /></Protected>} />
+      {/* Layout protegido: AppDataProvider monta uma vez, compartilha entre todas as rotas filhas */}
+      <Route element={<ProtectedLayout />}>
+        <Route path="/home"               element={<Home />} />
+        <Route path="/matches"            element={<Matches />} />
+        <Route path="/matches/:id"        element={<MatchDetail />} />
+        <Route path="/ranking"            element={<Ranking />} />
+        <Route path="/groups"             element={<Groups />} />
+        <Route path="/bolao"              element={<Bolao />} />
+        <Route path="/bolao/:id"          element={<BolaoDetail />} />
+        <Route path="/bolao/:id/palpites" element={<BolaoGrupoPalpites />} />
+        <Route path="/profile"            element={<Profile />} />
+        <Route path="/admin"              element={<Admin />} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   )
 }
 
-function Protected({ children }: { children: React.ReactNode }) {
+function ProtectedLayout() {
   return (
     <ProtectedRoute>
-      {children}
-      <BottomNav />
+      <AppDataProvider>
+        <Outlet />
+        <BottomNav />
+      </AppDataProvider>
     </ProtectedRoute>
   )
 }

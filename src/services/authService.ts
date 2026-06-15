@@ -29,7 +29,7 @@ export async function checkVerification(email: string): Promise<{ verified: bool
 }
 
 export async function getMe(): Promise<User> {
-  const cached = getCache<User>('me', 300_000) // 5 min
+  const cached = getCache<User>('me', 60_000) // 1 min
   if (cached) return cached
   const { data } = await api.get('/users/me')
   setCache('me', data)

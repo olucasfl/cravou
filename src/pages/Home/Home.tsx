@@ -1,19 +1,15 @@
-﻿import { useCallback, useEffect, useState, useMemo } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
   Calendar, Flag, ChevronRight, Crown, Zap,
 } from 'lucide-react'
-import { getMe, type User } from '@/services/authService'
-import {
-  getMatches, getMyPredictions, getRanking, getAllGroups, getBracket,
-  type Match, type Prediction, type GroupData, type Standing, type BracketSlot,
-} from '@/services/cravouService'
+import { useAppData } from '@/context/AppDataContext'
+import { type Match, type Prediction, type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
 import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory } from '@/utils/format'
-import { clearCache } from '@/utils/cache'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
-import { useSocketEvent } from '@/hooks/useSocketEvent'
+import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import s from './Home.module.css'
 
 type MainTab = 'jogos' | 'copa'
@@ -35,71 +31,27 @@ const ROUND_SLOT_COUNTS: Record<string, number> = {
 const STATUS_ORDER: Record<string, number> = { live: 0, awaiting_result: 1, locked: 2, upcoming: 3 }
 
 export default function Home() {
-  const [user, setUser]               = useState<User | null>(null)
-  const [allMatches, setAllMatches]   = useState<Match[]>([])
-  const [myPredictions, setMyPredictions] = useState<Prediction[]>([])
-  const [myPosition, setMyPosition]   = useState<number | null>(null)
-  const [groups, setGroups]           = useState<GroupData[]>([])
-  const [bracket, setBracket]         = useState<BracketSlot[]>([])
-  const [loading, setLoading]         = useState(true)
-  const [showTutorial, setShowTutorial]     = useState(false)
+  const { user, matches: allMatches, predictions: myPredictions, ranking, groups, bracket, loading, refresh } = useAppData()
+
+  const [showTutorial, setShowTutorial]         = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
-  const [nowMs, setNowMs] = useState(Date.now)
+  const [nowMs, setNowMs]                       = useState(Date.now)
+  const [mainTab, setMainTab]                   = useState<MainTab>('jogos')
+  const [copaTab, setCopaTab]                   = useState<CopaTab>('grupos')
+  const [bracketRound, setBracketRound]         = useState('round_of_32')
+  const [selectedGroup, setSelectedGroup]       = useState<string | null>(null)
 
-  const [mainTab, setMainTab]         = useState<MainTab>('jogos')
-  const [copaTab, setCopaTab]         = useState<CopaTab>('grupos')
-  const [bracketRound, setBracketRound] = useState('round_of_32')
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
-
-  const applyData = useCallback((u: User | null, all: Match[], preds: Prediction[], ranking: { userId: string; position: number }[], g: GroupData[], b: BracketSlot[]) => {
-    setUser(u)
-    setAllMatches(all)
-    setMyPredictions(preds)
-    setGroups(g)
-    setBracket(b)
-    if (u) setMyPosition(ranking.find(r => r.userId === u.id)?.position ?? null)
-    setLoading(false)
-  }, [])
-
-  const load = useCallback(async () => {
-    const [u, all, preds, ranking, g, b] = await Promise.all([
-      getMe().catch(() => null),
-      getMatches().catch(() => [] as Match[]),
-      getMyPredictions().catch(() => [] as Prediction[]),
-      getRanking().catch(() => []),
-      getAllGroups().catch(() => [] as GroupData[]),
-      getBracket().catch(() => [] as BracketSlot[]),
-    ])
-    applyData(u, all, preds, ranking, g, b)
-  }, [applyData])
-
-  useEffect(() => {
-    let active = true
-    async function init() {
-      const [u, all, preds, ranking, g, b] = await Promise.all([
-        getMe().catch(() => null),
-        getMatches().catch(() => [] as Match[]),
-        getMyPredictions().catch(() => [] as Prediction[]),
-        getRanking().catch(() => []),
-        getAllGroups().catch(() => [] as GroupData[]),
-        getBracket().catch(() => [] as BracketSlot[]),
-      ])
-      if (active) applyData(u, all, preds, ranking, g, b)
-    }
-    init()
-    return () => { active = false }
-  }, [applyData])
   useEffect(() => {
     const iv = setInterval(() => setNowMs(Date.now()), 15_000)
     return () => clearInterval(iv)
-  }, [setNowMs])
-
-  useSocketEvent('match:updated',               useCallback(() => { clearCache('matches','ranking','predictions'); load() }, [load]))
-  useSocketEvent('match:locked',                useCallback(() => { clearCache('matches'); load() }, [load]))
-  useSocketEvent('group:classified',            useCallback(() => { clearCache('groups','bracket'); load() }, [load]))
-  useSocketEvent('tournament:all-groups-complete', useCallback(() => { clearCache('groups','bracket'); load() }, [load]))
+  }, [])
 
   // ── Computed ───────────────────────────────────────────────
+
+  const myPosition = useMemo(() => {
+    if (!user) return null
+    return ranking.find(r => r.userId === user.id)?.position ?? null
+  }, [ranking, user])
 
   const predMap  = useMemo(() => new Map(myPredictions.map(p => [p.matchId, p])), [myPredictions])
   const matchMap = useMemo(() => new Map(allMatches.map(m => [m.id, m])), [allMatches])
@@ -114,7 +66,6 @@ export default function Home() {
         return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
       }),
     [allMatches])
-
 
   const scoredPredictions = useMemo(() =>
     myPredictions
@@ -152,190 +103,192 @@ export default function Home() {
     }))
   }, [bracketByRound, bracketRound])
 
-  const initials      = user?.name?.slice(0, 2).toUpperCase() ?? '?'
+  const initials = user?.name?.slice(0, 2).toUpperCase() ?? '?'
 
   return (
-    <div className="app-layout">
-      <div className="page fade-up">
+    <PullToRefresh onRefresh={refresh}>
+      <div className="app-layout">
+        <div className="page fade-up">
 
-        {/* Brand */}
-        <div className={s.brand}>
-          <img src="/logo-text.png" className={s.brandLogo} alt="Cravou!" />
-        </div>
+          {/* Brand */}
+          <div className={s.brand}>
+            <img src="/logo-text.png" className={s.brandLogo} alt="Cravou!" />
+          </div>
 
-        {/* Header */}
-        <div className={s.header}>
-          <div>
-            <div className={s.greeting}>Olá,</div>
-            <div className={s.name}>{user?.name ?? '...'}</div>
-          </div>
-          <div className={s.headerRight}>
-            <button className={s.howBtn} onClick={() => setShowTutorial(true)}>
-              <HelpCircle size={14} /> Como funciona?
-            </button>
-            <div className={s.avatar}>{initials}</div>
-          </div>
-        </div>
-
-        {/* Score Card */}
-        <div className={s.scoreCard}>
-          <div className={s.scoreCardTop}>
-            <span className={s.scoreLabel}>Seus pontos</span>
-            {!loading && myPosition && (
-              <span className={s.rankBadge}><Crown size={11} />#{myPosition} no ranking</span>
-            )}
-          </div>
-          <div className={s.scoreRow}>
-            <div className={s.scoreLeft}>
-              {loading
-                ? <div className="skeleton" style={{ width: 90, height: 44, borderRadius: 10, marginBottom: 4 }} />
-                : <div className={s.scoreValue}>{user?.bolaoPoints ?? 0}</div>
-              }
-              <div className={s.scoreSub}>no bolão</div>
+          {/* Header */}
+          <div className={s.header}>
+            <div>
+              <div className={s.greeting}>Olá,</div>
+              <div className={s.name}>{user?.name ?? '...'}</div>
             </div>
-            <div className={s.scoreIcon}>
-              <img src="/logo-ball.png" className={s.scoreIconImg} alt="" />
-            </div>
-          </div>
-          <div className={s.cravasRow}>
-            <Target size={13} className={s.cravasIcon} />
-            {loading
-              ? <div className="skeleton" style={{ width: 32, height: 16, borderRadius: 99, display: 'inline-block' }} />
-              : <span className={s.cravasValue}>{user?.cravadas ?? 0}</span>
-            }
-            <span className={s.cravasLabel}>cravadas</span>
-          </div>
-          {!loading && scoredPredictions.length > 0 && (
-            <button className={s.historyToggle} onClick={() => setShowHistoryModal(true)}>
-              <Target size={11} />
-              Ver onde ganhei pontos ({scoredPredictions.length})
-              <ChevronRight size={12} />
-            </button>
-          )}
-        </div>
-
-        {/* ── Main Tabs ───────────────────────────────────────── */}
-        <div className={s.mainTabs}>
-          <button
-            className={`${s.mainTab} ${mainTab === 'jogos' ? s.mainTabActive : ''}`}
-            onClick={() => setMainTab('jogos')}
-          >
-            Jogos
-          </button>
-          <button
-            className={`${s.mainTab} ${mainTab === 'copa' ? s.mainTabActive : ''}`}
-            onClick={() => setMainTab('copa')}
-          >
-            Copa
-          </button>
-        </div>
-
-        {/* ══ ABA: JOGOS ══════════════════════════════════════════ */}
-        {mainTab === 'jogos' && (
-          <div>
-            {loading && [1, 2, 3].map(i => (
-              <div key={i} className={s.matchCardSkeleton}>
-                <div className="skeleton" style={{ width: 70, height: 10, borderRadius: 99, marginBottom: 10 }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
-                  <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
-                  <div className="skeleton" style={{ width: 44, height: 22, borderRadius: 8, flexShrink: 0 }} />
-                  <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
-                  <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
-                </div>
-              </div>
-            ))}
-
-            {!loading && visibleMatches.length === 0 && (
-              <div className={s.empty}><div className={s.emptyIcon}><SoccerBall size={36} /></div>Nenhum jogo ativo</div>
-            )}
-
-            {!loading && visibleMatches.slice(0, 8).map(m => (
-              <MatchCard key={`${m.id}-${m.status}`} match={m} pred={predMap.get(m.id)} nowMs={nowMs} />
-            ))}
-
-            {!loading && visibleMatches.length > 0 && (
-              <Link to="/matches" className={s.verMaisBtn}>
-                Ver todos os jogos <ChevronRight size={15} />
-              </Link>
-            )}
-          </div>
-        )}
-
-        {/* ══ ABA: COPA ═══════════════════════════════════════════ */}
-        {mainTab === 'copa' && (
-          <div>
-            <div className={s.subTabs}>
-              <button className={`${s.subTab} ${copaTab === 'grupos' ? s.subTabActive : ''}`} onClick={() => setCopaTab('grupos')}>
-                Grupos
+            <div className={s.headerRight}>
+              <button className={s.howBtn} onClick={() => setShowTutorial(true)}>
+                <HelpCircle size={14} /> Como funciona?
               </button>
-              <button className={`${s.subTab} ${copaTab === 'mata' ? s.subTabActive : ''}`} onClick={() => setCopaTab('mata')}>
-                Mata-mata
-              </button>
+              <div className={s.avatar}>{initials}</div>
             </div>
+          </div>
 
-            {/* Grupos */}
-            {copaTab === 'grupos' && (
-              loading
-                ? <div className={s.groupCardRow}>{[1,2,3,4,5,6].map(i => <div key={i} className="skeleton" style={{ height: 148, borderRadius: 12 }} />)}</div>
-                : groups.length === 0
-                  ? <div className={s.empty}><div className={s.emptyIcon}><Trophy size={36} /></div>Grupos ainda não disponíveis</div>
-                  : <div className={s.groupRows}>
-                      {groupRows.map(row => {
-                        const active = row.find(g => g.group === selectedGroup)
-                        return (
-                          <div key={row[0].group} className={s.groupRowWrapper}>
-                            <div className={s.groupCardRow}>
-                              {row.map(g => (
-                                <GroupCard
-                                  key={g.group}
-                                  group={g}
-                                  selected={selectedGroup === g.group}
-                                  onToggle={() => setSelectedGroup(selectedGroup === g.group ? null : g.group)}
-                                />
-                              ))}
-                            </div>
-                            {active && (
-                              <div className={s.accordionPanel}>
-                                <StandingsTable group={active.group} standings={active.standings} />
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-            )}
-
-            {/* Mata-mata */}
-            {copaTab === 'mata' && (
-              <div>
-                <div className={s.roundTabs}>
-                  {BRACKET_ROUNDS.map(r => (
-                    <button
-                      key={r.value}
-                      className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
-                      onClick={() => setBracketRound(r.value)}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
+          {/* Score Card */}
+          <div className={s.scoreCard}>
+            <div className={s.scoreCardTop}>
+              <span className={s.scoreLabel}>Seus pontos</span>
+              {!loading && myPosition && (
+                <span className={s.rankBadge}><Crown size={11} />#{myPosition} no ranking</span>
+              )}
+            </div>
+            <div className={s.scoreRow}>
+              <div className={s.scoreLeft}>
                 {loading
-                  ? <div className={s.bracketGrid}>{[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: 80, borderRadius: 12 }} />)}</div>
-                  : <div className={s.bracketGrid}>
-                      {currentRoundSlots.map(slot => <BracketCard key={slot.id} slot={slot} />)}
-                    </div>
+                  ? <div className="skeleton" style={{ width: 90, height: 44, borderRadius: 10, marginBottom: 4 }} />
+                  : <div className={s.scoreValue}>{user?.bolaoPoints ?? 0}</div>
                 }
+                <div className={s.scoreSub}>no bolão</div>
               </div>
+              <div className={s.scoreIcon}>
+                <img src="/logo-ball.png" className={s.scoreIconImg} alt="" />
+              </div>
+            </div>
+            <div className={s.cravasRow}>
+              <Target size={13} className={s.cravasIcon} />
+              {loading
+                ? <div className="skeleton" style={{ width: 32, height: 16, borderRadius: 99, display: 'inline-block' }} />
+                : <span className={s.cravasValue}>{user?.cravadas ?? 0}</span>
+              }
+              <span className={s.cravasLabel}>cravadas</span>
+            </div>
+            {!loading && scoredPredictions.length > 0 && (
+              <button className={s.historyToggle} onClick={() => setShowHistoryModal(true)}>
+                <Target size={11} />
+                Ver onde ganhei pontos ({scoredPredictions.length})
+                <ChevronRight size={12} />
+              </button>
             )}
           </div>
-        )}
 
+          {/* ── Main Tabs ───────────────────────────────────────── */}
+          <div className={s.mainTabs}>
+            <button
+              className={`${s.mainTab} ${mainTab === 'jogos' ? s.mainTabActive : ''}`}
+              onClick={() => setMainTab('jogos')}
+            >
+              Jogos
+            </button>
+            <button
+              className={`${s.mainTab} ${mainTab === 'copa' ? s.mainTabActive : ''}`}
+              onClick={() => setMainTab('copa')}
+            >
+              Copa
+            </button>
+          </div>
+
+          {/* ══ ABA: JOGOS ══════════════════════════════════════════ */}
+          {mainTab === 'jogos' && (
+            <div>
+              {loading && [1, 2, 3].map(i => (
+                <div key={i} className={s.matchCardSkeleton}>
+                  <div className="skeleton" style={{ width: 70, height: 10, borderRadius: 99, marginBottom: 10 }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+                    <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                    <div className="skeleton" style={{ width: 44, height: 22, borderRadius: 8, flexShrink: 0 }} />
+                    <div className="skeleton" style={{ flex: 1, height: 13, borderRadius: 99 }} />
+                    <div className="skeleton" style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0 }} />
+                  </div>
+                </div>
+              ))}
+
+              {!loading && visibleMatches.length === 0 && (
+                <div className={s.empty}><div className={s.emptyIcon}><SoccerBall size={36} /></div>Nenhum jogo ativo</div>
+              )}
+
+              {!loading && visibleMatches.slice(0, 8).map(m => (
+                <MatchCard key={`${m.id}-${m.status}`} match={m} pred={predMap.get(m.id)} nowMs={nowMs} />
+              ))}
+
+              {!loading && visibleMatches.length > 0 && (
+                <Link to="/matches" className={s.verMaisBtn}>
+                  Ver todos os jogos <ChevronRight size={15} />
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* ══ ABA: COPA ═══════════════════════════════════════════ */}
+          {mainTab === 'copa' && (
+            <div>
+              <div className={s.subTabs}>
+                <button className={`${s.subTab} ${copaTab === 'grupos' ? s.subTabActive : ''}`} onClick={() => setCopaTab('grupos')}>
+                  Grupos
+                </button>
+                <button className={`${s.subTab} ${copaTab === 'mata' ? s.subTabActive : ''}`} onClick={() => setCopaTab('mata')}>
+                  Mata-mata
+                </button>
+              </div>
+
+              {/* Grupos */}
+              {copaTab === 'grupos' && (
+                loading
+                  ? <div className={s.groupCardRow}>{[1,2,3,4,5,6].map(i => <div key={i} className="skeleton" style={{ height: 148, borderRadius: 12 }} />)}</div>
+                  : groups.length === 0
+                    ? <div className={s.empty}><div className={s.emptyIcon}><Trophy size={36} /></div>Grupos ainda não disponíveis</div>
+                    : <div className={s.groupRows}>
+                        {groupRows.map(row => {
+                          const active = row.find(g => g.group === selectedGroup)
+                          return (
+                            <div key={row[0].group} className={s.groupRowWrapper}>
+                              <div className={s.groupCardRow}>
+                                {row.map(g => (
+                                  <GroupCard
+                                    key={g.group}
+                                    group={g}
+                                    selected={selectedGroup === g.group}
+                                    onToggle={() => setSelectedGroup(selectedGroup === g.group ? null : g.group)}
+                                  />
+                                ))}
+                              </div>
+                              {active && (
+                                <div className={s.accordionPanel}>
+                                  <StandingsTable group={active.group} standings={active.standings} />
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+              )}
+
+              {/* Mata-mata */}
+              {copaTab === 'mata' && (
+                <div>
+                  <div className={s.roundTabs}>
+                    {BRACKET_ROUNDS.map(r => (
+                      <button
+                        key={r.value}
+                        className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
+                        onClick={() => setBracketRound(r.value)}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
+                  {loading
+                    ? <div className={s.bracketGrid}>{[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: 80, borderRadius: 12 }} />)}</div>
+                    : <div className={s.bracketGrid}>
+                        {currentRoundSlots.map(slot => <BracketCard key={slot.id} slot={slot} />)}
+                      </div>
+                  }
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+
+        {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
+        {showHistoryModal && <HistoryModal predictions={scoredPredictions} onClose={() => setShowHistoryModal(false)} />}
       </div>
-
-      {showTutorial && <TutorialModal onClose={() => setShowTutorial(false)} />}
-      {showHistoryModal && <HistoryModal predictions={scoredPredictions} onClose={() => setShowHistoryModal(false)} />}
-    </div>
+    </PullToRefresh>
   )
 }
 
@@ -772,6 +725,3 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
     </div>
   )
 }
-
-
-
