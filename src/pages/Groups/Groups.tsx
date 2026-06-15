@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Shield, Trophy } from 'lucide-react'
-import {
-  getAllGroups, getBracket,
-  type GroupData, type Standing, type BracketSlot,
-} from '@/services/cravouService'
+import { type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
-import { useSocketEvent } from '@/hooks/useSocketEvent'
-import { clearCache } from '@/utils/cache'
+import { useAppData } from '@/context/AppDataContext'
+import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import s from './Groups.module.css'
 
 type MainTab = 'grupos' | 'mata'
@@ -30,29 +27,11 @@ const ROUND_SLOT_COUNTS: Record<string, number> = {
 }
 
 export default function Groups() {
+  const { groups, bracket, loading, refresh } = useAppData()
+
   const [tab, setTab]           = useState<MainTab>('grupos')
-  const [groups, setGroups]     = useState<GroupData[]>([])
-  const [bracket, setBracket]   = useState<BracketSlot[]>([])
   const [selected, setSelected] = useState<string | null>(null)
   const [bracketRound, setBracketRound] = useState('round_of_32')
-  const [loading, setLoading]   = useState(true)
-
-  const load = useCallback((force = false) => {
-    if (force) clearCache('groups', 'bracket')
-    Promise.all([
-      getAllGroups().catch(() => []),
-      getBracket().catch(() => []),
-    ]).then(([g, b]) => {
-      setGroups(g as GroupData[])
-      setBracket(b as BracketSlot[])
-      setLoading(false)
-    })
-  }, [])
-
-  useEffect(() => { load() }, [load])
-
-  useSocketEvent('group:classified',              useCallback(() => load(true), [load]))
-  useSocketEvent('tournament:all-groups-complete', useCallback(() => load(true), [load]))
 
   const bracketByRound = useMemo(() => {
     const map: Record<string, BracketSlot[]> = {}
@@ -84,134 +63,132 @@ export default function Groups() {
   for (let i = 0; i < groups.length; i += 2) rows.push(groups.slice(i, i + 2))
 
   return (
-    <div className="app-layout">
-      <div className="page fade-up">
+    <PullToRefresh onRefresh={refresh}>
+      <div className="app-layout">
+        <div className="page fade-up">
 
-        {/* ── Page Header ──────────────────────────────────── */}
-        <div className={s.pageHeader}>
-          <div className={s.pageTitle}>Copa 2026</div>
-          <div className={s.pageTabs}>
-            <button
-              className={`${s.pageTab} ${tab === 'grupos' ? s.pageTabActive : ''}`}
-              onClick={() => setTab('grupos')}
-            >
-              <Shield size={12} /> Grupos
-            </button>
-            <button
-              className={`${s.pageTab} ${tab === 'mata' ? s.pageTabActive : ''}`}
-              onClick={() => setTab('mata')}
-            >
-              <Trophy size={12} /> Mata-mata
-            </button>
+          <div className={s.pageHeader}>
+            <div className={s.pageTitle}>Copa 2026</div>
+            <div className={s.pageTabs}>
+              <button
+                className={`${s.pageTab} ${tab === 'grupos' ? s.pageTabActive : ''}`}
+                onClick={() => setTab('grupos')}
+              >
+                <Shield size={12} /> Grupos
+              </button>
+              <button
+                className={`${s.pageTab} ${tab === 'mata' ? s.pageTabActive : ''}`}
+                onClick={() => setTab('mata')}
+              >
+                <Trophy size={12} /> Mata-mata
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* ══ GRUPOS ══════════════════════════════════════════ */}
-        {tab === 'grupos' && (
-          <>
-            {loading && (
-              <div className={s.skeletonGrid}>
-                {[1,2,3,4,5,6].map((i) => (
-                  <div key={i} className="skeleton" style={{ height: 110 }} />
-                ))}
-              </div>
-            )}
+          {/* ══ GRUPOS ══════════════════════════════════════════ */}
+          {tab === 'grupos' && (
+            <>
+              {loading && (
+                <div className={s.skeletonGrid}>
+                  {[1,2,3,4,5,6].map((i) => (
+                    <div key={i} className="skeleton" style={{ height: 110 }} />
+                  ))}
+                </div>
+              )}
 
-            {!loading && (
-              <div className={s.rows}>
-                {rows.map((row) => {
-                  const activeGroup = row.find((g) => g.group === selected)
-                  return (
-                    <div key={row[0].group} className={s.rowWrapper}>
-                      <div className={s.cardRow}>
-                        {row.map(({ group, standings }) => (
-                          <div
-                            key={group}
-                            className={`${s.groupCard} ${selected === group ? s.groupCardActive : ''}`}
-                            onClick={() => setSelected(selected === group ? null : group)}
-                          >
-                            <div className={s.groupLetter}>GRUPO {group}</div>
-                            <div className={s.groupTeams}>
-                              {standings.slice(0, 4).map((st) => (
-                                <div
-                                  key={st.teamName}
-                                  className={`${s.groupTeamRow} ${st.isQualified ? s.qualified : ''}`}
-                                >
-                                  <CountryBadge country={st.teamName} size="xs" />
-                                  <span>{st.teamName}</span>
-                                </div>
-                              ))}
+              {!loading && (
+                <div className={s.rows}>
+                  {rows.map((row) => {
+                    const activeGroup = row.find((g) => g.group === selected)
+                    return (
+                      <div key={row[0].group} className={s.rowWrapper}>
+                        <div className={s.cardRow}>
+                          {row.map(({ group, standings }) => (
+                            <div
+                              key={group}
+                              className={`${s.groupCard} ${selected === group ? s.groupCardActive : ''}`}
+                              onClick={() => setSelected(selected === group ? null : group)}
+                            >
+                              <div className={s.groupLetter}>GRUPO {group}</div>
+                              <div className={s.groupTeams}>
+                                {standings.slice(0, 4).map((st) => (
+                                  <div
+                                    key={st.teamName}
+                                    className={`${s.groupTeamRow} ${st.isQualified ? s.qualified : ''}`}
+                                  >
+                                    <CountryBadge country={st.teamName} size="xs" />
+                                    <span>{st.teamName}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className={s.expandHint}>{selected === group ? '▲' : '▼'}</div>
                             </div>
-                            <div className={s.expandHint}>{selected === group ? '▲' : '▼'}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {activeGroup && (
-                        <div className={s.accordionPanel}>
-                          <StandingsTable group={activeGroup.group} standings={activeGroup.standings} />
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </>
-        )}
 
-        {/* ══ MATA-MATA ════════════════════════════════════════ */}
-        {tab === 'mata' && (
-          <>
-            {loading && (
-              <div className={s.skeletonList}>
-                {[1,2,3,4].map((i) => (
-                  <div key={i} className="skeleton" style={{ height: 84, marginBottom: 8 }} />
-                ))}
-              </div>
-            )}
+                        {activeGroup && (
+                          <div className={s.accordionPanel}>
+                            <StandingsTable group={activeGroup.group} standings={activeGroup.standings} />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
 
-            {!loading && (
-              <>
-                {/* Round selector — todos os rounds, sempre visíveis */}
-                <div className={s.roundTabs}>
-                  {ROUNDS.map((r) => (
-                    <button
-                      key={r.value}
-                      className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
-                      onClick={() => setBracketRound(r.value)}
-                    >
-                      {r.short}
-                    </button>
+          {/* ══ MATA-MATA ════════════════════════════════════════ */}
+          {tab === 'mata' && (
+            <>
+              {loading && (
+                <div className={s.skeletonList}>
+                  {[1,2,3,4].map((i) => (
+                    <div key={i} className="skeleton" style={{ height: 84, marginBottom: 8 }} />
                   ))}
                 </div>
+              )}
 
-                {/* Round title */}
-                <div className={s.roundHeading}>
-                  {ROUNDS.find((r) => r.value === bracketRound)?.label}
-                  {bracketRound !== 'final' && bracketRound !== 'third_place' && (
-                    <span className={s.roundCount}>
-                      {currentRoundSlots.length} jogos
-                    </span>
-                  )}
-                </div>
+              {!loading && (
+                <>
+                  <div className={s.roundTabs}>
+                    {ROUNDS.map((r) => (
+                      <button
+                        key={r.value}
+                        className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
+                        onClick={() => setBracketRound(r.value)}
+                      >
+                        {r.short}
+                      </button>
+                    ))}
+                  </div>
 
-                {/* Match cards */}
-                <div className={`${s.bracketGrid} ${bracketRound === 'final' || bracketRound === 'third_place' || bracketRound === 'semifinal' ? s.bracketGridSingle : ''}`}>
-                  {currentRoundSlots.map((slot) => (
-                    <BracketCard
-                      key={slot.id}
-                      slot={slot}
-                      isFinal={bracketRound === 'final'}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </>
-        )}
+                  <div className={s.roundHeading}>
+                    {ROUNDS.find((r) => r.value === bracketRound)?.label}
+                    {bracketRound !== 'final' && bracketRound !== 'third_place' && (
+                      <span className={s.roundCount}>
+                        {currentRoundSlots.length} jogos
+                      </span>
+                    )}
+                  </div>
+
+                  <div className={`${s.bracketGrid} ${bracketRound === 'final' || bracketRound === 'third_place' || bracketRound === 'semifinal' ? s.bracketGridSingle : ''}`}>
+                    {currentRoundSlots.map((slot) => (
+                      <BracketCard
+                        key={slot.id}
+                        slot={slot}
+                        isFinal={bracketRound === 'final'}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </PullToRefresh>
   )
 }
 
@@ -224,13 +201,11 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
 
   return (
     <div className={`${s.bCard} ${settled ? s.bCardDone : ''} ${isFinal ? s.bCardFinal : ''}`}>
-      {/* Slot label */}
       <div className={s.bHeader}>
         <span className={s.bSlot}>Confronto {slot.slotNumber}</span>
         {isFinal && <span className={s.bFinalBadge}><Trophy size={10} /> Final</span>}
       </div>
 
-      {/* Home team */}
       <div className={`${s.bTeam} ${homeWon ? s.bWinner : ''} ${settled && !homeWon ? s.bLoser : ''} ${!slot.homeTeam ? s.bTbd : ''}`}>
         {slot.homeTeam ? (
           <>
@@ -245,7 +220,6 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
 
       <div className={s.bDivider} />
 
-      {/* Away team */}
       <div className={`${s.bTeam} ${awayWon ? s.bWinner : ''} ${settled && !awayWon ? s.bLoser : ''} ${!slot.awayTeam ? s.bTbd : ''}`}>
         {slot.awayTeam ? (
           <>
