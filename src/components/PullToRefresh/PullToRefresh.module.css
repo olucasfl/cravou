@@ -35,3 +35,11 @@
 @keyframes ptr-spin {
   to { transform: rotate(360deg); }
 }
+
+.content {
+  transition: opacity 0.25s ease;
+}
+
+.contentRefreshing {
+  opacity: 0.4;
+}

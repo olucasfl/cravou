@@ -69,7 +69,9 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
       <div className={`${s.indicator} ${visible ? s.indicatorVisible : ''}`} aria-hidden="true">
         <span className={s.spinner} />
       </div>
-      {children}
+      <div className={`${s.content} ${refreshing ? s.contentRefreshing : ''}`}>
+        {children}
+      </div>
     </div>
   )
 }
