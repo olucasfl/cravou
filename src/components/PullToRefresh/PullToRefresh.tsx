@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import s from './PullToRefresh.module.css'
 
-const THRESHOLD = 70
 
 interface Props {
   onRefresh: () => Promise<void>
