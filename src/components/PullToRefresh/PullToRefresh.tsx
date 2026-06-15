@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import s from './PullToRefresh.module.css'
 
-const THRESHOLD = 100  // px — puxada intencional para ativar
+const THRESHOLD = 100  // px para confirmar o refresh
+const HIDDEN    = 120  // px acima da tela quando escondido
 
 interface Props {
   onRefresh: () => Promise<void>
@@ -9,42 +10,56 @@ interface Props {
 }
 
 export default function PullToRefresh({ onRefresh, children }: Props) {
-  const [visible, setVisible]       = useState(false)
+  const [pullY, setPullY]           = useState(0)
+  const [pulling, setPulling]       = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
-  const startYRef    = useRef<number | null>(null)
-  const deltaRef     = useRef(0)             // delta atual do dedo
-  const wrapperRef   = useRef<HTMLDivElement>(null)
+  const startYRef  = useRef<number | null>(null)
+  const pullYRef   = useRef(0)          // ref síncrono lido no touchEnd
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // posição do spinner: -HIDDEN (escondido) → 0 (visível)
+  const progress   = Math.min(pullY / THRESHOLD, 1)
+  const translateY = refreshing ? 0 : (progress - 1) * HIDDEN
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (window.scrollY > 0) return
     startYRef.current = e.touches[0].clientY
-    deltaRef.current = 0
+    pullYRef.current = 0
+    setPulling(true)
   }, [])
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (refreshing || startYRef.current === null) return
-    if (window.scrollY > 0) { startYRef.current = null; return }
+    if (window.scrollY > 0) { startYRef.current = null; setPulling(false); return }
 
     const delta = e.touches[0].clientY - startYRef.current
-    if (delta <= 0) { startYRef.current = null; setVisible(false); return }
+    if (delta <= 0) {
+      pullYRef.current = 0
+      setPullY(0)
+      return
+    }
 
-    deltaRef.current = delta
-    e.preventDefault()  // impede bounce nativo durante o arraste
+    // resistência após cruzar o threshold para não parecer solto demais
+    const damped = delta <= THRESHOLD
+      ? delta
+      : THRESHOLD + (delta - THRESHOLD) * 0.3
 
-    // spinner aparece ao cruzar threshold, some se voltar abaixo dele
-    setVisible(delta >= THRESHOLD)
+    pullYRef.current = damped
+    setPullY(damped)
+    e.preventDefault()
   }, [refreshing])
 
   const handleTouchEnd = useCallback(async () => {
     if (startYRef.current === null) return
-    const delta = deltaRef.current
     startYRef.current = null
-    deltaRef.current = 0
+    setPulling(false)
 
-    // abaixo do threshold ou puxou de volta → cancela sem recarregar
+    const delta = pullYRef.current
+    pullYRef.current = 0
+
     if (delta < THRESHOLD) {
-      setVisible(false)
+      setPullY(0)  // volta suavemente para cima
       return
     }
 
@@ -54,7 +69,7 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
       await onRefresh()
     } finally {
       setRefreshing(false)
-      setVisible(false)
+      setPullY(0)
     }
   }, [onRefresh])
 
@@ -73,7 +88,16 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
 
   return (
     <div ref={wrapperRef} className={s.wrapper}>
-      <div className={`${s.indicator} ${visible ? s.indicatorVisible : ''}`} aria-hidden="true">
+      <div
+        className={s.indicator}
+        style={{
+          transform: `translateY(${translateY}px)`,
+          // sem transição enquanto o dedo está na tela — segue o dedo
+          // com transição ao soltar — volta suave ou fica parado durante refresh
+          transition: pulling ? 'none' : 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        }}
+        aria-hidden="true"
+      >
         <span className={s.spinner} />
       </div>
       <div className={`${s.content} ${refreshing ? s.contentRefreshing : ''}`}>
