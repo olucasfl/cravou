@@ -253,6 +253,7 @@ function CreateGroupModal({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [brazilOnly, setBrazilOnly] = useState(false)
+  const [zeroPoints, setZeroPoints] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -264,7 +265,7 @@ function CreateGroupModal({
     setLoading(true)
     setError('')
     try {
-      const group = await createBolaoGroup(name.trim(), description.trim() || undefined, brazilOnly || undefined)
+      const group = await createBolaoGroup(name.trim(), description.trim() || undefined, brazilOnly || undefined, zeroPoints || undefined)
       onCreate(group)
     } catch (e) {
       const err = e as { response?: { data?: { message?: string } } }
@@ -323,6 +324,22 @@ function CreateGroupModal({
               Apenas os jogos do Brasil contam para o ranking deste bolão
             </div>
           )}
+
+          <div className={s.zeroToggleRow}>
+            <div className={s.zeroToggleInfo}>
+              <span className={s.zeroToggleLabel}>Pontuação zerada</span>
+              <span className={s.zeroToggleHint}>
+                Só contam pontos de jogos após a criação do grupo — todo mundo começa do zero, independente do histórico.
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={zeroPoints}
+              className={`${s.toggleSwitch} ${zeroPoints ? s.toggleSwitchOn : ''}`}
+              onClick={() => setZeroPoints((v) => !v)}
+            />
+          </div>
 
           {error && <div className={s.fieldError}>{error}</div>}
         </div>

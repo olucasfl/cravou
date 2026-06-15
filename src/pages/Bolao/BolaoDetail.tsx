@@ -180,6 +180,19 @@ export default function BolaoDetail() {
           </div>
         )}
 
+        {/* Pontuação zerada banner */}
+        {group.zeroPoints && (
+          <div className={s.zeroBanner}>
+            <span className={s.zeroBannerIcon}>0</span>
+            <div className={s.zeroBannerText}>
+              <span className={s.zeroBannerTitle}>Pontuação Zerada</span>
+              <span className={s.zeroBannerSub}>
+                Só contam pontos de jogos após a criação deste grupo — histórico anterior não conta
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Ver palpites do grupo */}
         <button
           className={s.palpitesBtn}
