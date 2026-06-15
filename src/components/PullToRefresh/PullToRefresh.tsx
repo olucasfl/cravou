@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import s from './PullToRefresh.module.css'
 
+const TRIGGER_THRESHOLD = 65  // px mínimo para ativar o refresh
 
 interface Props {
   onRefresh: () => Promise<void>
@@ -12,13 +13,11 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
   const [refreshing, setRefreshing] = useState(false)
 
   const startYRef  = useRef<number | null>(null)
-  const pulledRef  = useRef(false)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (window.scrollY > 0) return
     startYRef.current = e.touches[0].clientY
-    pulledRef.current = false
   }, [])
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -28,17 +27,19 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
     const delta = e.touches[0].clientY - startYRef.current
     if (delta <= 0) { startYRef.current = null; return }
 
-    if (delta > 10) {
-      pulledRef.current = true
+    // só mostra o spinner após o threshold — evita disparo acidental
+    if (delta >= TRIGGER_THRESHOLD) {
       setVisible(true)
       e.preventDefault()
     }
   }, [refreshing])
 
   const handleTouchEnd = useCallback(async () => {
-    if (!pulledRef.current) return
-    pulledRef.current = false
+    if (startYRef.current === null) return
+    const wasVisible = visible
     startYRef.current = null
+
+    if (!wasVisible) return  // não atingiu o threshold, ignora
 
     try { navigator.vibrate?.(30) } catch {}
     setRefreshing(true)
@@ -48,7 +49,7 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
       setRefreshing(false)
       setVisible(false)
     }
-  }, [onRefresh])
+  }, [visible, onRefresh])
 
   useEffect(() => {
     const el = wrapperRef.current
