@@ -75,7 +75,18 @@ export default function BolaoDetail() {
 
   async function handleCopyCode() {
     if (!group) return
-    await navigator.clipboard.writeText(group.inviteCode)
+    try {
+      await navigator.clipboard.writeText(group.inviteCode)
+    } catch {
+      const el = document.createElement('textarea')
+      el.value = group.inviteCode
+      el.style.position = 'fixed'
+      el.style.opacity = '0'
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
     setCodeCopied(true)
     setTimeout(() => setCodeCopied(false), 2000)
   }
@@ -157,17 +168,15 @@ export default function BolaoDetail() {
           )}
         </div>
 
-        {/* Invite Code (owner) */}
-        {isOwner && (
-          <button className={s.codeBar} onClick={handleCopyCode}>
-            <span className={s.codeLabel}>Código do grupo</span>
-            <span className={s.codeValue}>{group.inviteCode}</span>
-            <span className={s.codeCopy}>
-              {codeCopied ? <Check size={14} /> : <Copy size={14} />}
-              {codeCopied ? 'Copiado!' : 'Copiar'}
-            </span>
-          </button>
-        )}
+        {/* Invite Code (todos os membros) */}
+        <button className={s.codeBar} onClick={handleCopyCode}>
+          <span className={s.codeLabel}>Código do grupo</span>
+          <span className={s.codeValue}>{group.inviteCode}</span>
+          <span className={s.codeCopy}>
+            {codeCopied ? <Check size={14} /> : <Copy size={14} />}
+            {codeCopied ? 'Copiado!' : 'Copiar'}
+          </span>
+        </button>
 
         {/* Brasil Edition banner */}
         {group.brazilOnly && (
