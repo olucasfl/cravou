@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import s from './PullToRefresh.module.css'
 
-const TRIGGER_THRESHOLD = 65  // px mínimo para ativar o refresh
+const THRESHOLD = 100  // px — puxada intencional para ativar
 
 interface Props {
   onRefresh: () => Promise<void>
@@ -12,12 +12,14 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
   const [visible, setVisible]       = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
-  const startYRef  = useRef<number | null>(null)
-  const wrapperRef = useRef<HTMLDivElement>(null)
+  const startYRef    = useRef<number | null>(null)
+  const deltaRef     = useRef(0)             // delta atual do dedo
+  const wrapperRef   = useRef<HTMLDivElement>(null)
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (window.scrollY > 0) return
     startYRef.current = e.touches[0].clientY
+    deltaRef.current = 0
   }, [])
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -25,21 +27,26 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
     if (window.scrollY > 0) { startYRef.current = null; return }
 
     const delta = e.touches[0].clientY - startYRef.current
-    if (delta <= 0) { startYRef.current = null; return }
+    if (delta <= 0) { startYRef.current = null; setVisible(false); return }
 
-    // só mostra o spinner após o threshold — evita disparo acidental
-    if (delta >= TRIGGER_THRESHOLD) {
-      setVisible(true)
-      e.preventDefault()
-    }
+    deltaRef.current = delta
+    e.preventDefault()  // impede bounce nativo durante o arraste
+
+    // spinner aparece ao cruzar threshold, some se voltar abaixo dele
+    setVisible(delta >= THRESHOLD)
   }, [refreshing])
 
   const handleTouchEnd = useCallback(async () => {
     if (startYRef.current === null) return
-    const wasVisible = visible
+    const delta = deltaRef.current
     startYRef.current = null
+    deltaRef.current = 0
 
-    if (!wasVisible) return  // não atingiu o threshold, ignora
+    // abaixo do threshold ou puxou de volta → cancela sem recarregar
+    if (delta < THRESHOLD) {
+      setVisible(false)
+      return
+    }
 
     try { navigator.vibrate?.(30) } catch {}
     setRefreshing(true)
@@ -49,7 +56,7 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
       setRefreshing(false)
       setVisible(false)
     }
-  }, [visible, onRefresh])
+  }, [onRefresh])
 
   useEffect(() => {
     const el = wrapperRef.current
