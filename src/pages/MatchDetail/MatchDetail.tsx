@@ -425,6 +425,7 @@ function getMatchPhase(elapsed: number): { label: string; barPct: number; pulsin
 
 const CAT_LABEL: Record<PredCategory, string> = {
   exact:   'Placar exato!',
+  bonus:   'Resultado + bônus!',
   right:   'Resultado certo!',
   partial: 'Quase lá!',
   wrong:   'Errou',
