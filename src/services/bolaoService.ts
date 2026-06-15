@@ -1,4 +1,5 @@
 import api from './api'
+import { getCache, setCache } from '@/utils/cache'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,7 +58,10 @@ export interface UserSearchResult {
 // ── Grupos ────────────────────────────────────────────────────────────────────
 
 export async function getMyBolaoGroups() {
+  const cached = getCache<BolaoGroup[]>('myBolaoGroups', 60_000)
+  if (cached) return cached
   const { data } = await api.get('/cravou/groups/my')
+  setCache('myBolaoGroups', data)
   return data as BolaoGroup[]
 }
 
@@ -109,7 +113,10 @@ export async function sendBolaoInvite(groupId: string, inviteeId: string) {
 }
 
 export async function getPendingInvites() {
+  const cached = getCache<PendingInvite[]>('pendingInvites', 60_000)
+  if (cached) return cached
   const { data } = await api.get('/cravou/groups/invites/pending')
+  setCache('pendingInvites', data)
   return data as PendingInvite[]
 }
 
