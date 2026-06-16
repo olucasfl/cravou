@@ -111,6 +111,49 @@ export async function getBracketByRound(round: string) {
   return data as BracketSlot[]
 }
 
+// ── Palpites globais ──────────────────────────────────────────────────────────
+
+export type GlobalPalpiteCategory = 'cravou' | 'resultado_bonus' | 'resultado_certo' | 'parcial' | 'errou'
+
+export interface GlobalPalpite {
+  userId: string
+  name: string
+  homeScore: number | null
+  awayScore: number | null
+  penaltyWinner: string | null
+  points: number | null
+  category: GlobalPalpiteCategory
+}
+
+export interface GlobalFinishedMatch {
+  id: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number
+  awayScore: number
+  matchDate: string
+  phase: string
+  penaltyWinner: string | null
+}
+
+export interface GlobalMatchPalpites {
+  match: GlobalFinishedMatch
+  palpites: GlobalPalpite[]
+}
+
+export async function getGlobalFinishedMatches() {
+  const cached = getCache<{ matches: GlobalFinishedMatch[] }>('global-finished', 30_000)
+  if (cached) return cached
+  const { data } = await api.get('/cravou/matches/finished')
+  setCache('global-finished', data)
+  return data as { matches: GlobalFinishedMatch[] }
+}
+
+export async function getGlobalMatchPalpites(matchId: string) {
+  const { data } = await api.get(`/cravou/matches/${matchId}/palpites`)
+  return data as GlobalMatchPalpites
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export async function adminGetMatches() {

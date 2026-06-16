@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { Trophy, Crown, Target } from 'lucide-react'
 import { useAppData } from '@/context/AppDataContext'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
+import GlobalPalpitesTab from './GlobalPalpitesTab'
 import s from './Ranking.module.css'
 
-type Tab = 'pontos' | 'cravadas'
+type Tab = 'pontos' | 'cravadas' | 'palpites'
 
 export default function Ranking() {
   const { ranking: rankingPontos, user, loading, refresh } = useAppData()
@@ -53,9 +54,17 @@ export default function Ranking() {
             >
               <Target size={14} /> Cravadas
             </button>
+            <button
+              className={`${s.tab} ${tab === 'palpites' ? s.tabActivePalpites : ''}`}
+              onClick={() => setTab('palpites')}
+            >
+              Palpites
+            </button>
           </div>
 
-          {loading && [1, 2, 3, 4, 5, 6, 7].map((i) => (
+          {tab === 'palpites' && <GlobalPalpitesTab />}
+
+          {tab !== 'palpites' && loading && [1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--r-lg)', padding: '10px 14px', marginBottom: 8 }}>
               <div className="skeleton" style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0 }} />
               <div className="skeleton" style={{ width: 38, height: 38, borderRadius: '50%', flexShrink: 0 }} />
@@ -67,7 +76,7 @@ export default function Ranking() {
             </div>
           ))}
 
-          {!loading && ranking.length === 0 && (
+          {!loading && tab !== 'palpites' && ranking.length === 0 && (
             <div className={s.empty}>
               <div className={s.emptyIcon}><Trophy size={40} /></div>
               <div className={s.emptyTitle}>Nenhum palpite pontuado ainda</div>
@@ -75,7 +84,7 @@ export default function Ranking() {
             </div>
           )}
 
-          {!loading && showPodium && (
+          {!loading && tab !== 'palpites' && showPodium && (
             <div className={s.podium}>
               {[1, 0, 2].map((idx) => {
                 const e = top3[idx]
@@ -107,7 +116,7 @@ export default function Ranking() {
             </div>
           )}
 
-          {!loading && ranking.length > 0 && (
+          {!loading && tab !== 'palpites' && ranking.length > 0 && (
             <div className={s.list}>
               {listItems.map((e) => (
                 <div key={e.userId} className={`${s.item} ${e.userId === myId ? (isCravas ? s.meCravas : s.me) : ''}`}>

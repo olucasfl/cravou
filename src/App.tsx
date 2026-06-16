@@ -65,7 +65,7 @@ export default function App() {
         <Route path="/home"               element={<Home />} />
         <Route path="/matches"            element={<Matches />} />
         <Route path="/matches/:id"        element={<MatchDetail />} />
-        <Route path="/ranking"            element={<Ranking />} />
+        <Route path="/ranking"             element={<Ranking />} />
         <Route path="/groups"             element={<Groups />} />
         <Route path="/bolao"              element={<Bolao />} />
         <Route path="/bolao/:id"          element={<BolaoDetail />} />
