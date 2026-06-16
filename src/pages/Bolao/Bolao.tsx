@@ -77,7 +77,7 @@ export default function Bolao() {
     setJoinLoading(true)
     setJoinError('')
     try {
-      const res = await joinBolaoGroup(joinCode.trim().toUpperCase())
+      const res = await joinBolaoGroup(joinCode.trim())
       setJoinCode('')
       clearCache('myBolaoGroups')
       await loadGroups()
@@ -163,7 +163,7 @@ export default function Bolao() {
                     <Hash size={14} className={s.joinIcon} />
                     <input
                       className={s.joinInput}
-                      placeholder="Ex: ABC123"
+                      placeholder="Cole o código aqui"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
                       maxLength={250}
@@ -226,7 +226,7 @@ export default function Bolao() {
                     <Hash size={14} className={s.joinIcon} />
                     <input
                       className={s.joinInput}
-                      placeholder="Ex: ABC123"
+                      placeholder="Cole o código aqui"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
                       maxLength={250}
