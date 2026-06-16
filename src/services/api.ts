@@ -31,9 +31,9 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Não tentar refresh quando a própria requisição de auth falhou
+    // Não tentar refresh para endpoints de auth ou registro (POST /users)
     const url: string = original.url ?? ''
-    if (url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/users')) {
+    if (url.includes('/auth/login') || url.includes('/auth/refresh') || url === '/users') {
       return Promise.reject(error)
     }
 

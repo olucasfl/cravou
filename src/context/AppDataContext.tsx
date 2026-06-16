@@ -45,6 +45,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading]       = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const mountedRef                  = useRef(true)
+  const lastFetchAt                 = useRef(0)
 
   useEffect(() => {
     mountedRef.current = true
@@ -60,6 +61,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     b: BracketSlot[],
   ) => {
     if (!mountedRef.current) return
+    lastFetchAt.current = Date.now()
     setUser(u)
     setMatches(all)
     setPredictions(preds)
@@ -84,6 +86,18 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   // Carregamento inicial
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  // Refetch automático quando o app volta ao foco (troca de aba, desbloquear celular, etc.)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastFetchAt.current > 30_000) {
+        clearCache()
+        fetchAll()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [fetchAll])
 
   // Refresh completo: limpa cache e rebusca tudo
   const refresh = useCallback(async () => {

@@ -5,6 +5,7 @@ import { SoccerBall } from '@/components/icons/SoccerBall'
 import { CountryBadge } from '@/components/CountryBadge'
 import { getMatch, upsertPrediction, type Match, type Prediction } from '@/services/cravouService'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
+import { useAppData } from '@/context/AppDataContext'
 import {
   formatMatchDate,
   formatTimeUntil,
@@ -20,6 +21,7 @@ import s from './MatchDetail.module.css'
 
 export default function MatchDetail() {
   const { id } = useParams<{ id: string }>()
+  const { refresh } = useAppData()
   const [match, setMatch] = useState<Match | null>(null)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [home, setHome] = useState('')
@@ -82,6 +84,7 @@ export default function MatchDetail() {
       const saved = await upsertPrediction(id, h, a, pw)
       setPrediction(saved)
       setMsg({ type: 'success', text: 'Palpite salvo!' })
+      refresh() // atualiza HOME com o novo palpite em background
     } catch {
       setMsg({ type: 'error', text: 'Erro ao salvar. Tente novamente.' })
     } finally {
