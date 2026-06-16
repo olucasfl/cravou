@@ -166,7 +166,7 @@ export default function Bolao() {
                       placeholder="Ex: ABC123"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                      maxLength={12}
+                      maxLength={250}
                       onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                     />
                   </div>
@@ -229,7 +229,7 @@ export default function Bolao() {
                       placeholder="Ex: ABC123"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                      maxLength={12}
+                      maxLength={250}
                       onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
                     />
                   </div>
