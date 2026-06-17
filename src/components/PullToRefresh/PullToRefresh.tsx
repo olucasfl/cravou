@@ -24,6 +24,13 @@ export default function PullToRefresh({ onRefresh, children }: Props) {
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (window.scrollY > 0) return
+    // Skip if touch started inside a scrollable child (e.g. modal body)
+    let el = e.target as HTMLElement | null
+    while (el && el !== wrapperRef.current) {
+      const oy = window.getComputedStyle(el).overflowY
+      if (oy === 'auto' || oy === 'scroll') return
+      el = el.parentElement
+    }
     startYRef.current = e.touches[0].clientY
     pullYRef.current = 0
     setPulling(true)

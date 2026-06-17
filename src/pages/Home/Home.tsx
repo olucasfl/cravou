@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
-  Calendar, Flag, ChevronRight, Crown, Zap,
+  Calendar, Flag, ChevronRight, Crown, Zap, Minus,
 } from 'lucide-react'
 import { useAppData } from '@/context/AppDataContext'
 import { type Match, type Prediction, type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
@@ -477,8 +477,26 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const cravadas = predictions.filter(p => getPredCategory(p.points, true) === 'exact')
-  const others   = predictions.filter(p => getPredCategory(p.points, true) !== 'exact')
+  const byCategory = (cat: string) =>
+    predictions
+      .filter(p => getPredCategory(p.points, true, p.match.phase) === cat)
+      .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+
+  const cravadas = byCategory('exact')
+  const bonus    = byCategory('bonus')
+  const right    = byCategory('right')
+  const partial  = byCategory('partial')
+
+  const renderRows = (list: ScoredPred[], ptClass: string, icon?: React.ReactNode) =>
+    list.map(p => (
+      <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
+        <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
+        <div className={s.historyRight}>
+          <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
+          <span className={`${s.historyPts} ${ptClass}`}>{icon} +{p.points}</span>
+        </div>
+      </Link>
+    ))
 
   return (
     <div className={s.overlay} onClick={onClose}>
@@ -490,30 +508,34 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
         <div className={s.modalBody}>
           {cravadas.length > 0 && (
             <div className={s.historySection}>
-              <div className={s.historySectionTitle}><Target size={12} /> Cravadas ({cravadas.length})</div>
-              {cravadas.map(p => (
-                <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
-                  <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
-                  <div className={s.historyRight}>
-                    <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
-                    <span className={`${s.historyPts} ${s.historyExact}`}><Target size={9} /> +{p.points}</span>
-                  </div>
-                </Link>
-              ))}
+              <div className={`${s.historySectionTitle} ${s.historySectionExact}`}>
+                <Target size={12} /> Cravou! ({cravadas.length})
+              </div>
+              {renderRows(cravadas, s.historyExact, <Target size={9} />)}
             </div>
           )}
-          {others.length > 0 && (
+          {bonus.length > 0 && (
             <div className={s.historySection}>
-              <div className={s.historySectionTitle}>Outros pontos ({others.length})</div>
-              {others.map(p => (
-                <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
-                  <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
-                  <div className={s.historyRight}>
-                    <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
-                    <span className={`${s.historyPts} ${s.historyGood}`}>+{p.points}</span>
-                  </div>
-                </Link>
-              ))}
+              <div className={`${s.historySectionTitle} ${s.historySectionBonus}`}>
+                <Zap size={12} /> Bônus ({bonus.length})
+              </div>
+              {renderRows(bonus, s.historyBonus, <Zap size={9} />)}
+            </div>
+          )}
+          {right.length > 0 && (
+            <div className={s.historySection}>
+              <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
+                <CheckCircle2 size={12} /> Acertou o Vencedor ({right.length})
+              </div>
+              {renderRows(right, s.historyGood)}
+            </div>
+          )}
+          {partial.length > 0 && (
+            <div className={s.historySection}>
+              <div className={`${s.historySectionTitle} ${s.historySectionPartial}`}>
+                <Minus size={12} /> Parcial ({partial.length})
+              </div>
+              {renderRows(partial, s.historyPartial)}
             </div>
           )}
         </div>

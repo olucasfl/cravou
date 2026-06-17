@@ -263,8 +263,15 @@
   justify-content: flex-end;
 }
 
-.historyGood  { color: #eab308; }
-.historyExact { color: var(--c-green); }
+.historyExact   { color: var(--c-green); }
+.historyBonus   { color: #84cc16; }
+.historyGood    { color: #eab308; }
+.historyPartial { color: #f97316; }
+
+.historySectionExact   { color: var(--c-green); }
+.historySectionBonus   { color: #84cc16; }
+.historySectionRight   { color: #eab308; }
+.historySectionPartial { color: #f97316; }
 
 /* ── Tournament Progress ─────────────────────────────────── */
 .progress {
@@ -643,6 +650,8 @@
 
 .modalBody {
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
