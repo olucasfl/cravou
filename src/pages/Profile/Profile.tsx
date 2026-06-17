@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Shield, BarChart2, LogOut, Target, CheckCircle2, XCircle, Trophy } from 'lucide-react'
+import { ChevronRight, Shield, BarChart2, LogOut, Target, CheckCircle2, XCircle, Trophy, Minus } from 'lucide-react'
 import { getMe, logout, type User } from '@/services/authService'
 import { getRanking, getMyPredictions, type Prediction } from '@/services/cravouService'
+import { useAppData } from '@/context/AppDataContext'
+import { getPredCategory } from '@/utils/format'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import s from './Profile.module.css'
 
@@ -11,6 +13,8 @@ export default function Profile() {
   const [myPosition, setMyPosition] = useState<number | null>(null)
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [loading, setLoading]     = useState(true)
+
+  const { matches } = useAppData()
 
   useEffect(() => {
     async function load() {
@@ -30,17 +34,28 @@ export default function Profile() {
     load()
   }, [])
 
-  // Somente palpites de partidas já encerradas (points !== null)
-  const finished  = predictions.filter(p => p.points !== null)
-  const total     = predictions.length
-  const cravadas  = finished.filter(p => (p.points ?? 0) >= 10).length
-  const certos    = finished.filter(p => (p.points ?? 0) >= 5 && (p.points ?? 0) < 10).length
-  const parciais  = finished.filter(p => (p.points ?? 0) >= 2 && (p.points ?? 0) < 5).length
-  const erros     = finished.filter(p => (p.points ?? 0) < 2).length
+  // Total de jogos já encerrados (com resultado) independente de palpite
+  const totalFinished = matches.filter(m => m.status === 'finished').length
+
+  // Palpites em jogos já encerrados (têm pontuação)
+  const finished = predictions.filter(p => p.points !== null)
+  const total    = predictions.length
+
+  // Categorização correta usando a fase do jogo
+  const matchMap = new Map(matches.map(m => [m.id, m]))
+  const cat = (p: Prediction) => getPredCategory(p.points, true, matchMap.get(p.matchId)?.phase)
+  const cravadas = finished.filter(p => cat(p) === 'exact').length
+  const certos   = finished.filter(p => cat(p) === 'bonus' || cat(p) === 'right').length
+  const parciais = finished.filter(p => cat(p) === 'partial').length
+  const erros    = finished.filter(p => cat(p) === 'wrong').length
+  // Jogos encerrados onde o usuário não palpitou
+  const missed   = Math.max(0, totalFinished - finished.length)
+
   const pontuaram = finished.filter(p => (p.points ?? 0) > 0).length
   const aprovPct  = finished.length > 0 ? Math.round((pontuaram / finished.length) * 100) : 0
 
-  const pct = (n: number) => finished.length > 0 ? (n / finished.length) * 100 : 0
+  // Barra usa totalFinished como base para incluir os "sem palpite"
+  const pct = (n: number) => totalFinished > 0 ? (n / totalFinished) * 100 : 0
 
   const initials = user?.name?.slice(0, 2).toUpperCase() ?? '?'
 
@@ -102,15 +117,18 @@ export default function Profile() {
           <div className={s.perfCard}>
             <div className={s.perfHeader}>
               <span className={s.perfTitle}>Desempenho</span>
-              <span className={s.perfSub}>{finished.length} de {total} jogos encerrados</span>
+              <span className={s.perfSub}>
+                {finished.length} de {totalFinished} jogos encerrados
+              </span>
             </div>
 
-            {/* Barra segmentada */}
+            {/* Barra segmentada — base = totalFinished, inclui sem palpite */}
             <div className={s.perfBar}>
-              {cravadas > 0 && <div className={`${s.perfSeg} ${s.segExact}`} style={{ width: `${pct(cravadas)}%` }} />}
+              {cravadas > 0 && <div className={`${s.perfSeg} ${s.segExact}`}   style={{ width: `${pct(cravadas)}%` }} />}
               {certos   > 0 && <div className={`${s.perfSeg} ${s.segRight}`}   style={{ width: `${pct(certos)}%` }} />}
               {parciais > 0 && <div className={`${s.perfSeg} ${s.segPartial}`} style={{ width: `${pct(parciais)}%` }} />}
               {erros    > 0 && <div className={`${s.perfSeg} ${s.segWrong}`}   style={{ width: `${pct(erros)}%` }} />}
+              {missed   > 0 && <div className={`${s.perfSeg} ${s.segMissed}`}  style={{ width: `${pct(missed)}%` }} />}
             </div>
 
             {/* Legenda */}
@@ -135,11 +153,18 @@ export default function Profile() {
                 <span className={s.perfLegendVal}>{erros}</span>
                 <span className={s.perfLegendLbl}>erros</span>
               </div>
+              {missed > 0 && (
+                <div className={s.perfLegendItem}>
+                  <Minus size={12} className={s.iconMissed} />
+                  <span className={s.perfLegendVal}>{missed}</span>
+                  <span className={s.perfLegendLbl}>sem palpite</span>
+                </div>
+              )}
             </div>
 
             {/* Aproveitamento */}
             <div className={s.aprovRow}>
-              <span className={s.aprovLabel}>Aproveitamento nos encerrados</span>
+              <span className={s.aprovLabel}>Aproveitamento nos palpites</span>
               <span className={`${s.aprovPct} ${aprovPct >= 60 ? s.aprovGood : aprovPct >= 40 ? s.aprovOk : s.aprovBad}`}>
                 {aprovPct}%
               </span>
@@ -157,8 +182,8 @@ export default function Profile() {
           </div>
         ) : null}
 
-        {/* ── Palpites pendentes ── */}
-        {total > 0 && finished.length < total && (
+        {/* ── Palpites pendentes (feitos em jogos que ainda não encerraram) ── */}
+        {total > finished.length && (
           <div className={s.pendingRow}>
             <span className={s.pendingDot} />
             <span>{total - finished.length} palpite{total - finished.length > 1 ? 's' : ''} aguardando resultado</span>

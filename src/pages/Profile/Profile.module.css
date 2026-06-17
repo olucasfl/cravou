@@ -153,6 +153,7 @@
 .segRight   { background: #eab308; }
 .segPartial { background: #f97316; }
 .segWrong   { background: rgba(239,68,68,0.5); }
+.segMissed  { background: var(--c-border-2); }
 
 /* Legenda */
 .perfLegend {
@@ -192,6 +193,7 @@
 .iconRight   { color: #eab308; }
 .iconPartial { color: #f97316; }
 .iconWrong   { color: rgba(239,68,68,0.6); }
+.iconMissed  { color: var(--c-text-3); }
 
 /* Aproveitamento */
 .aprovRow {
