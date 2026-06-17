@@ -264,9 +264,53 @@
   border-radius: var(--r-md);
   border-left-width: 3px;
   min-width: 0;
+  cursor: pointer;
+  transition: opacity 0.1s, transform 0.1s;
 }
+.card:hover  { filter: brightness(1.12); }
+.card:active { opacity: 0.72; transform: scale(0.97); filter: brightness(1); }
 
-.card_cravou    { border-left-color: var(--c-green); }
+.card_cravou {
+  border-color: rgba(34,197,94,0.55);
+  border-left-color: var(--c-green);
+  border-left-width: 4px;
+  background: linear-gradient(105deg, rgba(34,197,94,0.18) 0%, rgba(34,197,94,0.06) 55%, var(--c-surface) 100%);
+  animation: cravouCardPulse 1.6s ease-in-out infinite alternate;
+  position: relative;
+  overflow: hidden;
+}
+.card_cravou::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -120%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(34,197,94,0.12) 30%,
+    rgba(34,197,94,0.38) 50%,
+    rgba(34,197,94,0.12) 70%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  animation: cravouShimmer 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes cravouCardPulse {
+  from {
+    box-shadow: 0 0 6px rgba(34,197,94,0.2), 0 0 0 0px rgba(34,197,94,0.0);
+  }
+  to {
+    box-shadow: 0 0 18px rgba(34,197,94,0.55), 0 0 32px rgba(34,197,94,0.18), inset 0 0 14px rgba(34,197,94,0.06);
+  }
+}
+@keyframes cravouShimmer {
+  0%   { left: -120%; }
+  100% { left: 160%; }
+}
+.card_cravou .cardName { color: var(--c-green); font-weight: 600; }
+
 .card_bonus     { border-left-color: #84cc16; }
 .card_resultado { border-left-color: var(--c-gold); }
 .card_parcial   { border-left-color: var(--c-accent); }

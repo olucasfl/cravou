@@ -9,6 +9,7 @@ import {
   type GlobalPalpite,
 } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
+import { PlayerModal } from '@/components/PlayerModal/PlayerModal'
 import { phaseLabel } from '@/utils/format'
 import s from './GlobalPalpitesTab.module.css'
 
@@ -60,13 +61,13 @@ const CAT_ORDER: GlobalPalpiteCategory[] = ['cravou', 'resultado_bonus', 'result
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function MemberCard({ p }: { p: GlobalPalpite }) {
+function MemberCard({ p, onCardClick }: { p: GlobalPalpite; onCardClick: () => void }) {
   const css = CAT_CONFIG[p.category].css
   const isBonus = p.category === 'resultado_bonus'
   const basePoints = isBonus && p.points !== null ? p.points - 2 : null
 
   return (
-    <div className={`${s.card} ${s[`card_${css}`]}`}>
+    <div className={`${s.card} ${s[`card_${css}`]}`} onClick={onCardClick}>
       <div className={s.cardAvatar} style={{ background: avatarColor(p.userId) }}>
         {avatarInitial(p.name)}
       </div>
@@ -90,7 +91,13 @@ function MemberCard({ p }: { p: GlobalPalpite }) {
   )
 }
 
-function PalpitesView({ data }: { data: GlobalMatchPalpites }) {
+function PalpitesView({
+  data,
+  onCardClick,
+}: {
+  data: GlobalMatchPalpites
+  onCardClick: (p: GlobalPalpite) => void
+}) {
   const groups = CAT_ORDER.map((cat) => ({
     cat,
     cfg: CAT_CONFIG[cat],
@@ -123,7 +130,9 @@ function PalpitesView({ data }: { data: GlobalMatchPalpites }) {
             <span className={s.catCount}>{items.length}</span>
           </div>
           <div className={s.cardGrid}>
-            {items.map((p) => <MemberCard key={p.userId} p={p} />)}
+            {items.map((p) => (
+              <MemberCard key={p.userId} p={p} onCardClick={() => onCardClick(p)} />
+            ))}
           </div>
         </div>
       ))}
@@ -145,6 +154,7 @@ export default function GlobalPalpitesTab() {
   const [loadingMatches, setLoadingMatches]   = useState(_cachedMatches === null)
   const [loadingPalpites, setLoadingPalpites] = useState(false)
   const [search, setSearch]                   = useState('')
+  const [selectedPlayer, setSelectedPlayer]   = useState<GlobalPalpite | null>(null)
 
   const selectMatch = useCallback(async (matchId: string) => {
     setSelectedId(matchId)
@@ -289,8 +299,16 @@ export default function GlobalPalpitesTab() {
           <div className={s.loadingBar} style={{ width: '85%' }} />
         </div>
       ) : palpites ? (
-        <PalpitesView data={palpites} />
+        <PalpitesView data={palpites} onCardClick={setSelectedPlayer} />
       ) : null}
+
+      {selectedPlayer && selectedMatch && (
+        <PlayerModal
+          player={selectedPlayer}
+          match={selectedMatch}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </>
   )
 }

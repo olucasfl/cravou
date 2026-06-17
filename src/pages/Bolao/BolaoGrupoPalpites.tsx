@@ -10,6 +10,7 @@ import {
   type PalpiteCategory,
 } from '@/services/bolaoService'
 import { CountryBadge } from '@/components/CountryBadge'
+import { PlayerModal } from '@/components/PlayerModal/PlayerModal'
 import { phaseLabel } from '@/utils/format'
 import s from './BolaoGrupoPalpites.module.css'
 
@@ -62,13 +63,13 @@ const CAT_ORDER: PalpiteCategory[] = ['cravou', 'resultado_bonus', 'resultado_ce
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function MemberCard({ p }: { p: MemberPalpite }) {
+function MemberCard({ p, onCardClick }: { p: MemberPalpite; onCardClick: () => void }) {
   const css = CAT_CONFIG[p.category].css
   const isBonus = p.category === 'resultado_bonus'
   const basePoints = isBonus && p.points !== null ? p.points - 2 : null
 
   return (
-    <div className={`${s.card} ${s[`card_${css}`]}`}>
+    <div className={`${s.card} ${s[`card_${css}`]}`} onClick={onCardClick}>
       <div className={s.cardAvatar} style={{ background: avatarColor(p.userId) }}>
         {avatarInitial(p.name)}
       </div>
@@ -92,7 +93,13 @@ function MemberCard({ p }: { p: MemberPalpite }) {
   )
 }
 
-function PalpitesView({ data }: { data: GroupMatchPalpites }) {
+function PalpitesView({
+  data,
+  onCardClick,
+}: {
+  data: GroupMatchPalpites
+  onCardClick: (p: MemberPalpite) => void
+}) {
   const groups = CAT_ORDER.map((cat) => ({
     cat,
     cfg: CAT_CONFIG[cat],
@@ -127,7 +134,9 @@ function PalpitesView({ data }: { data: GroupMatchPalpites }) {
             <span className={s.catCount}>{items.length}</span>
           </div>
           <div className={s.cardGrid}>
-            {items.map((p) => <MemberCard key={p.userId} p={p} />)}
+            {items.map((p) => (
+              <MemberCard key={p.userId} p={p} onCardClick={() => onCardClick(p)} />
+            ))}
           </div>
         </div>
       ))}
@@ -148,6 +157,7 @@ export default function BolaoGrupoPalpites() {
   const [loadingPalpites, setLoadingPalpites] = useState(false)
   const [groupName, setGroupName]             = useState('')
   const [search, setSearch]                   = useState('')
+  const [selectedPlayer, setSelectedPlayer]   = useState<MemberPalpite | null>(null)
   const cacheRef = useRef<Record<string, GroupMatchPalpites>>({})
 
   useEffect(() => {
@@ -317,12 +327,20 @@ export default function BolaoGrupoPalpites() {
                 <div className={s.loadingBar} style={{ width: '85%' }} />
               </div>
             ) : palpites ? (
-              <PalpitesView data={palpites} />
+              <PalpitesView data={palpites} onCardClick={setSelectedPlayer} />
             ) : null}
           </>
         )}
 
       </div>
+
+      {selectedPlayer && selectedMatch && (
+        <PlayerModal
+          player={selectedPlayer}
+          match={selectedMatch}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </div>
   )
 }
