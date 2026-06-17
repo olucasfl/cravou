@@ -68,11 +68,11 @@
   gap: 6px;
   max-width: 110px;
 }
-
-.podiumItem.first { order: 2; }
+.podiumItem.first  { order: 2; }
 .podiumItem.second { order: 1; }
 .podiumItem.third  { order: 3; }
 
+/* ── Avatars ──────────────────────────────────────── */
 .podiumAvatar {
   width: 48px;
   height: 48px;
@@ -84,12 +84,71 @@
   font-size: 1.1rem;
   color: #000;
 }
-.podiumItem.first  .podiumAvatar { width: 60px; height: 60px; background: var(--c-gold); font-size: 1.3rem; }
-.podiumItem.second .podiumAvatar { background: #9ca3af; }
-.podiumItem.third  .podiumAvatar { background: #92400e; }
 
-.podiumCrown { display: flex; justify-content: center; }
+/* 1º — Ouro: flutua — o campeão está acima de todos */
+.podiumItem.first .podiumAvatar {
+  width: 60px; height: 60px;
+  background: var(--c-gold);
+  font-size: 1.3rem;
+  animation: goldFloat 2.6s ease-in-out infinite, goldGlow 2.2s ease-in-out infinite alternate;
+}
+@keyframes goldFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes goldGlow {
+  from { box-shadow: 0 0 6px rgba(245,158,11,0.4), 0 0 0 2px rgba(245,158,11,0.2); }
+  to   { box-shadow: 0 0 20px rgba(245,158,11,0.85), 0 0 0 3px rgba(245,158,11,0.45); }
+}
 
+/* 2º — Prata: brilho metálico que varre o avatar */
+.podiumItem.second .podiumAvatar {
+  background: #9ca3af;
+  position: relative;
+  overflow: hidden;
+  animation: silverGlow 2.6s ease-in-out infinite alternate;
+}
+.podiumItem.second .podiumAvatar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: silverShimmer 4s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes silverGlow {
+  from { box-shadow: 0 0 4px rgba(156,163,175,0.25); }
+  to   { box-shadow: 0 0 14px rgba(156,163,175,0.65), 0 0 0 2px rgba(156,163,175,0.3); }
+}
+@keyframes silverShimmer {
+  0%        { left: -100%; opacity: 0; }
+  15%       { opacity: 1; }
+  50%, 100% { left: 150%; opacity: 0; }
+}
+
+/* 3º — Bronze: glow quente e lento */
+.podiumItem.third .podiumAvatar {
+  background: #92400e;
+  animation: bronzeGlow 3.5s ease-in-out infinite alternate;
+}
+@keyframes bronzeGlow {
+  from { box-shadow: 0 0 4px rgba(146,64,14,0.25); }
+  to   { box-shadow: 0 0 16px rgba(185,105,30,0.65), 0 0 0 2px rgba(146,64,14,0.35); }
+}
+
+/* ── Coroa (1º lugar) ─────────────────────────────── */
+.podiumCrown {
+  display: flex;
+  justify-content: center;
+  animation: crownBounce 2.2s ease-in-out infinite;
+}
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+/* ── Nome ─────────────────────────────────────────── */
 .podiumName {
   font-size: 0.7rem;
   font-weight: 700;
@@ -101,18 +160,31 @@
   white-space: nowrap;
 }
 
+/* ── Pontos ───────────────────────────────────────── */
 .podiumPts {
   font-family: var(--font-display);
   font-size: 1.4rem;
   color: var(--c-text);
 }
 .podiumItem.first .podiumPts { font-size: 1.8rem; color: var(--c-gold); }
+.podiumItem.second .podiumPts { color: #9ca3af; }
+.podiumItem.third  .podiumPts { color: #b45309; }
 
+/* ── Barras do pódio ──────────────────────────────── */
 .podiumBar {
   width: 100%;
   border-radius: var(--r-sm) var(--r-sm) 0 0;
 }
-.podiumItem.first  .podiumBar { height: 48px; background: var(--c-gold-glow); border: 1px solid var(--c-gold); }
+.podiumItem.first .podiumBar {
+  height: 48px;
+  background: var(--c-gold-glow);
+  border: 1px solid var(--c-gold);
+  animation: barGoldGlow 1.8s ease-in-out infinite alternate;
+}
+@keyframes barGoldGlow {
+  from { box-shadow: none; }
+  to   { box-shadow: 0 -6px 18px rgba(245,158,11,0.4); }
+}
 .podiumItem.second .podiumBar { height: 32px; background: var(--c-surface-2); border: 1px solid var(--c-border-2); }
 .podiumItem.third  .podiumBar { height: 24px; background: var(--c-surface-2); border: 1px solid var(--c-border-2); }
 

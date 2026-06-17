@@ -269,7 +269,15 @@
 .second { order: 1; }
 .third  { order: 3; }
 
-.crown { display: flex; justify-content: center; }
+.crown {
+  display: flex;
+  justify-content: center;
+  animation: crownBounce 2.2s ease-in-out infinite;
+}
+@keyframes crownBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
 
 .podiumAvatar {
   width: 48px;
@@ -282,9 +290,35 @@
   font-size: 1.1rem;
   color: #000;
 }
-.avatarGold   { width: 60px; height: 60px; background: var(--c-gold); font-size: 1.3rem; }
-.avatarSilver { background: #9ca3af; }
-.avatarBronze { background: #92400e; color: #fcd34d; }
+.avatarGold {
+  width: 60px; height: 60px; background: var(--c-gold); font-size: 1.3rem;
+  animation: goldFloat 2.2s ease-in-out infinite, goldAvatarGlow 1.8s ease-in-out infinite alternate;
+}
+.avatarSilver {
+  background: #9ca3af;
+  animation: silverPulse 2s ease-in-out infinite alternate;
+}
+.avatarBronze {
+  background: #92400e; color: #fcd34d;
+  animation: bronzePulse 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes goldFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes goldAvatarGlow {
+  from { box-shadow: 0 0 8px rgba(245,158,11,0.5), 0 0 0 2px rgba(245,158,11,0.25); }
+  to   { box-shadow: 0 0 22px rgba(245,158,11,0.9), 0 0 0 3px rgba(245,158,11,0.55), 0 0 44px rgba(245,158,11,0.25); }
+}
+@keyframes silverPulse {
+  from { box-shadow: 0 0 4px rgba(156,163,175,0.3); }
+  to   { box-shadow: 0 0 16px rgba(156,163,175,0.75), 0 0 0 2px rgba(156,163,175,0.35); }
+}
+@keyframes bronzePulse {
+  from { box-shadow: 0 0 3px rgba(146,64,14,0.3); }
+  to   { box-shadow: 0 0 14px rgba(180,100,30,0.65), 0 0 0 2px rgba(146,64,14,0.35); }
+}
 
 .podiumName {
   font-size: 0.7rem;
@@ -316,9 +350,17 @@
   width: 100%;
   border-radius: var(--r-sm) var(--r-sm) 0 0;
 }
-.barGold    { height: 48px; background: var(--c-gold-glow); border: 1px solid var(--c-gold); }
+.barGold {
+  height: 48px; background: var(--c-gold-glow); border: 1px solid var(--c-gold);
+  animation: barGoldGlow 1.8s ease-in-out infinite alternate;
+}
 .barDefault { height: 32px; background: var(--c-surface-2); border: 1px solid var(--c-border-2); }
 .third .podiumBar.barDefault { height: 24px; }
+
+@keyframes barGoldGlow {
+  from { box-shadow: none; }
+  to   { box-shadow: 0 -6px 18px rgba(245,158,11,0.4); }
+}
 
 /* Ranking list rows */
 .list {
