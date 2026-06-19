@@ -195,7 +195,7 @@
 .stripLabel { opacity: 0.6; font-size: 0.68rem; }
 
 .chip_cravou    { background: rgba(34, 197, 94, 0.12);   color: var(--c-green);  border-color: rgba(34, 197, 94, 0.2); }
-.chip_bonus     { background: rgba(132, 204, 22, 0.12); color: #84cc16;         border-color: rgba(132, 204, 22, 0.2); }
+.chip_bonus     { background: rgba(245, 158, 11, 0.12); color: var(--c-gold);   border-color: rgba(245, 158, 11, 0.2); }
 .chip_resultado { background: rgba(245, 158, 11, 0.12); color: var(--c-gold);   border-color: rgba(245, 158, 11, 0.2); }
 .chip_parcial   { background: rgba(0, 212, 255, 0.08);  color: var(--c-accent); border-color: rgba(0, 212, 255, 0.2); }
 .chip_errou     { background: rgba(255, 59, 48, 0.08);  color: var(--c-red);    border-color: rgba(255, 59, 48, 0.18); }
@@ -213,15 +213,16 @@
 }
 
 .catHeader_cravou    { background: rgba(34, 197, 94, 0.08);   border: 1px solid rgba(34, 197, 94, 0.18); }
-.catHeader_bonus     { background: rgba(132, 204, 22, 0.08); border: 1px solid rgba(132, 204, 22, 0.18); }
+.catHeader_bonus     { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.18); }
 .catHeader_resultado { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.18); }
 .catHeader_parcial   { background: rgba(0, 212, 255, 0.06);  border: 1px solid rgba(0, 212, 255, 0.15); }
 .catHeader_errou     { background: rgba(255, 59, 48, 0.06);  border: 1px solid rgba(255, 59, 48, 0.15); }
 
-.catTitle { font-size: 0.8rem; font-weight: 700; flex: 1; }
+.catTitle { font-size: 0.8rem; font-weight: 700; flex: 1; display: flex; align-items: center; gap: 4px; }
+.catTitleDrawIcon { color: #ec4899; flex-shrink: 0; }
 
 .catHeader_cravou    .catTitle { color: var(--c-green); }
-.catHeader_bonus     .catTitle { color: #84cc16; }
+.catHeader_bonus     .catTitle { color: var(--c-gold); }
 .catHeader_resultado .catTitle { color: var(--c-gold); }
 .catHeader_parcial   .catTitle { color: var(--c-accent); }
 .catHeader_errou     .catTitle { color: var(--c-red); }
@@ -311,7 +312,7 @@
 }
 .card_cravou .cardName { color: var(--c-green); font-weight: 600; }
 
-.card_bonus     { border-left-color: #84cc16; }
+.card_bonus     { border-left-color: var(--c-gold); }
 .card_resultado { border-left-color: var(--c-gold); }
 .card_parcial   { border-left-color: var(--c-accent); }
 .card_errou     { border-left-color: var(--c-red); }
@@ -365,7 +366,7 @@
 }
 
 .badge_cravou    { background: rgba(34, 197, 94, 0.15);   color: var(--c-green); }
-.badge_bonus     { background: rgba(132, 204, 22, 0.18); color: #84cc16; }
+.badge_bonus     { background: rgba(245, 158, 11, 0.15); color: var(--c-gold); }
 .badge_resultado { background: rgba(245, 158, 11, 0.15); color: var(--c-gold); }
 .badge_parcial   { background: rgba(0, 212, 255, 0.10);  color: var(--c-accent); }
 .badge_errou     { background: rgba(255, 59, 48, 0.10);  color: var(--c-red); }
@@ -373,10 +374,13 @@
 .cardBonusRow { display: flex; align-items: center; gap: 3px; }
 
 .bonusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-size: 0.58rem;
   font-weight: 800;
-  background: rgba(132, 204, 22, 0.22);
-  color: #84cc16;
+  background: rgba(236, 72, 153, 0.18);
+  color: #ec4899;
   border-radius: var(--r-full);
   padding: 1px 5px;
   line-height: 1.5;

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost, Trophy } from 'lucide-react'
+import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost, Trophy, Minus } from 'lucide-react'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { CountryBadge } from '@/components/CountryBadge'
 import { getMatch, upsertPrediction, type Match, type Prediction } from '@/services/cravouService'
@@ -14,6 +14,7 @@ import {
   minutesElapsed,
   phaseLabel,
   getPredCategory,
+  getPredBreakdown,
   type PredCategory,
 } from '@/utils/format'
 import CravouCelebration from '@/components/CravouCelebration/CravouCelebration'
@@ -306,16 +307,16 @@ export default function MatchDetail() {
             {/* Info pontuação */}
             {isKnockout ? (
               <div className={s.scoringGrid}>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> placar exato (+ classificado se empate)</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> resultado certo (ou empate sem classificado)</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> placar exato + classificado nos pênaltis</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> resultado certo <span className={s.scoringBonus}>+2 gols de um time · +1 empate</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time (errou resultado)</span></div>
                 <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
               </div>
             ) : (
               <div className={s.scoringGrid}>
                 <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>10 pts</b> placar exato</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>5 pts</b> vencedor certo</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>5 pts</b> resultado certo <span className={s.scoringBonus}>+2 gols de um time · +1 empate</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time (errou resultado)</span></div>
                 <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
               </div>
             )}
@@ -458,6 +459,11 @@ function ResultCard({ prediction, match, cat }: { prediction: Prediction; match:
     prediction.homeScore === match.homeScore && prediction.awayScore === match.awayScore &&
     match.homeScore === match.awayScore
 
+  const bd = (cat === 'right' || cat === 'bonus') && pts > 0
+    ? getPredBreakdown(pts, match.phase)
+    : null
+  const hasBonus = bd && bd.bonus > 0
+
   const catStyles: Record<PredCategory, string> = {
     exact:   s.resultExact,
     bonus:   s.resultBonus,
@@ -466,36 +472,41 @@ function ResultCard({ prediction, match, cat }: { prediction: Prediction; match:
     wrong:   s.resultWrong,
     none:    s.resultNone,
   }
+  const iconColor = '#eab308'
   const catIcon = {
-    exact:   <Target      size={40} strokeWidth={1.5} color="var(--c-green)" />,
-    bonus:   <Zap         size={40} strokeWidth={1.5} color="#84cc16" />,
-    right:   <CheckCircle2 size={40} strokeWidth={1.5} color="#eab308" />,
+    exact:   <Target       size={40} strokeWidth={1.5} color="var(--c-green)" />,
+    bonus:   bd?.drawBonus
+      ? <Minus size={40} strokeWidth={2} color={iconColor} />
+      : <Zap   size={40} strokeWidth={1.5} color={iconColor} />,
+    right:   bd?.drawBonus
+      ? <Minus       size={40} strokeWidth={2} color={iconColor} />
+      : <CheckCircle2 size={40} strokeWidth={1.5} color={iconColor} />,
     partial: <SoccerBall  size={40} color="#f97316" />,
     wrong:   <XCircle     size={40} strokeWidth={1.5} color="var(--c-red)" />,
     none:    null,
-  } as const
+  }
 
   let resultMsg = ''
   if (cat === 'exact') resultMsg = 'CRAVOU! Placar exato' + (isKnockout && match.homeScore === match.awayScore ? ' + classificado!' : '!')
   else if (isExactDraw) resultMsg = 'Placar certo, mas errou o classificado nos pênaltis'
+  else if (cat === 'bonus' && bd?.drawBonus) resultMsg = 'Empate acertado + gols de um time!'
   else if (cat === 'bonus') resultMsg = 'Resultado certo e gols de um time!'
+  else if (cat === 'right' && bd?.drawBonus) resultMsg = 'Empate acertado! Bônus de +1'
   else if (cat === 'right') resultMsg = 'Acertou o resultado!'
   else if (cat === 'partial') resultMsg = 'Quase lá — gols de um time certos'
   else resultMsg = 'Dessa vez não — mais sorte no próximo!'
-
-  const basePoints = cat === 'bonus' ? pts - 2 : null
 
   return (
     <div className={`${s.resultCard} ${catStyles[cat]}`}>
       <div className={s.resultEmoji}>{catIcon[cat]}</div>
       <div className={s.resultMsg}>{resultMsg}</div>
-      {cat === 'bonus' ? (
-        <div className={s.resultBonusBlock}>
-          <div className={s.resultPts}>+{pts} <span>pontos</span></div>
-          <div className={s.resultBonusBreakdown}>
-            <span className={s.resultBonusBase}>+{basePoints} resultado</span>
-            <span className={s.resultBonusPill}>+2 bônus</span>
-          </div>
+      {hasBonus ? (
+        <div className={s.resultPtsSplit}>
+          <span className={s.resultPtsSplitBase}>+{bd!.base}</span>
+          <span className={s.resultPtsSplitBonus}>
+            {bd!.drawBonus && <Minus size={26} strokeWidth={2.5} />}+{bd!.bonus}
+          </span>
+          <span className={s.resultPtsSplitLabel}>pontos</span>
         </div>
       ) : (
         <div className={s.resultPts}>+{pts} <span>pontos</span></div>

@@ -43,7 +43,7 @@ export default function Profile() {
 
   // Categorização correta usando a fase do jogo
   const matchMap = new Map(matches.map(m => [m.id, m]))
-  const cat = (p: Prediction) => getPredCategory(p.points, true, matchMap.get(p.matchId)?.phase)
+  const cat = (p: Prediction) => getPredCategory(p.points, true, matchMap.get(p.matchId)?.phase ?? 'group_stage')
   const cravadas = finished.filter(p => cat(p) === 'exact').length
   const certos   = finished.filter(p => cat(p) === 'bonus' || cat(p) === 'right').length
   const parciais = finished.filter(p => cat(p) === 'partial').length

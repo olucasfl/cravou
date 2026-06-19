@@ -228,14 +228,15 @@
 
 /* ── Grade de pontuação ── */
 .scoringGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
   padding-top: 4px;
   border-top: 1px solid var(--c-border);
 }
-.scoringItem { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--c-text-2); }
-.scoringDot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.scoringItem  { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--c-text-2); }
+.scoringDot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.scoringBonus { color: #ec4899; font-size: 0.85em; font-weight: 600; }
 
 /* ── Mensagens ── */
 .msgOk  { text-align: center; font-size: 0.85rem; color: var(--c-green); }
@@ -374,7 +375,7 @@
   text-align: center;
 }
 .resultExact   { background: var(--c-green-glow);      border-color: var(--c-green); }
-.resultBonus   { background: rgba(132,204,22,0.07);   border-color: #84cc16; }
+.resultBonus   { background: rgba(234,179,8,0.1);     border-color: #eab308; }
 .resultRight   { background: rgba(234,179,8,0.1);     border-color: #eab308; }
 .resultPartial { background: rgba(249,115,22,0.08);   border-color: #f97316; }
 .resultWrong   { background: rgba(239,68,68,0.06);    border-color: rgba(239,68,68,0.4); }
@@ -390,39 +391,33 @@
   margin: 4px 0;
 }
 .resultExact   .resultPts { color: var(--c-green); text-shadow: var(--shadow-green); }
-.resultBonus   .resultPts { color: #84cc16; }
+.resultBonus   .resultPts { color: #eab308; }
 .resultRight   .resultPts { color: #eab308; }
 .resultPartial .resultPts { color: #f97316; }
 .resultWrong   .resultPts { color: var(--c-text-3); }
 .resultPts span { font-size: 1rem; color: var(--c-text-3); font-family: var(--font-body); }
 
-/* ── Bonus breakdown ─────────────────────────────────────────── */
-.resultBonusBlock {
+/* ── Pontuação com bônus ─────────────────────────────────────── */
+.resultPtsSplit {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: baseline;
   gap: 6px;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  margin: 4px 0;
 }
-
-.resultBonusBreakdown {
-  display: flex;
+.resultPtsSplitBase  { color: #eab308; }
+.resultPtsSplitBonus {
+  color: #ec4899;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
 }
-
-.resultBonusBase {
-  font-size: 0.72rem;
+.resultPtsSplitLabel {
+  font-size: 1rem;
   color: var(--c-text-3);
-}
-
-.resultBonusPill {
-  font-size: 0.72rem;
-  font-weight: 800;
-  background: rgba(132, 204, 22, 0.2);
-  color: #84cc16;
-  border-radius: 99px;
-  padding: 2px 9px;
-  letter-spacing: 0.3px;
+  font-family: var(--font-body);
 }
 
 .resultComparison {

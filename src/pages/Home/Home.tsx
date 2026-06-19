@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useAppData } from '@/context/AppDataContext'
 import { type Match, type Prediction, type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
-import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory } from '@/utils/format'
+import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, getPredBreakdown } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
@@ -482,21 +482,42 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
       .filter(p => getPredCategory(p.points, true, p.match.phase) === cat)
       .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
 
-  const cravadas = byCategory('exact')
-  const bonus    = byCategory('bonus')
-  const right    = byCategory('right')
-  const partial  = byCategory('partial')
+  const cravadas  = byCategory('exact')
+  const bonusCat  = byCategory('bonus')
+  const rightCat  = byCategory('right')
+  const partial   = byCategory('partial')
 
-  const renderRows = (list: ScoredPred[], ptClass: string, icon?: React.ReactNode) =>
-    list.map(p => (
+  const drawBonusPreds = rightCat.filter(p => getPredBreakdown(p.points!, p.match.phase)?.drawBonus === true)
+  const rightPure      = rightCat.filter(p => !getPredBreakdown(p.points!, p.match.phase)?.drawBonus)
+  const allBonus       = [...bonusCat, ...drawBonusPreds].sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+
+  const renderRow = (p: ScoredPred, isExact = false) => {
+    const bd = !isExact ? getPredBreakdown(p.points!, p.match.phase) : null
+    const hasBonus = bd && bd.bonus > 0
+    const displayBase = hasBonus ? bd!.base : (p.points ?? 0)
+    const isDrawBonus = hasBonus && bd!.drawBonus
+
+    return (
       <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
         <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
         <div className={s.historyRight}>
           <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
-          <span className={`${s.historyPts} ${ptClass}`}>{icon} +{p.points}</span>
+          {isExact ? (
+            <span className={`${s.historyPts} ${s.historyExact}`}><Target size={9} /> +{p.points}</span>
+          ) : (
+            <span className={`${s.historyPts} ${s.historyGood}`}>
+              +{displayBase}
+              {hasBonus && (
+                <span className={s.historyBonusBadge}>
+                  {isDrawBonus && <Minus size={7} strokeWidth={3} />}+{bd!.bonus}
+                </span>
+              )}
+            </span>
+          )}
         </div>
       </Link>
-    ))
+    )
+  }
 
   return (
     <div className={s.overlay} onClick={onClose}>
@@ -511,23 +532,23 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
               <div className={`${s.historySectionTitle} ${s.historySectionExact}`}>
                 <Target size={12} /> Cravou! ({cravadas.length})
               </div>
-              {renderRows(cravadas, s.historyExact, <Target size={9} />)}
+              {cravadas.map(p => renderRow(p, true))}
             </div>
           )}
-          {bonus.length > 0 && (
-            <div className={s.historySection}>
-              <div className={`${s.historySectionTitle} ${s.historySectionBonus}`}>
-                <Zap size={12} /> Bônus ({bonus.length})
-              </div>
-              {renderRows(bonus, s.historyBonus, <Zap size={9} />)}
-            </div>
-          )}
-          {right.length > 0 && (
+          {allBonus.length > 0 && (
             <div className={s.historySection}>
               <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
-                <CheckCircle2 size={12} /> Acertou o Vencedor ({right.length})
+                <Zap size={12} /> Resultado + Bônus ({allBonus.length})
               </div>
-              {renderRows(right, s.historyGood)}
+              {allBonus.map(p => renderRow(p))}
+            </div>
+          )}
+          {rightPure.length > 0 && (
+            <div className={s.historySection}>
+              <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
+                <CheckCircle2 size={12} /> Resultado Certo ({rightPure.length})
+              </div>
+              {rightPure.map(p => renderRow(p))}
             </div>
           )}
           {partial.length > 0 && (
@@ -535,7 +556,7 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
               <div className={`${s.historySectionTitle} ${s.historySectionPartial}`}>
                 <Minus size={12} /> Parcial ({partial.length})
               </div>
-              {renderRows(partial, s.historyPartial)}
+              {partial.map(p => renderRow(p))}
             </div>
           )}
         </div>
@@ -619,8 +640,16 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
                   <Zap size={13} />
                   <span>Resultado + bônus de gols</span>
                 </div>
-                <span className={s.tutScorePts}>7 pts</span>
-                <span className={s.tutScorePts}>10 pts</span>
+                <span className={s.tutScorePts}>5 <span className={s.tutBonusPink}>+2</span></span>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreDrawBonus}`}>
+                <div className={s.tutScoreLabel}>
+                  <Minus size={13} />
+                  <span>Empate acertado (sem cravar)</span>
+                </div>
+                <span className={s.tutScorePts}>5 <span className={s.tutBonusPink}>+1</span></span>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+1</span></span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
                 <div className={s.tutScoreLabel}>
@@ -640,7 +669,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <div className={s.tutNote}>
-              O bônus se <strong>soma</strong> ao resultado certo — acertou o vencedor <strong>e</strong> os gols de um time? Ganha resultado + 2 de bônus ao mesmo tempo.
+              O bônus se <strong>soma</strong> ao resultado certo. Acertou o vencedor + gols de um time? +2 de bônus. Acertou empate (sem cravar o placar exato)? +1 de bônus empate. Os dois bônus podem se acumular.
             </div>
           </div>
 
@@ -661,17 +690,45 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             <div className={s.tutSectionTitle}>Bônus de gols (+2 pts)</div>
             <div className={s.tutCard}>
               <div className={s.tutCardRow}>
-                <Zap size={14} color="#84cc16" />
-                <span>Acertou o <strong>resultado</strong> (quem ganhou ou empate) <strong>e</strong> a quantidade de gols de um time? Os +2 de bônus se <strong>somam</strong> ao resultado certo.</span>
+                <Zap size={14} color="#eab308" />
+                <span>Acertou o <strong>resultado</strong> (quem ganhou) <strong>e</strong> os gols de um time? +2 de bônus se <strong>somam</strong> ao resultado certo.</span>
               </div>
               <div className={s.tutCardRow}>
-                <CheckCircle2 size={14} color="#84cc16" />
+                <CheckCircle2 size={14} color="#eab308" />
                 <span>Grupos: <strong>5 + 2 = 7 pts</strong> · Mata-mata: <strong>8 + 2 = 10 pts</strong></span>
               </div>
               <div className={s.tutCardRow}>
                 <XCircle size={14} color="var(--c-text-3)" />
-                <span>O bônus <strong>não</strong> vale se errar o resultado — acertar gols de um time sem acertar quem ganhou vale apenas 2 pts (parcial).</span>
+                <span>Bônus de gols não vale sem acertar o resultado — gols certos sem resultado correto = apenas 2 pts (parcial).</span>
               </div>
+            </div>
+          </div>
+
+          {/* ── Bônus de empate ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Bônus de empate (+1 pt)</div>
+            <div className={s.tutCard}>
+              <div className={s.tutCardRow}>
+                <Minus size={14} color="#ec4899" />
+                <span>Apostou em <strong>empate</strong> e o jogo terminou empatado, mas <strong>em placar diferente</strong>? Você ganha +1 ponto de bônus por ter acertado o empate.</span>
+              </div>
+              <div className={s.tutCardRow}>
+                <CheckCircle2 size={14} color="#ec4899" />
+                <span>Grupos: <strong>5 + 1 = 6 pts</strong> · Mata-mata: <strong>8 + 1 = 9 pts</strong></span>
+              </div>
+              <div className={s.tutCardRow}>
+                <Target size={14} color="var(--c-green)" />
+                <span>Acertou o placar exato do empate? <strong>CRAVOU (10/15 pts)</strong> — sem bônus extra, mas com a pontuação máxima.</span>
+              </div>
+            </div>
+            <div className={s.tutExamples} style={{ marginTop: 8 }}>
+              <div className={s.tutEx}><span className={s.tutExScore}>1 × 1</span><span className={s.tutExGreen}><Target size={11} /> +10 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>2 × 2</span><span className={s.tutExPink}><Minus size={11} /> +6 pts</span><span className={s.tutExLabel}>Empate certo (5 + 1 bônus empate)</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 0</span><span className={s.tutExPink}><Minus size={11} /> +6 pts</span><span className={s.tutExLabel}>Empate certo (5 + 1 bônus empate)</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1 × 0</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>Errou — não foi empate</span></div>
+            </div>
+            <div className={s.tutNote}>
+              Esse bônus existe porque no empate não há "vencedor" para acertar — compensamos com +1 ponto extra para quem previu o empate.
             </div>
           </div>
 

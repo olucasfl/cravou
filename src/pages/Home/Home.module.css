@@ -264,14 +264,27 @@
 }
 
 .historyExact   { color: var(--c-green); }
-.historyBonus   { color: #84cc16; }
+.historyBonus   { color: #eab308; }
 .historyGood    { color: #eab308; }
 .historyPartial { color: #f97316; }
 
 .historySectionExact   { color: var(--c-green); }
-.historySectionBonus   { color: #84cc16; }
+.historySectionBonus   { color: #eab308; }
 .historySectionRight   { color: #eab308; }
 .historySectionPartial { color: #f97316; }
+
+.historyBonusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  background: rgba(236, 72, 153, 0.18);
+  color: #ec4899;
+  border-radius: 99px;
+  padding: 1px 4px;
+  line-height: 1.5;
+}
 
 /* ── Tournament Progress ─────────────────────────────────── */
 .progress {
@@ -701,8 +714,9 @@
 }
 .tutExScore  { font-family: var(--font-display); font-size: 1rem; color: var(--c-text); min-width: 46px; }
 .tutExLabel  { font-size: 0.72rem; color: var(--c-text-3); }
+.tutExPink   { font-weight: 700; color: #ec4899; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExGreen  { font-weight: 700; color: var(--c-green); min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
-.tutExLime   { font-weight: 700; color: #84cc16; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
+.tutExLime   { font-weight: 700; color: #eab308; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExYellow { font-weight: 700; color: #eab308; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExOrange { font-weight: 700; color: #f97316; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExRed    { font-weight: 700; color: var(--c-red); min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
@@ -848,9 +862,15 @@
 .tutScorePartial .tutScoreLabel { color: #f97316; }
 .tutScorePartial .tutScorePts   { color: #f97316; }
 
-.tutScoreBonus { background: rgba(132,204,22,0.06); }
-.tutScoreBonus .tutScoreLabel { color: #84cc16; }
-.tutScoreBonus .tutScorePts   { color: #84cc16; }
+.tutScoreBonus { background: rgba(234,179,8,0.06); }
+.tutScoreBonus .tutScoreLabel { color: #eab308; }
+.tutScoreBonus .tutScorePts   { color: #eab308; }
+
+.tutScoreDrawBonus { background: rgba(234,179,8,0.06); }
+.tutScoreDrawBonus .tutScoreLabel { color: #eab308; }
+.tutScoreDrawBonus .tutScorePts   { color: #eab308; }
+
+.tutBonusPink { color: #ec4899; font-weight: 800; }
 
 .tutScoreWrong { }
 .tutScoreWrong .tutScoreLabel { color: var(--c-text-3); }

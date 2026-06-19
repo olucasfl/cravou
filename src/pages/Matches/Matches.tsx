@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X } from 'lucide-react'
+import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X, Minus } from 'lucide-react'
 import { type Match, type Prediction } from '@/services/cravouService'
-import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, type PredCategory } from '@/utils/format'
+import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, getPredBreakdown, type PredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { useAppData } from '@/context/AppDataContext'
@@ -328,15 +328,23 @@ function PredRow({ match: m, pred, cat, isCalc }: { match: Match; pred?: Predict
           <span className={`${s.predScore} ${finished ? scoreCol[cat] : ''}`}>
             {pred.homeScore} × {pred.awayScore}
           </span>
-          {finished && pred.points !== null && cat === 'bonus' ? (
-            <span className={`${s.predPts} ${ptsCol[cat]}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              {catIcon[cat]} +{pred.points} pts <span className={s.bonusTag}>+2</span>
-            </span>
-          ) : finished && pred.points !== null ? (
-            <span className={`${s.predPts} ${ptsCol[cat]}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-              {catIcon[cat]} {pred.points > 0 ? `+${pred.points} pts` : '0 pts'}
-            </span>
-          ) : null}
+          {finished && pred.points !== null ? (() => {
+            const bd = (cat === 'right' || cat === 'bonus')
+              ? getPredBreakdown(pred.points, m.phase)
+              : null
+            const displayPts = bd ? bd.base : pred.points
+            return (
+              <span className={`${s.predPts} ${ptsCol[cat]}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                {catIcon[cat]} {displayPts > 0 ? `+${displayPts}` : '0'}
+                {bd && bd.bonus > 0 ? (
+                  <span className={s.bonusTag}>
+                    {bd.drawBonus && <Minus size={7} strokeWidth={3} />}+{bd.bonus} bônus
+                  </span>
+                ) : null}
+                {' pts'}
+              </span>
+            )
+          })() : null}
           {isCalc && pred.points === null && (
             <span className={s.predCalcText}>calculando...</span>
           )}

@@ -53,22 +53,27 @@ export function isWithinHours(dateStr: string, hours: number): boolean {
 // Categoria do resultado de um palpite finalizado
 export type PredCategory = 'exact' | 'bonus' | 'right' | 'partial' | 'wrong' | 'none'
 
-export function getPredCategory(points: number | null | undefined, hasPrediction: boolean, phase?: string): PredCategory {
+export function getPredCategory(points: number | null | undefined, hasPrediction: boolean, phase: string): PredCategory {
   if (!hasPrediction) return 'none'
   if (points === null || points === undefined) return 'none'
   if (points >= 15) return 'exact'
-  if (phase !== undefined) {
-    if (points === 10 && phase === 'group_stage') return 'exact'
-    if (points === 7 || points === 10) return 'bonus'
-  } else {
-    // sem phase: comportamento antigo (10 = exact)
-    if (points >= 10) return 'exact'
-  }
+  if (points === 10 && phase === 'group_stage') return 'exact'
+  if (phase === 'group_stage' && (points === 7 || points === 8)) return 'bonus'
+  if (phase !== 'group_stage' && (points === 10 || points === 11)) return 'bonus'
   if (points >= 5) return 'right'
   if (points >= 2) return 'partial'
   return 'wrong'
 }
 
+
+// Retorna a decomposição de pontos para resultados corretos (right/bonus)
+export function getPredBreakdown(points: number, phase: string): { base: number; bonus: number; drawBonus: boolean } | null {
+  const isGroup = phase === 'group_stage'
+  const base = isGroup ? 5 : 8
+  if (points < base || points > base + 3) return null
+  const diff = points - base
+  return { base, bonus: diff, drawBonus: diff === 1 || diff === 3 }
+}
 
 export function phaseLabel(phase: string): string {
   const map: Record<string, string> = {

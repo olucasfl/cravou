@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { X, Minus } from 'lucide-react'
 import { CountryBadge } from '@/components/CountryBadge'
+import { getPredBreakdown } from '@/utils/format'
 import s from './PlayerModal.module.css'
 
 function avatarInitial(name: string) {
@@ -55,6 +56,7 @@ export interface MatchContext {
   homeScore: number
   awayScore: number
   penaltyWinner: string | null
+  phase: string
 }
 
 interface Props {
@@ -66,10 +68,16 @@ interface Props {
 export function PlayerModal({ player, match, onClose }: Props) {
   const cat = player.category
   const cfg = CAT_CONFIG[cat] ?? { label: cat, css: 'sempal' }
-  const isBonus = cat === 'resultado_bonus'
   const isCravou = cat === 'cravou'
-  const basePoints = isBonus && player.points !== null ? player.points - 2 : null
   const hasPalpite = player.homeScore !== null && player.awayScore !== null
+
+  const bd = (cat === 'resultado_bonus' || cat === 'resultado_certo') && player.points !== null
+    ? getPredBreakdown(player.points, match.phase)
+    : null
+  const hasBonus = bd !== null && bd.bonus > 0
+  const effectiveLabel = hasBonus && cat === 'resultado_certo' && bd?.drawBonus
+    ? 'Empate Acertado'
+    : cfg.label
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -134,9 +142,14 @@ export function PlayerModal({ player, match, onClose }: Props) {
                 ))}
               </div>
             )}
-            <span className={s.catLabel}>{cfg.label}</span>
-            {isBonus && basePoints !== null ? (
-              <span className={s.catPts}>+{basePoints} <span className={s.bonusExtra}>+2★</span></span>
+            <span className={s.catLabel}>{effectiveLabel}</span>
+            {hasBonus && bd ? (
+              <span className={s.catPts}>
+                +{bd.base}{' '}
+                <span className={s.bonusExtra}>
+                  {bd.drawBonus && <Minus size={8} strokeWidth={3} />}+{bd.bonus} bônus
+                </span>
+              </span>
             ) : (
               player.points !== null && cat !== 'sem_palpite' && (
                 <span className={s.catPts}>+{player.points} pts</span>

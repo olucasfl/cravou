@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Target, Search, X } from 'lucide-react'
+import { ArrowLeft, Target, Search, X, Minus } from 'lucide-react'
 import {
   getGroupFinishedMatches,
   getGroupMatchPalpites,
@@ -11,7 +11,7 @@ import {
 } from '@/services/bolaoService'
 import { CountryBadge } from '@/components/CountryBadge'
 import { PlayerModal } from '@/components/PlayerModal/PlayerModal'
-import { phaseLabel } from '@/utils/format'
+import { phaseLabel, getPredBreakdown } from '@/utils/format'
 import s from './BolaoGrupoPalpites.module.css'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -63,10 +63,12 @@ const CAT_ORDER: PalpiteCategory[] = ['cravou', 'resultado_bonus', 'resultado_ce
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function MemberCard({ p, onCardClick }: { p: MemberPalpite; onCardClick: () => void }) {
+function MemberCard({ p, phase, onCardClick }: { p: MemberPalpite; phase: string; onCardClick: () => void }) {
   const css = CAT_CONFIG[p.category].css
-  const isBonus = p.category === 'resultado_bonus'
-  const basePoints = isBonus && p.points !== null ? p.points - 2 : null
+  const bd = (p.category === 'resultado_bonus' || p.category === 'resultado_certo') && p.points !== null
+    ? getPredBreakdown(p.points, phase)
+    : null
+  const hasBonus = bd && bd.bonus > 0
 
   return (
     <div className={`${s.card} ${s[`card_${css}`]}`} onClick={onCardClick}>
@@ -78,10 +80,12 @@ function MemberCard({ p, onCardClick }: { p: MemberPalpite; onCardClick: () => v
         <span className={s.cardScore}>
           {p.homeScore !== null && p.awayScore !== null ? `${p.homeScore}×${p.awayScore}` : '—'}
         </span>
-        {isBonus && p.points !== null ? (
+        {hasBonus && p.points !== null ? (
           <div className={s.cardBonusRow}>
-            <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>{`+${basePoints}`}</span>
-            <span className={s.bonusPill}>+2★</span>
+            <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>{`+${bd!.base}`}</span>
+            <span className={s.bonusPill}>
+              {bd!.drawBonus && <Minus size={7} strokeWidth={3} />}+{bd!.bonus}
+            </span>
           </div>
         ) : (
           <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>
@@ -126,20 +130,28 @@ function PalpitesView({
       </div>
 
       {/* groups */}
-      {groups.map(({ cat, cfg, items }) => (
-        <div key={cat} className={s.catSection}>
-          <div className={`${s.catHeader} ${s[`catHeader_${cfg.css}`]}`}>
-            <span className={s.catTitle}>{cfg.label}</span>
-            <span className={s.catPts}>{cfg.pts}</span>
-            <span className={s.catCount}>{items.length}</span>
+      {groups.map(({ cat, cfg, items }) => {
+        const hasDrawBonus = cat === 'resultado_certo' && items.some(
+          p => p.points !== null && getPredBreakdown(p.points, data.match.phase)?.drawBonus
+        )
+        return (
+          <div key={cat} className={s.catSection}>
+            <div className={`${s.catHeader} ${s[`catHeader_${cfg.css}`]}`}>
+              <span className={s.catTitle}>
+                {cfg.label}
+                {hasDrawBonus && <Minus size={10} strokeWidth={2.5} className={s.catTitleDrawIcon} />}
+              </span>
+              <span className={s.catPts}>{cfg.pts}</span>
+              <span className={s.catCount}>{items.length}</span>
+            </div>
+            <div className={s.cardGrid}>
+              {items.map((p) => (
+                <MemberCard key={p.userId} p={p} phase={data.match.phase} onCardClick={() => onCardClick(p)} />
+              ))}
+            </div>
           </div>
-          <div className={s.cardGrid}>
-            {items.map((p) => (
-              <MemberCard key={p.userId} p={p} onCardClick={() => onCardClick(p)} />
-            ))}
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
