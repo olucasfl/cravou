@@ -629,7 +629,7 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     const hv = parseInt(editHome), av = parseInt(editAway)
     if (isNaN(hv) || isNaN(av) || hv < 0 || av < 0) { onToast('err', 'Informe um placar válido.'); return }
     if (isKnockout && hv === av && !penaltyWinner) {
-      onToast('err', 'Empate em mata-mata: selecione o vencedor nos pênaltis.')
+      onToast('err', 'Empate em mata-mata: selecione quem se classifica.')
       return
     }
     setFinalizing(true)

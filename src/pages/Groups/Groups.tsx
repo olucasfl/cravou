@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Shield, Trophy } from 'lucide-react'
-import { type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
+import { Shield, Trophy, ChevronRight, X as XIcon } from 'lucide-react'
+import { type GroupData, type Standing, type BracketSlot, type Match } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
 import { useAppData } from '@/context/AppDataContext'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
@@ -27,7 +27,7 @@ const ROUND_SLOT_COUNTS: Record<string, number> = {
 }
 
 export default function Groups() {
-  const { groups, bracket, loading, refresh } = useAppData()
+  const { groups, bracket, matches, loading, refresh } = useAppData()
 
   const [tab, setTab]           = useState<MainTab>('grupos')
   const [selected, setSelected] = useState<string | null>(null)
@@ -179,6 +179,7 @@ export default function Groups() {
                         key={slot.id}
                         slot={slot}
                         isFinal={bracketRound === 'final'}
+                        match={slot.matchId ? matches.find(m => m.id === slot.matchId) : undefined}
                       />
                     ))}
                   </div>
@@ -194,10 +195,19 @@ export default function Groups() {
 
 // ── BracketCard ──────────────────────────────────────────────────────────────
 
-function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean }) {
-  const homeWon = !!slot.winnerTeam && slot.winnerTeam === slot.homeTeam
-  const awayWon = !!slot.winnerTeam && slot.winnerTeam === slot.awayTeam
-  const settled = !!slot.winnerTeam
+function BracketCard({ slot, isFinal, match }: { slot: BracketSlot; isFinal: boolean; match?: Match }) {
+  // Derivar vencedor: preferir slot.winnerTeam, fallback para dados do match
+  const effectiveWinner = slot.winnerTeam ?? (() => {
+    if (!match || match.status !== 'finished' || match.homeScore === null || match.awayScore === null) return null
+    if (match.homeScore > match.awayScore) return match.homeTeam
+    if (match.awayScore > match.homeScore) return match.awayTeam
+    if (match.penaltyWinner) return match.penaltyWinner
+    return null
+  })()
+
+  const homeWon = !!effectiveWinner && effectiveWinner.toLowerCase() === (slot.homeTeam ?? '').toLowerCase()
+  const awayWon = !!effectiveWinner && effectiveWinner.toLowerCase() === (slot.awayTeam ?? '').toLowerCase()
+  const settled = !!effectiveWinner
 
   return (
     <div className={`${s.bCard} ${settled ? s.bCardDone : ''} ${isFinal ? s.bCardFinal : ''}`}>
@@ -215,7 +225,8 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
         ) : (
           <span className={s.bDesc}>{slot.homeDesc || '—'}</span>
         )}
-        {homeWon && <span className={s.bAdvancesBadge}>Avança</span>}
+        {homeWon && <span className={s.bAdvancesBadge}><ChevronRight size={9} /> Classificado</span>}
+        {settled && !homeWon && slot.homeTeam && <span className={s.bEliminatedBadge}><XIcon size={8} /> Elim.</span>}
       </div>
 
       <div className={s.bDivider} />
@@ -229,7 +240,8 @@ function BracketCard({ slot, isFinal }: { slot: BracketSlot; isFinal: boolean })
         ) : (
           <span className={s.bDesc}>{slot.awayDesc || '—'}</span>
         )}
-        {awayWon && <span className={s.bAdvancesBadge}>Avança</span>}
+        {awayWon && <span className={s.bAdvancesBadge}><ChevronRight size={9} /> Classificado</span>}
+        {settled && !awayWon && slot.awayTeam && <span className={s.bEliminatedBadge}><XIcon size={8} /> Elim.</span>}
       </div>
     </div>
   )

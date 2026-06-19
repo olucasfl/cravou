@@ -285,6 +285,18 @@
   padding: 1px 4px;
   line-height: 1.5;
 }
+.historyPenaltyBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--c-red);
+  border-radius: 99px;
+  padding: 1px 4px;
+  line-height: 1.5;
+}
 
 /* ── Tournament Progress ─────────────────────────────────── */
 .progress {
@@ -661,6 +673,36 @@
 }
 .modalClose:hover { color: var(--c-text); }
 
+.historyViewTabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 20px 0;
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
+}
+.historyViewTab {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  color: var(--c-text-3);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+}
+.historyViewTab:hover { color: var(--c-text-2); }
+.historyViewTabActive {
+  color: var(--c-accent);
+  border-bottom-color: var(--c-accent);
+}
+
+.historySectionPhase   { color: #38bdf8; }
+.historySectionPhaseKo { color: #a78bfa; }
+
 .modalBody {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -722,6 +764,21 @@
 .tutExRed    { font-weight: 700; color: var(--c-red); min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 
 /* Card de regras */
+.tutAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(234,179,8,0.08);
+  border: 1px solid rgba(234,179,8,0.35);
+  border-radius: var(--r-md);
+  font-size: 0.82rem;
+  color: var(--c-text-2);
+  line-height: 1.45;
+}
+.tutAlert strong { color: var(--c-text); }
+.tutAlertIcon { color: #eab308; flex-shrink: 0; margin-top: 1px; }
+
 .tutCard {
   display: flex;
   flex-direction: column;
@@ -809,7 +866,7 @@
 
 .tutScoreHeader {
   display: grid;
-  grid-template-columns: 1fr 68px 68px;
+  grid-template-columns: 1fr 80px;
   gap: 0;
   padding: 7px 12px;
   background: var(--c-surface-2);
@@ -827,7 +884,7 @@
 
 .tutScoreRow {
   display: grid;
-  grid-template-columns: 1fr 68px 68px;
+  grid-template-columns: 1fr 80px;
   align-items: center;
   padding: 9px 12px;
   border-bottom: 1px solid var(--c-border);
@@ -870,7 +927,12 @@
 .tutScoreDrawBonus .tutScoreLabel { color: #eab308; }
 .tutScoreDrawBonus .tutScorePts   { color: #eab308; }
 
+.tutScoreDrawPenalty { background: rgba(239,68,68,0.05); }
+.tutScoreDrawPenalty .tutScoreLabel { color: #f97316; }
+.tutScoreDrawPenalty .tutScorePts   { color: #f97316; }
+
 .tutBonusPink { color: #ec4899; font-weight: 800; }
+.tutBonusRed  { color: var(--c-red); font-weight: 800; }
 
 .tutScoreWrong { }
 .tutScoreWrong .tutScoreLabel { color: var(--c-text-3); }

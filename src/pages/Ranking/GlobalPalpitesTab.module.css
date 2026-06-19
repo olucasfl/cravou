@@ -385,6 +385,18 @@
   padding: 1px 5px;
   line-height: 1.5;
 }
+.penaltyPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--c-red);
+  border-radius: var(--r-full);
+  padding: 1px 5px;
+  line-height: 1.5;
+}
 
 /* ── Loading ───────────────────────────────────────────────── */
 .loadingPalpites {

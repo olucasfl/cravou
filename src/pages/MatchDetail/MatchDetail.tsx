@@ -63,7 +63,7 @@ export default function MatchDetail() {
     if (!match || !prediction) return
     if (match.status !== 'finished') return
     const category = getPredCategory(prediction.points, true, match.phase)
-    if (category === 'exact' && !celebratedRef.current) {
+    if ((category === 'exact' || category === 'exact_bonus' || category === 'exact_penalty') && !celebratedRef.current) {
       celebratedRef.current = true
       const t = setTimeout(() => setShowCelebration(true), 900)
       return () => clearTimeout(t)
@@ -159,8 +159,8 @@ export default function MatchDetail() {
         <div className={`${s.hero}
           ${isLive        ? s.heroLive        : ''}
           ${isCalculating ? s.heroCalculating : ''}
-          ${isFinished && cat === 'exact'   ? s.heroExact   : ''}
-          ${isFinished && cat === 'right'   ? s.heroRight   : ''}
+          ${isFinished && (cat === 'exact' || cat === 'exact_bonus' || cat === 'exact_penalty') ? s.heroExact   : ''}
+          ${isFinished && (cat === 'right' || cat === 'bonus' || cat === 'bonus_penalty')    ? s.heroRight   : ''}
           ${isFinished && cat === 'partial' ? s.heroPartial : ''}
           ${isFinished && cat === 'wrong'   ? s.heroWrong   : ''}
         `}>
@@ -211,7 +211,10 @@ export default function MatchDetail() {
                 </div>
               )}
               {isFinished && hasScore && (
-                <div className={`${s.resultTag} ${s[`resultTag_${cat}`]}`}>
+                <div className={`${s.resultTag} ${s[`resultTag_${
+                  cat === 'exact_bonus' || cat === 'exact_penalty' ? 'exact' :
+                  cat === 'bonus_penalty' ? 'right' : cat
+                }`]}`}>
                   {CAT_LABEL[cat]}
                 </div>
               )}
@@ -271,11 +274,11 @@ export default function MatchDetail() {
               </div>
             </div>
 
-            {/* Selector de pênaltis — só aparece em mata-mata com empate previsto */}
+            {/* Selector de classificado — só aparece em mata-mata com empate previsto */}
             {isKnockout && isTiePred && (
               <div className={s.penaltyPickWrap}>
                 <div className={s.penaltyPickLabel}>
-                  <Zap size={12} /> Empate — quem você acha que passa nos pênaltis?
+                  <Zap size={12} /> Empate — quem você acha que se classifica?
                 </div>
                 <div className={s.penaltyBtns}>
                   <button
@@ -307,9 +310,12 @@ export default function MatchDetail() {
             {/* Info pontuação */}
             {isKnockout ? (
               <div className={s.scoringGrid}>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> placar exato + classificado nos pênaltis</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> resultado certo <span className={s.scoringBonus}>+2 gols de um time · +1 empate</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>2 pts</b> gols de um time (errou resultado)</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> placar exato de vitória</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>17 pts</b> empate exato + classificado correto <span className={s.scoringBonus}>+2</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>14 pts</b> empate exato + classificado errado <span className={s.scoringPenalty}>−1</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>10 pts</b> resultado certo <span className={s.scoringBonus}>+2 gols de um time ou acertou classificado</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>7 pts</b> acertou empate, errou classificado <span className={s.scoringPenalty}>−1</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>3 pts</b> gols de um time (errou resultado)</span></div>
                 <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
               </div>
             ) : (
@@ -428,12 +434,15 @@ function getMatchPhase(elapsed: number): { label: string; barPct: number; pulsin
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const CAT_LABEL: Record<PredCategory, string> = {
-  exact:   'Placar exato!',
-  bonus:   'Resultado + bônus!',
-  right:   'Resultado certo!',
-  partial: 'Quase lá!',
-  wrong:   'Errou',
-  none:    '—',
+  exact:          'Placar exato!',
+  exact_bonus:    'Cravou + bônus!',
+  exact_penalty:  'Cravou!',
+  bonus:          'Resultado + bônus!',
+  bonus_penalty:  'Resultado certo',
+  right:          'Resultado certo!',
+  partial:        'Quase lá!',
+  wrong:          'Errou',
+  none:           '—',
 }
 
 function PredBadge({ prediction, home, away }: { prediction: Prediction; home: string; away: string }) {
@@ -445,7 +454,7 @@ function PredBadge({ prediction, home, away }: { prediction: Prediction; home: s
       </span>
       {prediction.penaltyWinner && (
         <span className={s.predBadgePenalty}>
-          <Trophy size={11} /> Pênaltis: {prediction.penaltyWinner}
+          <Trophy size={11} /> Classif.: {prediction.penaltyWinner}
         </span>
       )}
     </div>
@@ -455,56 +464,86 @@ function PredBadge({ prediction, home, away }: { prediction: Prediction; home: s
 function ResultCard({ prediction, match, cat }: { prediction: Prediction; match: Match; cat: PredCategory }) {
   const pts = prediction.points ?? 0
   const isKnockout = match.phase !== 'group_stage'
-  const isExactDraw = cat === 'right' && isKnockout &&
-    prediction.homeScore === match.homeScore && prediction.awayScore === match.awayScore &&
-    match.homeScore === match.awayScore
 
-  const bd = (cat === 'right' || cat === 'bonus') && pts > 0
+  const CATS_WITH_BREAKDOWN: PredCategory[] = ['right', 'bonus', 'exact_bonus', 'exact_penalty', 'bonus_penalty']
+  const bd = CATS_WITH_BREAKDOWN.includes(cat) && pts > 0
     ? getPredBreakdown(pts, match.phase)
     : null
-  const hasBonus = bd && bd.bonus > 0
+  const hasModifier = bd !== null && bd.modifier !== 0
+
+  // Pill do classificado — aparece sempre que há penaltyWinner no palpite (knockout draw)
+  const showClassifiedPill = isKnockout && !!prediction.penaltyWinner && cat !== 'wrong' && cat !== 'partial' && cat !== 'none'
+  const classifiedModifier = bd?.modifier ?? 0
 
   const catStyles: Record<PredCategory, string> = {
-    exact:   s.resultExact,
-    bonus:   s.resultBonus,
-    right:   s.resultRight,
-    partial: s.resultPartial,
-    wrong:   s.resultWrong,
-    none:    s.resultNone,
+    exact:          s.resultExact,
+    exact_bonus:    s.resultExact,
+    exact_penalty:  s.resultExact,
+    bonus:          s.resultBonus,
+    bonus_penalty:  s.resultRight,
+    right:          s.resultRight,
+    partial:        s.resultPartial,
+    wrong:          s.resultWrong,
+    none:           s.resultNone,
   }
+
   const iconColor = '#eab308'
-  const catIcon = {
-    exact:   <Target       size={40} strokeWidth={1.5} color="var(--c-green)" />,
-    bonus:   bd?.drawBonus
+  const catIcon: Record<PredCategory, React.ReactNode> = {
+    exact:          <Target size={40} strokeWidth={1.5} color="var(--c-green)" />,
+    exact_bonus:    <Target size={40} strokeWidth={1.5} color="var(--c-green)" />,
+    exact_penalty:  <Target size={40} strokeWidth={1.5} color="var(--c-green)" />,
+    bonus:          bd?.drawBonus
       ? <Minus size={40} strokeWidth={2} color={iconColor} />
       : <Zap   size={40} strokeWidth={1.5} color={iconColor} />,
-    right:   bd?.drawBonus
-      ? <Minus       size={40} strokeWidth={2} color={iconColor} />
-      : <CheckCircle2 size={40} strokeWidth={1.5} color={iconColor} />,
-    partial: <SoccerBall  size={40} color="#f97316" />,
-    wrong:   <XCircle     size={40} strokeWidth={1.5} color="var(--c-red)" />,
-    none:    null,
+    bonus_penalty:  <Minus size={40} strokeWidth={2} color={iconColor} />,
+    right:          <CheckCircle2 size={40} strokeWidth={1.5} color={iconColor} />,
+    partial:        <SoccerBall size={40} color="#f97316" />,
+    wrong:          <XCircle size={40} strokeWidth={1.5} color="var(--c-red)" />,
+    none:           null,
   }
 
   let resultMsg = ''
-  if (cat === 'exact') resultMsg = 'CRAVOU! Placar exato' + (isKnockout && match.homeScore === match.awayScore ? ' + classificado!' : '!')
-  else if (isExactDraw) resultMsg = 'Placar certo, mas errou o classificado nos pênaltis'
-  else if (cat === 'bonus' && bd?.drawBonus) resultMsg = 'Empate acertado + gols de um time!'
-  else if (cat === 'bonus') resultMsg = 'Resultado certo e gols de um time!'
-  else if (cat === 'right' && bd?.drawBonus) resultMsg = 'Empate acertado! Bônus de +1'
-  else if (cat === 'right') resultMsg = 'Acertou o resultado!'
-  else if (cat === 'partial') resultMsg = 'Quase lá — gols de um time certos'
-  else resultMsg = 'Dessa vez não — mais sorte no próximo!'
+  if (cat === 'exact' || cat === 'exact_bonus' || cat === 'exact_penalty') {
+    resultMsg = isKnockout && match.homeScore === match.awayScore
+      ? 'CRAVOU! Empate exato'
+      : 'CRAVOU! Placar exato!'
+  } else if (cat === 'bonus' && prediction.penaltyWinner) {
+    resultMsg = 'Acertou empate + classificado!'
+  } else if (cat === 'bonus' && bd?.drawBonus) {
+    resultMsg = 'Empate acertado + gols de um time!'
+  } else if (cat === 'bonus') {
+    resultMsg = 'Resultado certo e gols de um time!'
+  } else if (cat === 'bonus_penalty') {
+    resultMsg = 'Acertou empate, errou o classificado'
+  } else if (cat === 'right') {
+    resultMsg = 'Acertou o resultado!'
+  } else if (cat === 'partial') {
+    resultMsg = 'Quase lá — gols de um time certos'
+  } else {
+    resultMsg = 'Dessa vez não — mais sorte no próximo!'
+  }
 
   return (
     <div className={`${s.resultCard} ${catStyles[cat]}`}>
       <div className={s.resultEmoji}>{catIcon[cat]}</div>
       <div className={s.resultMsg}>{resultMsg}</div>
-      {hasBonus ? (
+
+      {showClassifiedPill && (
+        <div className={classifiedModifier >= 0 ? s.classifiedPillBonus : s.classifiedPillPenalty}>
+          <Trophy size={11} />
+          CLASSIFICADO {prediction.penaltyWinner}
+          <span className={s.classifiedPillMod}>
+            {classifiedModifier > 0 ? `(+${classifiedModifier} pts)` : classifiedModifier < 0 ? `(${classifiedModifier} pt)` : ''}
+          </span>
+        </div>
+      )}
+
+      {hasModifier ? (
         <div className={s.resultPtsSplit}>
           <span className={s.resultPtsSplitBase}>+{bd!.base}</span>
-          <span className={s.resultPtsSplitBonus}>
-            {bd!.drawBonus && <Minus size={26} strokeWidth={2.5} />}+{bd!.bonus}
+          <span className={bd!.modifier < 0 ? s.resultPtsSplitPenalty : s.resultPtsSplitBonus}>
+            {bd!.drawBonus && <Minus size={26} strokeWidth={2.5} />}
+            {bd!.modifier > 0 ? `+${bd!.modifier}` : String(bd!.modifier)}
           </span>
           <span className={s.resultPtsSplitLabel}>pontos</span>
         </div>

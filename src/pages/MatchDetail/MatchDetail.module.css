@@ -236,7 +236,8 @@
 }
 .scoringItem  { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--c-text-2); }
 .scoringDot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.scoringBonus { color: #ec4899; font-size: 0.85em; font-weight: 600; }
+.scoringBonus   { color: #ec4899; font-size: 0.85em; font-weight: 600; }
+.scoringPenalty { color: var(--c-red); font-size: 0.85em; font-weight: 600; }
 
 /* ── Mensagens ── */
 .msgOk  { text-align: center; font-size: 0.85rem; color: var(--c-green); }
@@ -397,7 +398,7 @@
 .resultWrong   .resultPts { color: var(--c-text-3); }
 .resultPts span { font-size: 1rem; color: var(--c-text-3); font-family: var(--font-body); }
 
-/* ── Pontuação com bônus ─────────────────────────────────────── */
+/* ── Pontuação com bônus / penalidade ───────────────────────────── */
 .resultPtsSplit {
   display: flex;
   align-items: baseline;
@@ -407,9 +408,16 @@
   line-height: 1;
   margin: 4px 0;
 }
-.resultPtsSplitBase  { color: #eab308; }
+.resultPtsSplitBase    { color: #eab308; }
+.resultExact .resultPtsSplitBase { color: var(--c-green); text-shadow: var(--shadow-green); }
 .resultPtsSplitBonus {
   color: #ec4899;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.resultPtsSplitPenalty {
+  color: var(--c-red);
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -418,6 +426,34 @@
   font-size: 1rem;
   color: var(--c-text-3);
   font-family: var(--font-body);
+}
+
+/* ── Pill de classificado (knockout empate) ───────────────────── */
+.classifiedPillBonus,
+.classifiedPillPenalty {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--r-full);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.classifiedPillBonus {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  color: var(--c-accent);
+}
+.classifiedPillPenalty {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--c-red);
+}
+.classifiedPillMod {
+  font-size: 0.65rem;
+  opacity: 0.85;
 }
 
 .resultComparison {

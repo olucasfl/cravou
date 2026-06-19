@@ -71,7 +71,10 @@ export function PlayerModal({ player, match, onClose }: Props) {
   const isCravou = cat === 'cravou'
   const hasPalpite = player.homeScore !== null && player.awayScore !== null
 
-  const bd = (cat === 'resultado_bonus' || cat === 'resultado_certo') && player.points !== null
+  const isKnockout = match.phase !== 'group_stage'
+  const needsBreakdown = cat === 'resultado_bonus' || cat === 'resultado_certo' ||
+    (cat === 'cravou' && isKnockout && (player.points === 14 || player.points === 17))
+  const bd = needsBreakdown && player.points !== null
     ? getPredBreakdown(player.points, match.phase)
     : null
   const hasBonus = bd !== null && bd.bonus > 0
@@ -107,7 +110,7 @@ export function PlayerModal({ player, match, onClose }: Props) {
           </div>
           <div className={s.matchNames}>{match.homeTeam} · {match.awayTeam}</div>
           {match.penaltyWinner && (
-            <div className={s.matchPen}>Pênaltis: {match.penaltyWinner}</div>
+            <div className={s.matchPen}>Classif.: {match.penaltyWinner}</div>
           )}
         </div>
 
@@ -118,7 +121,7 @@ export function PlayerModal({ player, match, onClose }: Props) {
             {hasPalpite ? `${player.homeScore} × ${player.awayScore}` : '—'}
           </div>
           {player.penaltyWinner && (
-            <div className={s.palpitePen}>Pen: {player.penaltyWinner}</div>
+            <div className={s.palpitePen}>Classif.: {player.penaltyWinner}</div>
           )}
 
           {/* Badge com animação por categoria */}
@@ -146,8 +149,10 @@ export function PlayerModal({ player, match, onClose }: Props) {
             {hasBonus && bd ? (
               <span className={s.catPts}>
                 +{bd.base}{' '}
-                <span className={s.bonusExtra}>
-                  {bd.drawBonus && <Minus size={8} strokeWidth={3} />}+{bd.bonus} bônus
+                <span className={bd.modifier < 0 ? s.penaltyExtra : s.bonusExtra}>
+                  {bd.drawBonus && <Minus size={8} strokeWidth={3} />}
+                  {bd.modifier < 0 ? String(bd.modifier) : `+${bd.bonus}`}
+                  {bd.modifier < 0 ? ' pen' : ' bônus'}
                 </span>
               </span>
             ) : (

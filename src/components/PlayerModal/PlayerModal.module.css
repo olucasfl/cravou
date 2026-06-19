@@ -190,9 +190,10 @@
   position: relative;
 }
 
-.catLabel   { font-size: 12px; }
-.catPts     { font-size: 12px; display: inline-flex; align-items: center; gap: 3px; }
-.bonusExtra { font-size: 10px; color: #ec4899; display: inline-flex; align-items: center; gap: 2px; }
+.catLabel    { font-size: 12px; }
+.catPts      { font-size: 12px; display: inline-flex; align-items: center; gap: 3px; }
+.bonusExtra  { font-size: 10px; color: #ec4899; display: inline-flex; align-items: center; gap: 2px; }
+.penaltyExtra{ font-size: 10px; color: #f87171; display: inline-flex; align-items: center; gap: 2px; }
 
 /* cravou → verde */
 .catBadge_cravou {

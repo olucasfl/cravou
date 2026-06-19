@@ -477,43 +477,47 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const byCategory = (cat: string) =>
+  const [viewMode, setViewMode] = useState<'categoria' | 'fase'>('categoria')
+
+  const byCategory = (...cats: string[]) =>
     predictions
-      .filter(p => getPredCategory(p.points, true, p.match.phase) === cat)
+      .filter(p => cats.includes(getPredCategory(p.points, true, p.match.phase)))
       .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
 
-  const cravadas  = byCategory('exact')
-  const bonusCat  = byCategory('bonus')
-  const rightCat  = byCategory('right')
-  const partial   = byCategory('partial')
+  const cravadas     = byCategory('exact', 'exact_bonus', 'exact_penalty')
+  const bonusCat     = byCategory('bonus')
+  const rightCat     = byCategory('right')
+  const penaltyCat   = byCategory('bonus_penalty')
+  const partial      = byCategory('partial')
 
   const drawBonusPreds = rightCat.filter(p => getPredBreakdown(p.points!, p.match.phase)?.drawBonus === true)
   const rightPure      = rightCat.filter(p => !getPredBreakdown(p.points!, p.match.phase)?.drawBonus)
   const allBonus       = [...bonusCat, ...drawBonusPreds].sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
 
-  const renderRow = (p: ScoredPred, isExact = false) => {
-    const bd = !isExact ? getPredBreakdown(p.points!, p.match.phase) : null
-    const hasBonus = bd && bd.bonus > 0
-    const displayBase = hasBonus ? bd!.base : (p.points ?? 0)
-    const isDrawBonus = hasBonus && bd!.drawBonus
+  const grupos   = predictions.filter(p => p.match.phase === 'group_stage').sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+  const mataMata = predictions.filter(p => p.match.phase !== 'group_stage').sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
+
+  const renderRow = (p: ScoredPred) => {
+    const bd = getPredBreakdown(p.points!, p.match.phase)
+    const hasModifier = bd && bd.modifier !== 0
+    const displayBase = hasModifier ? bd!.base : (p.points ?? 0)
+    const cat = getPredCategory(p.points, true, p.match.phase)
+    const isCravou = cat === 'exact' || cat === 'exact_bonus' || cat === 'exact_penalty'
 
     return (
       <Link key={p.id} to={`/matches/${p.matchId}`} className={s.historyRow} onClick={onClose}>
         <div className={s.historyTeams}>{p.match.homeTeam} × {p.match.awayTeam}</div>
         <div className={s.historyRight}>
           <span className={s.historyPred}>{p.homeScore}×{p.awayScore}</span>
-          {isExact ? (
-            <span className={`${s.historyPts} ${s.historyExact}`}><Target size={9} /> +{p.points}</span>
-          ) : (
-            <span className={`${s.historyPts} ${s.historyGood}`}>
-              +{displayBase}
-              {hasBonus && (
-                <span className={s.historyBonusBadge}>
-                  {isDrawBonus && <Minus size={7} strokeWidth={3} />}+{bd!.bonus}
-                </span>
-              )}
-            </span>
-          )}
+          <span className={`${s.historyPts} ${isCravou ? s.historyExact : s.historyGood}`}>
+            {isCravou && !hasModifier && <Target size={9} />}
+            +{displayBase}
+            {hasModifier && (
+              <span className={bd!.modifier < 0 ? s.historyPenaltyBadge : s.historyBonusBadge}>
+                {bd!.modifier < 0 ? String(bd!.modifier) : `+${bd!.bonus}`}
+              </span>
+            )}
+          </span>
         </div>
       </Link>
     )
@@ -526,38 +530,80 @@ function HistoryModal({ predictions, onClose }: { predictions: ScoredPred[]; onC
           <span className={s.modalTitle}>Onde ganhei pontos</span>
           <button className={s.modalClose} onClick={onClose}><X size={18} /></button>
         </div>
+        <div className={s.historyViewTabs}>
+          <button
+            className={`${s.historyViewTab} ${viewMode === 'categoria' ? s.historyViewTabActive : ''}`}
+            onClick={() => setViewMode('categoria')}
+          >Por categoria</button>
+          <button
+            className={`${s.historyViewTab} ${viewMode === 'fase' ? s.historyViewTabActive : ''}`}
+            onClick={() => setViewMode('fase')}
+          >Grupos · Mata-mata</button>
+        </div>
+
         <div className={s.modalBody}>
-          {cravadas.length > 0 && (
-            <div className={s.historySection}>
-              <div className={`${s.historySectionTitle} ${s.historySectionExact}`}>
-                <Target size={12} /> Cravou! ({cravadas.length})
-              </div>
-              {cravadas.map(p => renderRow(p, true))}
-            </div>
-          )}
-          {allBonus.length > 0 && (
-            <div className={s.historySection}>
-              <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
-                <Zap size={12} /> Resultado + Bônus ({allBonus.length})
-              </div>
-              {allBonus.map(p => renderRow(p))}
-            </div>
-          )}
-          {rightPure.length > 0 && (
-            <div className={s.historySection}>
-              <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
-                <CheckCircle2 size={12} /> Resultado Certo ({rightPure.length})
-              </div>
-              {rightPure.map(p => renderRow(p))}
-            </div>
-          )}
-          {partial.length > 0 && (
-            <div className={s.historySection}>
-              <div className={`${s.historySectionTitle} ${s.historySectionPartial}`}>
-                <Minus size={12} /> Parcial ({partial.length})
-              </div>
-              {partial.map(p => renderRow(p))}
-            </div>
+          {viewMode === 'categoria' ? (
+            <>
+              {cravadas.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionExact}`}>
+                    <Target size={12} /> Cravou! ({cravadas.length})
+                  </div>
+                  {cravadas.map(p => renderRow(p))}
+                </div>
+              )}
+              {allBonus.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
+                    <Zap size={12} /> Resultado + Bônus ({allBonus.length})
+                  </div>
+                  {allBonus.map(p => renderRow(p))}
+                </div>
+              )}
+              {rightPure.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
+                    <CheckCircle2 size={12} /> Resultado Certo ({rightPure.length})
+                  </div>
+                  {rightPure.map(p => renderRow(p))}
+                </div>
+              )}
+              {penaltyCat.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionRight}`}>
+                    <Minus size={12} /> Empate certo, errou classificado ({penaltyCat.length})
+                  </div>
+                  {penaltyCat.map(p => renderRow(p))}
+                </div>
+              )}
+              {partial.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionPartial}`}>
+                    <Minus size={12} /> Parcial ({partial.length})
+                  </div>
+                  {partial.map(p => renderRow(p))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {grupos.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionPhase}`}>
+                    <Flag size={12} /> Grupos ({grupos.length})
+                  </div>
+                  {grupos.map(p => renderRow(p))}
+                </div>
+              )}
+              {mataMata.length > 0 && (
+                <div className={s.historySection}>
+                  <div className={`${s.historySectionTitle} ${s.historySectionPhaseKo}`}>
+                    <Trophy size={12} /> Mata-mata ({mataMata.length})
+                  </div>
+                  {mataMata.map(p => renderRow(p))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -610,66 +656,93 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* ── Pontuação ── */}
+          {/* ── Regra dos 90 minutos ── */}
           <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Pontuação</div>
+            <div className={s.tutAlert}>
+              <Clock size={15} className={s.tutAlertIcon} />
+              <span><strong>O resultado só conta nos 90 minutos.</strong> Prorrogação e pênaltis não alteram o placar do palpite — apenas quem <strong>se classifica</strong> em jogos de mata-mata.</span>
+            </div>
+          </div>
+
+          {/* ── Pontuação — Grupos ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Pontuação — Grupos</div>
             <div className={s.tutScoreGrid}>
               <div className={s.tutScoreHeader}>
                 <span />
-                <span className={s.tutScorePhase}>Grupos</span>
-                <span className={s.tutScorePhase}>Mata-mata</span>
+                <span className={s.tutScorePhase}>Pts</span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}>
-                  <Target size={13} />
-                  <span>CRAVOU! — placar exato</span>
-                </div>
+                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU! — placar exato</span></div>
                 <span className={s.tutScorePts}>10 pts</span>
-                <span className={s.tutScorePts}>15 pts</span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreRight}`}>
-                <div className={s.tutScoreLabel}>
-                  <CheckCircle2 size={13} />
-                  <span>Resultado certo</span>
-                </div>
+                <div className={s.tutScoreLabel}><CheckCircle2 size={13} /><span>Resultado certo</span></div>
                 <span className={s.tutScorePts}>5 pts</span>
-                <span className={s.tutScorePts}>8 pts</span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
-                <div className={s.tutScoreLabel}>
-                  <Zap size={13} />
-                  <span>Resultado + bônus de gols</span>
-                </div>
+                <div className={s.tutScoreLabel}><Zap size={13} /><span>Resultado + bônus de gols</span></div>
                 <span className={s.tutScorePts}>5 <span className={s.tutBonusPink}>+2</span></span>
-                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreDrawBonus}`}>
-                <div className={s.tutScoreLabel}>
-                  <Minus size={13} />
-                  <span>Empate acertado (sem cravar)</span>
-                </div>
+                <div className={s.tutScoreLabel}><Minus size={13} /><span>Empate acertado (sem cravar)</span></div>
                 <span className={s.tutScorePts}>5 <span className={s.tutBonusPink}>+1</span></span>
-                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+1</span></span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
-                <div className={s.tutScoreLabel}>
-                  <SoccerBall size={13} />
-                  <span>Gols de um time certos</span>
-                </div>
-                <span className={s.tutScorePts}>2 pts</span>
+                <div className={s.tutScoreLabel}><SoccerBall size={13} /><span>Gols de um time certos</span></div>
                 <span className={s.tutScorePts}>2 pts</span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreWrong}`}>
-                <div className={s.tutScoreLabel}>
-                  <XCircle size={13} />
-                  <span>Errou tudo</span>
-                </div>
-                <span className={s.tutScorePts}>0 pts</span>
+                <div className={s.tutScoreLabel}><XCircle size={13} /><span>Errou tudo</span></div>
                 <span className={s.tutScorePts}>0 pts</span>
               </div>
             </div>
-            <div className={s.tutNote}>
-              O bônus se <strong>soma</strong> ao resultado certo. Acertou o vencedor + gols de um time? +2 de bônus. Acertou empate (sem cravar o placar exato)? +1 de bônus empate. Os dois bônus podem se acumular.
+          </div>
+
+          {/* ── Pontuação — Mata-mata ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Pontuação — Mata-mata</div>
+            <div className={s.tutScoreGrid}>
+              <div className={s.tutScoreHeader}>
+                <span />
+                <span className={s.tutScorePhase}>Pts</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
+                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU! — placar exato de vitória</span></div>
+                <span className={s.tutScorePts}>15 pts</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
+                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU empate + classificado correto</span></div>
+                <span className={s.tutScorePts}>15 <span className={s.tutBonusPink}>+2</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
+                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU empate + classificado errado</span></div>
+                <span className={s.tutScorePts}>15 <span className={s.tutBonusRed}>−1</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreRight}`}>
+                <div className={s.tutScoreLabel}><CheckCircle2 size={13} /><span>Resultado certo (vitória)</span></div>
+                <span className={s.tutScorePts}>8 pts</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
+                <div className={s.tutScoreLabel}><Zap size={13} /><span>Resultado + bônus de gols</span></div>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
+                <div className={s.tutScoreLabel}><Zap size={13} /><span>Empate acertado (sem cravar) + acertou classificado</span></div>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreDrawPenalty}`}>
+                <div className={s.tutScoreLabel}><Minus size={13} /><span>Empate acertado (sem cravar) + errou classificado</span></div>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusRed}>−1</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
+                <div className={s.tutScoreLabel}><SoccerBall size={13} /><span>Gols de um time certos</span></div>
+                <span className={s.tutScorePts}>3 pts</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreWrong}`}>
+                <div className={s.tutScoreLabel}><XCircle size={13} /><span>Errou tudo</span></div>
+                <span className={s.tutScorePts}>0 pts</span>
+              </div>
             </div>
           </div>
 
@@ -714,7 +787,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className={s.tutCardRow}>
                 <CheckCircle2 size={14} color="#ec4899" />
-                <span>Grupos: <strong>5 + 1 = 6 pts</strong> · Mata-mata: <strong>8 + 1 = 9 pts</strong></span>
+                <span>Grupos: <strong>5 + 1 = 6 pts</strong></span>
               </div>
               <div className={s.tutCardRow}>
                 <Target size={14} color="var(--c-green)" />
@@ -732,21 +805,29 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* ── Mata-mata: pênaltis ── */}
+          {/* ── Mata-mata: classificado ── */}
           <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Mata-mata — Regra dos pênaltis</div>
+            <div className={s.tutSectionTitle}>Mata-mata — Empate e Classificado</div>
             <div className={s.tutCard}>
               <div className={s.tutCardRow}>
                 <Trophy size={14} color="#f97316" />
-                <span>Ao palpitar <strong>empate</strong> em jogo de mata-mata, você deve escolher também <strong>qual time passa nos pênaltis</strong>.</span>
+                <span>Ao palpitar <strong>empate</strong> em jogo de mata-mata, você deve escolher também <strong>qual time se classifica</strong> — é obrigatório.</span>
               </div>
               <div className={s.tutCardRow}>
-                <Target size={14} color="var(--c-accent)" />
-                <span>Para ganhar <strong>CRAVOU! (15 pts)</strong> no mata-mata, precisa acertar o placar <strong>e</strong> o time que avança nos pênaltis (se houver).</span>
+                <Target size={14} color="var(--c-green)" />
+                <span>Cravou o empate exato + acertou quem avança? <strong>17 pts</strong> (+2 de bônus por acertar o classificado).</span>
+              </div>
+              <div className={s.tutCardRow}>
+                <Target size={14} color="var(--c-green)" />
+                <span>Cravou o empate exato mas errou quem avança? <strong>14 pts</strong> (−1 de penalidade).</span>
               </div>
               <div className={s.tutCardRow}>
                 <CheckCircle2 size={14} color="#eab308" />
-                <span>Acertou o empate mas errou quem passa nos pênaltis? Você ainda ganha <strong>8 pts</strong> (resultado certo).</span>
+                <span>Acertou empate (sem cravar) + quem avança? <strong>10 pts</strong> (+2 de bônus).</span>
+              </div>
+              <div className={s.tutCardRow}>
+                <Minus size={14} color="var(--c-red)" />
+                <span>Acertou empate (sem cravar) mas errou quem avança? <strong>7 pts</strong> (−1 de penalidade).</span>
               </div>
             </div>
           </div>

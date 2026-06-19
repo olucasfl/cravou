@@ -301,6 +301,33 @@
   padding: 1px 4px;
   line-height: 1.5;
 }
+.penaltyTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--c-red);
+  border-radius: 99px;
+  padding: 1px 4px;
+  line-height: 1.5;
+}
+
+.predClassified {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #22d3ee;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 99px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
 
 .predCalcText { font-size: 0.65rem; color: var(--c-gold); font-style: italic; }
 .noPred       { font-size: 0.7rem; color: var(--c-text-3); font-style: italic; }

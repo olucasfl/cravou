@@ -51,28 +51,55 @@ export function isWithinHours(dateStr: string, hours: number): boolean {
 }
 
 // Categoria do resultado de um palpite finalizado
-export type PredCategory = 'exact' | 'bonus' | 'right' | 'partial' | 'wrong' | 'none'
+export type PredCategory =
+  | 'exact'          // 15pts (knockout vitória) / 10pts (grupo)
+  | 'exact_bonus'    // 17pts (knockout: cravou empate + classificado correto)
+  | 'exact_penalty'  // 14pts (knockout: cravou empate + classificado errado)
+  | 'bonus'          // resultado certo + bônus de gols / empate+classificado
+  | 'bonus_penalty'  // 7pts (knockout: acertou empate + classificado errado)
+  | 'right'          // resultado certo sem bônus
+  | 'partial'        // consolação
+  | 'wrong'
+  | 'none'
 
 export function getPredCategory(points: number | null | undefined, hasPrediction: boolean, phase: string): PredCategory {
   if (!hasPrediction) return 'none'
   if (points === null || points === undefined) return 'none'
-  if (points >= 15) return 'exact'
-  if (points === 10 && phase === 'group_stage') return 'exact'
-  if (phase === 'group_stage' && (points === 7 || points === 8)) return 'bonus'
-  if (phase !== 'group_stage' && (points === 10 || points === 11)) return 'bonus'
-  if (points >= 5) return 'right'
-  if (points >= 2) return 'partial'
+  if (phase === 'group_stage') {
+    if (points === 10) return 'exact'
+    if (points === 7 || points === 8) return 'bonus'
+    if (points >= 5) return 'right'
+    if (points >= 2) return 'partial'
+    return 'wrong'
+  }
+  // Mata-mata
+  if (points === 17) return 'exact_bonus'
+  if (points === 15) return 'exact'
+  if (points === 14) return 'exact_penalty'
+  if (points === 10 || points === 11) return 'bonus'  // 11 = compat com dados antigos
+  if (points === 8) return 'right'
+  if (points === 7) return 'bonus_penalty'
+  if (points >= 3) return 'partial'
   return 'wrong'
 }
 
-
-// Retorna a decomposição de pontos para resultados corretos (right/bonus)
-export function getPredBreakdown(points: number, phase: string): { base: number; bonus: number; drawBonus: boolean } | null {
-  const isGroup = phase === 'group_stage'
-  const base = isGroup ? 5 : 8
-  if (points < base || points > base + 3) return null
-  const diff = points - base
-  return { base, bonus: diff, drawBonus: diff === 1 || diff === 3 }
+// Retorna a decomposição de pontos para resultados com bônus ou penalidade
+// modifier > 0 = bônus, modifier < 0 = penalidade
+export function getPredBreakdown(points: number, phase: string): { base: number; bonus: number; drawBonus: boolean; modifier: number } | null {
+  if (phase === 'group_stage') {
+    const base = 5
+    if (points < 5 || points > 8) return null
+    const diff = points - base
+    return { base, bonus: diff, modifier: diff, drawBonus: diff === 1 || diff === 3 }
+  }
+  // Mata-mata: placar exato com empate
+  if (points === 17) return { base: 15, bonus: 2, modifier:  2, drawBonus: false }
+  if (points === 14) return { base: 15, bonus: 1, modifier: -1, drawBonus: false }
+  // Mata-mata: resultado correto
+  if (points === 10) return { base: 8,  bonus: 2, modifier:  2, drawBonus: false }
+  if (points === 11) return { base: 8,  bonus: 3, modifier:  3, drawBonus: false }
+  if (points === 7)  return { base: 8,  bonus: 1, modifier: -1, drawBonus: false }
+  return null
 }
 
 export function phaseLabel(phase: string): string {

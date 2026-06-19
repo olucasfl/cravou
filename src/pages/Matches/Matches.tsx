@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X, Minus } from 'lucide-react'
+import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X, Minus, Trophy } from 'lucide-react'
 import { type Match, type Prediction } from '@/services/cravouService'
 import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, getPredBreakdown, type PredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
@@ -227,9 +227,9 @@ function MatchCard({ match: m, prediction: pred }: { match: Match; prediction?: 
     isLive     ? s.cardLive     : '',
     isCalc     ? s.cardCalc     : '',
     isWaiting  ? s.cardWaiting  : '',
-    isFinished && cat === 'exact'   ? s.cardExact   : '',
+    isFinished && (cat === 'exact' || cat === 'exact_bonus' || cat === 'exact_penalty') ? s.cardExact   : '',
     isFinished && cat === 'bonus'   ? s.cardBonus   : '',
-    isFinished && cat === 'right'   ? s.cardRight   : '',
+    isFinished && (cat === 'right' || cat === 'bonus_penalty') ? s.cardRight : '',
     isFinished && cat === 'partial' ? s.cardPartial : '',
     isFinished && cat === 'wrong'   ? s.cardWrong   : '',
     isFinished && cat === 'none'    ? s.cardNoP     : '',
@@ -307,17 +307,32 @@ function StatusChip({ match: m, closingSoon, closingVerySoon }: { match: Match; 
 function PredRow({ match: m, pred, cat, isCalc }: { match: Match; pred?: Prediction; cat: PredCategory; isCalc: boolean }) {
   const finished = m.status === 'finished' && !!pred
 
-  const rowBg: Record<PredCategory, string>    = { exact: s.rowExact, bonus: s.rowBonus, right: s.rowRight, partial: s.rowPartial, wrong: s.rowWrong, none: '' }
-  const scoreCol: Record<PredCategory, string> = { exact: s.predScoreExact, bonus: s.predScoreBonus, right: s.predScoreRight, partial: s.predScorePartial, wrong: s.predScoreWrong, none: '' }
-  const ptsCol: Record<PredCategory, string>   = { exact: s.predPtsExact,   bonus: s.predPtsBonus,   right: s.predPtsRight,   partial: s.predPtsPartial,   wrong: s.predPtsWrong,   none: '' }
+  const rowBg: Record<PredCategory, string>    = {
+    exact: s.rowExact, exact_bonus: s.rowExact, exact_penalty: s.rowExact,
+    bonus: s.rowBonus, bonus_penalty: s.rowRight,
+    right: s.rowRight, partial: s.rowPartial, wrong: s.rowWrong, none: '',
+  }
+  const scoreCol: Record<PredCategory, string> = {
+    exact: s.predScoreExact, exact_bonus: s.predScoreExact, exact_penalty: s.predScoreExact,
+    bonus: s.predScoreBonus, bonus_penalty: s.predScoreRight,
+    right: s.predScoreRight, partial: s.predScorePartial, wrong: s.predScoreWrong, none: '',
+  }
+  const ptsCol: Record<PredCategory, string>   = {
+    exact: s.predPtsExact, exact_bonus: s.predPtsExact, exact_penalty: s.predPtsExact,
+    bonus: s.predPtsBonus, bonus_penalty: s.predPtsRight,
+    right: s.predPtsRight, partial: s.predPtsPartial, wrong: s.predPtsWrong, none: '',
+  }
 
   const catIcon: Record<PredCategory, React.ReactNode> = {
-    exact:   <Target size={11} />,
-    bonus:   <Zap size={11} />,
-    right:   <CheckCircle2 size={11} />,
-    partial: <SoccerBall size={11} />,
-    wrong:   <XCircle size={11} />,
-    none:    null,
+    exact:         <Target size={11} />,
+    exact_bonus:   <Target size={11} />,
+    exact_penalty: <Target size={11} />,
+    bonus:         <Zap size={11} />,
+    bonus_penalty: <Minus size={11} />,
+    right:         <CheckCircle2 size={11} />,
+    partial:       <SoccerBall size={11} />,
+    wrong:         <XCircle size={11} />,
+    none:          null,
   }
 
   return (
@@ -328,8 +343,14 @@ function PredRow({ match: m, pred, cat, isCalc }: { match: Match; pred?: Predict
           <span className={`${s.predScore} ${finished ? scoreCol[cat] : ''}`}>
             {pred.homeScore} × {pred.awayScore}
           </span>
+          {m.phase !== 'group_stage' && pred.penaltyWinner && (
+            <span className={s.predClassified}>
+              <Trophy size={9} /> {pred.penaltyWinner}
+            </span>
+          )}
           {finished && pred.points !== null ? (() => {
-            const bd = (cat === 'right' || cat === 'bonus')
+            const CATS_WITH_BD: PredCategory[] = ['right', 'bonus', 'exact_bonus', 'exact_penalty', 'bonus_penalty']
+            const bd = CATS_WITH_BD.includes(cat)
               ? getPredBreakdown(pred.points, m.phase)
               : null
             const displayPts = bd ? bd.base : pred.points
@@ -337,8 +358,10 @@ function PredRow({ match: m, pred, cat, isCalc }: { match: Match; pred?: Predict
               <span className={`${s.predPts} ${ptsCol[cat]}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 {catIcon[cat]} {displayPts > 0 ? `+${displayPts}` : '0'}
                 {bd && bd.bonus > 0 ? (
-                  <span className={s.bonusTag}>
-                    {bd.drawBonus && <Minus size={7} strokeWidth={3} />}+{bd.bonus} bônus
+                  <span className={bd.modifier < 0 ? s.penaltyTag : s.bonusTag}>
+                    {bd.drawBonus && <Minus size={7} strokeWidth={3} />}
+                    {bd.modifier < 0 ? String(bd.modifier) : `+${bd.bonus}`}
+                    {bd.modifier < 0 ? ' pen' : ' bônus'}
                   </span>
                 ) : null}
                 {' pts'}

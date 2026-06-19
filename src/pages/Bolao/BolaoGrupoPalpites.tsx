@@ -51,7 +51,7 @@ function matchesSearch(m: GroupFinishedMatch, q: string) {
 // ── category config ───────────────────────────────────────────────────────────
 
 const CAT_CONFIG: Record<PalpiteCategory, { label: string; pts: string; css: string }> = {
-  cravou:           { label: 'Cravou!',               pts: '10–15 pts', css: 'cravou'    },
+  cravou:           { label: 'Cravou!',               pts: '10–17 pts', css: 'cravou'    },
   resultado_bonus:  { label: 'Resultado + Bônus',      pts: '7–10 pts',  css: 'bonus'     },
   resultado_certo:  { label: 'Resultado Certo',        pts: '5–8 pts',   css: 'resultado' },
   parcial:          { label: 'Gols de um time',        pts: '2 pts',     css: 'parcial'   },
@@ -65,9 +65,7 @@ const CAT_ORDER: PalpiteCategory[] = ['cravou', 'resultado_bonus', 'resultado_ce
 
 function MemberCard({ p, phase, onCardClick }: { p: MemberPalpite; phase: string; onCardClick: () => void }) {
   const css = CAT_CONFIG[p.category].css
-  const bd = (p.category === 'resultado_bonus' || p.category === 'resultado_certo') && p.points !== null
-    ? getPredBreakdown(p.points, phase)
-    : null
+  const bd = p.points !== null ? getPredBreakdown(p.points, phase) : null
   const hasBonus = bd && bd.bonus > 0
 
   return (
@@ -83,8 +81,9 @@ function MemberCard({ p, phase, onCardClick }: { p: MemberPalpite; phase: string
         {hasBonus && p.points !== null ? (
           <div className={s.cardBonusRow}>
             <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>{`+${bd!.base}`}</span>
-            <span className={s.bonusPill}>
-              {bd!.drawBonus && <Minus size={7} strokeWidth={3} />}+{bd!.bonus}
+            <span className={bd!.modifier < 0 ? s.penaltyPill : s.bonusPill}>
+              {bd!.drawBonus && <Minus size={7} strokeWidth={3} />}
+              {bd!.modifier < 0 ? String(bd!.modifier) : `+${bd!.bonus}`}
             </span>
           </div>
         ) : (
@@ -324,7 +323,7 @@ export default function BolaoGrupoPalpites() {
                   <span className={s.matchBarInfo}>
                     {phaseLabel(selectedMatch.phase)} · {shortDate(selectedMatch.matchDate)}
                     {selectedMatch.penaltyWinner && (
-                      <> · <span className={s.matchBarPen}>Pen: {selectedMatch.penaltyWinner}</span></>
+                      <> · <span className={s.matchBarPen}>Classif.: {selectedMatch.penaltyWinner}</span></>
                     )}
                   </span>
                 </div>
