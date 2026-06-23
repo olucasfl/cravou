@@ -211,6 +211,16 @@ export default function GlobalPalpitesTab() {
         const data = await getGlobalMatchPalpites(selectedId)
         if (data.isFinished) _palpitesCache[selectedId] = data
         setPalpites(data)
+        // sync status/score back to chip list so chips reflect the new state immediately
+        setMatches(prev => {
+          const next = prev.map(m =>
+            m.id === selectedId
+              ? { ...m, status: data.match.status, homeScore: data.match.homeScore, awayScore: data.match.awayScore, predictionsLocked: data.match.predictionsLocked }
+              : m
+          )
+          _cachedMatches = next
+          return next
+        })
       } catch { /* silent — don't disrupt the user on background refresh */ }
     }, delay)
     return () => clearInterval(timer)

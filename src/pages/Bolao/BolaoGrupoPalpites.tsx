@@ -172,7 +172,7 @@ export default function BolaoGrupoPalpites() {
     setPalpites(null)
     try {
       const data = await getGroupMatchPalpites(id!, matchId)
-      cacheRef.current[matchId] = data
+      if (data.isFinished) cacheRef.current[matchId] = data
       setPalpites(data)
     } catch {
       setPalpitesError('Não foi possível carregar os palpites.')
@@ -218,8 +218,14 @@ export default function BolaoGrupoPalpites() {
     const timer = setInterval(async () => {
       try {
         const data = await getGroupMatchPalpites(id!, selectedId)
-        cacheRef.current[selectedId] = data
+        if (data.isFinished) cacheRef.current[selectedId] = data
         setPalpites(data)
+        // sync status/score back to chip list so chips reflect the new state immediately
+        setMatches(prev => prev.map(m =>
+          m.id === selectedId
+            ? { ...m, status: data.match.status, homeScore: data.match.homeScore, awayScore: data.match.awayScore, predictionsLocked: data.match.predictionsLocked }
+            : m
+        ))
       } catch { /* silent — don't disrupt the user on background refresh */ }
     }, delay)
     return () => clearInterval(timer)
