@@ -96,6 +96,28 @@
 }
 .chipActive .chipScore { color: var(--c-accent); }
 
+.chipLock {
+  display: flex;
+  align-items: center;
+  color: var(--c-text-3);
+  padding: 0 2px;
+}
+
+.chipLive {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--c-green);
+  letter-spacing: 0.3px;
+  animation: liveFlicker 1.4s ease-in-out infinite alternate;
+}
+@keyframes liveFlicker {
+  from { opacity: 1; }
+  to   { opacity: 0.6; }
+}
+
 /* ── Match info bar ────────────────────────────────────────── */
 .matchBar {
   background: var(--c-surface);
@@ -154,6 +176,17 @@
 
 .matchBarPen { color: var(--c-gold); }
 
+.matchBarLiveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--c-green);
+  letter-spacing: 0.5px;
+  animation: liveFlicker 1.4s ease-in-out infinite alternate;
+}
+
 .latestBadge {
   font-size: 0.65rem;
   font-weight: 600;
@@ -172,6 +205,28 @@
   flex-direction: column;
   gap: 16px;
   padding-bottom: 28px;
+}
+
+.preResultNote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--c-text-3);
+  background: rgba(156, 163, 175, 0.07);
+  border: 1px solid rgba(156, 163, 175, 0.14);
+  border-radius: var(--r-md);
+  padding: 7px 12px;
+}
+
+.cardPenLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--c-gold);
+  background: rgba(245, 158, 11, 0.12);
+  border-radius: var(--r-full);
+  padding: 1px 5px;
+  white-space: nowrap;
 }
 
 /* ── Summary strip ─────────────────────────────────────────── */
@@ -199,6 +254,12 @@
 .chip_resultado { background: rgba(245, 158, 11, 0.12); color: var(--c-gold);   border-color: rgba(245, 158, 11, 0.2); }
 .chip_parcial   { background: rgba(0, 212, 255, 0.08);  color: var(--c-accent); border-color: rgba(0, 212, 255, 0.2); }
 .chip_errou     { background: rgba(255, 59, 48, 0.08);  color: var(--c-red);    border-color: rgba(255, 59, 48, 0.18); }
+.chip_sempal    { background: rgba(156, 163, 175, 0.1); color: var(--c-text-3); border-color: rgba(156, 163, 175, 0.2); }
+
+/* Pre-result outcome chips */
+.chip_homeWin   { background: rgba(59, 130, 246, 0.12);  color: #60a5fa;          border-color: rgba(59, 130, 246, 0.25); }
+.chip_awayWin   { background: rgba(168, 85, 247, 0.12);  color: #c084fc;          border-color: rgba(168, 85, 247, 0.25); }
+.chip_draw      { background: rgba(245, 158, 11, 0.12);  color: var(--c-gold);    border-color: rgba(245, 158, 11, 0.2); }
 
 /* ── Category section ──────────────────────────────────────── */
 .catSection {}
@@ -217,6 +278,12 @@
 .catHeader_resultado { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.18); }
 .catHeader_parcial   { background: rgba(0, 212, 255, 0.06);  border: 1px solid rgba(0, 212, 255, 0.15); }
 .catHeader_errou     { background: rgba(255, 59, 48, 0.06);  border: 1px solid rgba(255, 59, 48, 0.15); }
+.catHeader_sempal    { background: rgba(156, 163, 175, 0.06); border: 1px solid rgba(156, 163, 175, 0.15); }
+
+/* Pre-result outcome headers */
+.catHeader_homeWin   { background: rgba(59, 130, 246, 0.07); border: 1px solid rgba(59, 130, 246, 0.2); }
+.catHeader_awayWin   { background: rgba(168, 85, 247, 0.07); border: 1px solid rgba(168, 85, 247, 0.2); }
+.catHeader_draw      { background: rgba(245, 158, 11, 0.07); border: 1px solid rgba(245, 158, 11, 0.18); }
 
 .catTitle { font-size: 0.8rem; font-weight: 700; flex: 1; display: flex; align-items: center; gap: 4px; }
 .catTitleDrawIcon { color: #ec4899; flex-shrink: 0; }
@@ -226,6 +293,10 @@
 .catHeader_resultado .catTitle { color: var(--c-gold); }
 .catHeader_parcial   .catTitle { color: var(--c-accent); }
 .catHeader_errou     .catTitle { color: var(--c-red); }
+.catHeader_sempal    .catTitle { color: var(--c-text-3); }
+.catHeader_homeWin   .catTitle { color: #60a5fa; }
+.catHeader_awayWin   .catTitle { color: #c084fc; }
+.catHeader_draw      .catTitle { color: var(--c-gold); }
 
 .catPts {
   font-size: 0.68rem;
@@ -316,6 +387,10 @@
 .card_resultado { border-left-color: var(--c-gold); }
 .card_parcial   { border-left-color: var(--c-accent); }
 .card_errou     { border-left-color: var(--c-red); }
+.card_sempal    { border-left-color: rgba(156, 163, 175, 0.4); opacity: 0.65; }
+.card_homeWin   { border-left-color: #60a5fa; }
+.card_awayWin   { border-left-color: #c084fc; }
+.card_draw      { border-left-color: var(--c-gold); }
 
 .cardAvatar {
   width: 26px;
@@ -370,6 +445,7 @@
 .badge_resultado { background: rgba(245, 158, 11, 0.15); color: var(--c-gold); }
 .badge_parcial   { background: rgba(0, 212, 255, 0.10);  color: var(--c-accent); }
 .badge_errou     { background: rgba(255, 59, 48, 0.10);  color: var(--c-red); }
+.badge_sempal    { background: rgba(156, 163, 175, 0.10); color: var(--c-text-3); }
 
 .cardBonusRow { display: flex; align-items: center; gap: 3px; }
 

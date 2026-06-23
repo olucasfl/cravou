@@ -114,6 +114,7 @@ export async function getBracketByRound(round: string) {
 // ── Palpites globais ──────────────────────────────────────────────────────────
 
 export type GlobalPalpiteCategory = 'cravou' | 'resultado_bonus' | 'resultado_certo' | 'parcial' | 'errou'
+export type ExtendedPalpiteCategory = GlobalPalpiteCategory | 'sem_palpite'
 
 export interface GlobalPalpite {
   userId: string
@@ -141,6 +142,35 @@ export interface GlobalMatchPalpites {
   palpites: GlobalPalpite[]
 }
 
+// ── Palpites de partidas bloqueadas/ao vivo/finalizadas ───────────────────────
+
+export interface PalpitableMatch {
+  id: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number | null
+  awayScore: number | null
+  matchDate: string
+  phase: string
+  penaltyWinner: string | null
+  status: 'upcoming' | 'live' | 'finished' | 'locked' | 'awaiting_result'
+}
+
+export interface PalpitableGlobalPalpite {
+  userId: string
+  name: string
+  homeScore: number | null
+  awayScore: number | null
+  penaltyWinner: string | null
+  points: number | null
+  category: ExtendedPalpiteCategory | null
+}
+
+export interface PalpitableMatchPalpites {
+  match: PalpitableMatch
+  palpites: PalpitableGlobalPalpite[]
+}
+
 export async function getGlobalFinishedMatches() {
   const cached = getCache<{ matches: GlobalFinishedMatch[] }>('global-finished', 30_000)
   if (cached) return cached
@@ -152,6 +182,19 @@ export async function getGlobalFinishedMatches() {
 export async function getGlobalMatchPalpites(matchId: string) {
   const { data } = await api.get(`/cravou/matches/${matchId}/palpites`)
   return data as GlobalMatchPalpites
+}
+
+export async function getGlobalPalpitavelMatches() {
+  const cached = getCache<{ matches: PalpitableMatch[] }>('global-palpitavel', 20_000)
+  if (cached) return cached
+  const { data } = await api.get('/cravou/matches/palpitavel')
+  setCache('global-palpitavel', data)
+  return data as { matches: PalpitableMatch[] }
+}
+
+export async function getGlobalMatchPalpitesLive(matchId: string) {
+  const { data } = await api.get(`/cravou/matches/${matchId}/palpites-live`)
+  return data as PalpitableMatchPalpites
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────

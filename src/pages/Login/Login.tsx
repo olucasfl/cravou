@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, CheckCircle2 } from 'lucide-react'
+import { Mail, CheckCircle2, ArrowLeft } from 'lucide-react'
 import { login, forgotPassword, resendVerification } from '@/services/authService'
 import s from './Login.module.css'
 
@@ -157,7 +157,7 @@ export default function Login() {
           /* ── Painel Esqueci Minha Senha ── */
           <>
             <button type="button" className={s.backBtn} onClick={() => { setForgotOpen(false); setForgotSent(false); setForgotError('') }}>
-              ← Voltar ao login
+              <ArrowLeft size={14} /> Voltar ao login
             </button>
 
             <div className={s.title}>Recuperar senha</div>

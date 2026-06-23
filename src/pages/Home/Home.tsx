@@ -751,9 +751,9 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             <div className={s.tutSectionTitle}>Exemplo — Brasil 2 × 1 Argentina (grupos)</div>
             <div className={s.tutExamples}>
               <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> +10 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>3 × 1</span><span className={s.tutExLime}><Zap size={11} /> +7 pts</span><span className={s.tutExLabel}>Brasil venceu + 1 gol da Argentina ✓</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>3 × 1</span><span className={s.tutExLime}><Zap size={11} /> +7 pts</span><span className={s.tutExLabel}>Brasil venceu + 1 gol da Argentina <CheckCircle2 size={10} /></span></div>
               <div className={s.tutEx}><span className={s.tutExScore}>3 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> +5 pts</span><span className={s.tutExLabel}>Brasil venceu (sem gols certos)</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>1 gol da Argentina ✓ (errou resultado)</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>1 gol da Argentina <CheckCircle2 size={10} /> (errou resultado)</span></div>
               <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
             </div>
           </div>

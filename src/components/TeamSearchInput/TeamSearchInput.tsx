@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Check } from 'lucide-react'
 import { CountryBadge } from '@/components/CountryBadge'
 import s from './TeamSearchInput.module.css'
 
@@ -85,7 +85,7 @@ export function TeamSearchInput({ value, onChange, placeholder = 'Buscar seleç�
             >
               <CountryBadge country={team} size="xs" />
               <span className={s.optionName}>{team}</span>
-              {value === team && <span className={s.optionCheck}>✓</span>}
+              {value === team && <span className={s.optionCheck}><Check size={13} strokeWidth={2.5} /></span>}
             </button>
           ))}
         </div>

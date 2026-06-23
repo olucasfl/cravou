@@ -155,12 +155,46 @@ export interface GroupMatchPalpites {
   palpites: MemberPalpite[]
 }
 
+// ── Palpites de partidas bloqueadas/ao vivo/finalizadas (grupo) ───────────────
+
+export interface PalpitableGroupMatch {
+  id: string
+  homeTeam: string
+  awayTeam: string
+  homeScore: number | null
+  awayScore: number | null
+  matchDate: string
+  phase: string
+  penaltyWinner: string | null
+  status: 'upcoming' | 'live' | 'finished' | 'locked' | 'awaiting_result'
+}
+
+export interface PalpitableGroupPalpite {
+  userId: string
+  name: string
+  homeScore: number | null
+  awayScore: number | null
+  penaltyWinner: string | null
+  points: number | null
+  category: PalpiteCategory | null
+}
+
+export interface PalpitableGroupMatchPalpites {
+  match: PalpitableGroupMatch
+  palpites: PalpitableGroupPalpite[]
+}
+
 export async function getGroupFinishedMatches(groupId: string) {
   const { data } = await api.get(`/cravou/groups/${groupId}/finished-matches`)
   return data as { matches: GroupFinishedMatch[] }
 }
 
+export async function getGroupPalpitavelMatches(groupId: string) {
+  const { data } = await api.get(`/cravou/groups/${groupId}/palpitavel-matches`)
+  return data as { matches: PalpitableGroupMatch[] }
+}
+
 export async function getGroupMatchPalpites(groupId: string, matchId: string) {
   const { data } = await api.get(`/cravou/groups/${groupId}/matches/${matchId}/palpites`)
-  return data as GroupMatchPalpites
+  return data as PalpitableGroupMatchPalpites
 }
