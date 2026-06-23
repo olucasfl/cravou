@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Target, Search, X, Minus, Lock } from 'lucide-react'
+import { Target, Search, X, Minus, Lock, AlertCircle } from 'lucide-react'
 import {
   getGlobalFinishedMatches,
   getGlobalMatchPalpites,
@@ -90,7 +90,6 @@ function PalpitesView({
 
   return (
     <div className={s.palpitesView}>
-      {/* summary strip */}
       <div className={s.summaryStrip}>
         {catOrder.map((cat) => {
           const n = palpites.filter((p) => p.category === cat).length
@@ -105,7 +104,6 @@ function PalpitesView({
         })}
       </div>
 
-      {/* groups */}
       {groups.map(({ cat, cfg, items }) => {
         const hasDrawBonus = isFinished && cat === 'resultado_certo' && items.some(
           p => p.points !== null && getPredBreakdown(p.points, match.phase)?.drawBonus
@@ -138,7 +136,7 @@ function PalpitesView({
   )
 }
 
-// ── module-level cache (survives tab switches) ────────────────────────────────
+// ── module-level cache (survives tab switches, only for finished matches) ──────
 
 let _cachedMatches: GlobalMatch[] | null = null
 const _palpitesCache: Record<string, GlobalMatchPalpites> = {}
@@ -153,9 +151,13 @@ export default function GlobalPalpitesTab() {
   const [loadingPalpites, setLoadingPalpites] = useState(false)
   const [search, setSearch]                   = useState('')
   const [selectedPlayer, setSelectedPlayer]   = useState<GlobalPalpite | null>(null)
+  const [matchesError, setMatchesError]       = useState<string | null>(null)
+  const [palpitesError, setPalpitesError]     = useState<string | null>(null)
+  const [retryCount, setRetryCount]           = useState(0)
 
   const selectMatch = useCallback(async (matchId: string) => {
     setSelectedId(matchId)
+    setPalpitesError(null)
     if (_palpitesCache[matchId]) {
       setPalpites(_palpitesCache[matchId])
       return
@@ -166,11 +168,14 @@ export default function GlobalPalpitesTab() {
       const data = await getGlobalMatchPalpites(matchId)
       if (data.isFinished) _palpitesCache[matchId] = data
       setPalpites(data)
+    } catch {
+      setPalpitesError('Não foi possível carregar os palpites.')
     } finally {
       setLoadingPalpites(false)
     }
   }, [])
 
+  // initial load
   useEffect(() => {
     if (_cachedMatches !== null) {
       if (_cachedMatches.length > 0) selectMatch(_cachedMatches[0].id)
@@ -178,19 +183,38 @@ export default function GlobalPalpitesTab() {
     }
     let active = true
     async function load() {
+      setMatchesError(null)
       try {
         const res = await getGlobalFinishedMatches()
         if (!active) return
         _cachedMatches = res.matches
         setMatches(res.matches)
         if (res.matches.length > 0) selectMatch(res.matches[0].id)
+      } catch {
+        if (active) setMatchesError('Não foi possível carregar as partidas.')
       } finally {
         if (active) setLoadingMatches(false)
       }
     }
     load()
     return () => { active = false }
-  }, [selectMatch])
+  }, [selectMatch, retryCount])
+
+  // background polling for live / awaiting_result matches
+  useEffect(() => {
+    if (!selectedId || !palpites) return
+    const { status } = palpites.match
+    if (status !== 'live' && status !== 'awaiting_result') return
+    const delay = status === 'live' ? 30_000 : 60_000
+    const timer = setInterval(async () => {
+      try {
+        const data = await getGlobalMatchPalpites(selectedId)
+        if (data.isFinished) _palpitesCache[selectedId] = data
+        setPalpites(data)
+      } catch { /* silent — don't disrupt the user on background refresh */ }
+    }, delay)
+    return () => clearInterval(timer)
+  }, [selectedId, palpites?.match.status])
 
   const filtered = search.trim() ? matches.filter((m) => matchesSearch(m, search)) : matches
   const latestMatchId = matches[0]?.id ?? null
@@ -206,6 +230,7 @@ export default function GlobalPalpitesTab() {
   const selectedMatch = matches.find((m) => m.id === selectedId)
   const isLatest = selectedId === latestMatchId
 
+  // ── loading state ──
   if (loadingMatches) {
     return (
       <div className={s.loadingPalpites}>
@@ -216,6 +241,23 @@ export default function GlobalPalpitesTab() {
     )
   }
 
+  // ── matches list error ──
+  if (matchesError) {
+    return (
+      <div className={s.errorState}>
+        <AlertCircle size={36} strokeWidth={1.5} />
+        <p>{matchesError}</p>
+        <button
+          className={s.retryBtn}
+          onClick={() => { setLoadingMatches(true); setRetryCount(c => c + 1) }}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    )
+  }
+
+  // ── empty state ──
   if (matches.length === 0) {
     return (
       <div className={s.emptyState}>
@@ -228,6 +270,7 @@ export default function GlobalPalpitesTab() {
 
   return (
     <>
+      {/* Search */}
       <div className={s.searchRow}>
         <Search size={15} className={s.searchIcon} />
         <input
@@ -249,20 +292,30 @@ export default function GlobalPalpitesTab() {
         <div className={s.chipWrapper}>
           <div className={s.chipScroll}>
             {filtered.map((m) => {
-              const isLocked = m.predictionsLocked && m.status !== 'finished'
+              const isLive     = m.status === 'live'
+              const isAwaiting = m.status === 'awaiting_result'
+              const isLocked   = m.predictionsLocked && !isLive && !isAwaiting && m.status !== 'finished'
               return (
                 <button
                   key={m.id}
-                  className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''} ${isLocked ? s.chipLocked : ''}`}
+                  className={[
+                    s.chip,
+                    m.id === selectedId ? s.chipActive : '',
+                    isLive ? s.chipLive : isAwaiting ? s.chipAwaiting : isLocked ? s.chipLocked : '',
+                  ].join(' ')}
                   onClick={() => selectMatch(m.id)}
                 >
                   {m.id === latestMatchId && <span className={s.latestDot} />}
                   <CountryBadge country={m.homeTeam} size="xs" />
-                  {isLocked ? (
-                    <Lock size={9} className={s.chipLockIcon} />
-                  ) : (
+                  {m.status === 'finished' ? (
                     <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
-                  )}
+                  ) : isLive ? (
+                    <span className={s.chipLiveText}>AO VIVO</span>
+                  ) : isAwaiting ? (
+                    <span className={s.chipAwaitingIcon} />
+                  ) : isLocked ? (
+                    <Lock size={9} className={s.chipLockIcon} />
+                  ) : null}
                   <CountryBadge country={m.awayTeam} size="xs" />
                 </button>
               )
@@ -271,6 +324,7 @@ export default function GlobalPalpitesTab() {
         </div>
       )}
 
+      {/* Selected match info bar */}
       {selectedMatch && (
         <div className={s.matchBar}>
           <div className={s.matchBarTeams}>
@@ -289,13 +343,29 @@ export default function GlobalPalpitesTab() {
               <span className={s.matchBarTeamNames}>
                 {selectedMatch.homeTeam} · {selectedMatch.awayTeam}
               </span>
-              {isLatest && <span className={s.latestBadge}>
-                {selectedMatch.status !== 'finished' ? 'Bloqueado' : 'Último jogo'}
-              </span>}
+              {/* Status badge — always shown for live/awaiting/locked; only latest for finished */}
+              {selectedMatch.status === 'live' ? (
+                <span className={s.badgeLive}><span className={s.liveDot} /> Ao Vivo</span>
+              ) : selectedMatch.status === 'awaiting_result' ? (
+                <span className={s.badgeAwaiting}><span className={s.awaitingSpinner} /> Aguardando</span>
+              ) : selectedMatch.predictionsLocked && selectedMatch.status !== 'finished' ? (
+                <span className={s.badgeLocked}>Bloqueado</span>
+              ) : isLatest ? (
+                <span className={s.latestBadge}>Último jogo</span>
+              ) : null}
             </div>
             <span className={s.matchBarInfo}>
               {phaseLabel(selectedMatch.phase)} · {shortDate(selectedMatch.matchDate)}
-              {selectedMatch.status !== 'finished' && (
+              {selectedMatch.status === 'live' && (
+                <> · <span className={s.matchBarLiveInfo}>Em andamento</span></>
+              )}
+              {selectedMatch.status === 'awaiting_result' && (
+                <> · <span className={s.matchBarAwaitingInfo}>Apuração em breve</span></>
+              )}
+              {selectedMatch.predictionsLocked &&
+               selectedMatch.status !== 'finished' &&
+               selectedMatch.status !== 'live' &&
+               selectedMatch.status !== 'awaiting_result' && (
                 <> · <span className={s.matchBarLockInfo}><Lock size={9} /> {shortTime(selectedMatch.matchDate)}</span></>
               )}
               {selectedMatch.penaltyWinner && (
@@ -306,11 +376,23 @@ export default function GlobalPalpitesTab() {
         </div>
       )}
 
+      {/* Palpites */}
       {loadingPalpites ? (
         <div className={s.loadingPalpites}>
           <div className={s.loadingBar} />
           <div className={s.loadingBar} style={{ width: '70%' }} />
           <div className={s.loadingBar} style={{ width: '85%' }} />
+        </div>
+      ) : palpitesError ? (
+        <div className={s.errorState}>
+          <AlertCircle size={32} strokeWidth={1.5} />
+          <p>{palpitesError}</p>
+          <button
+            className={s.retryBtn}
+            onClick={() => { if (selectedId) selectMatch(selectedId) }}
+          >
+            Tentar novamente
+          </button>
         </div>
       ) : palpites ? (
         <PalpitesView data={palpites} onCardClick={setSelectedPlayer} />

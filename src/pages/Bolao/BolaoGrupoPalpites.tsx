@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Target, Search, X, Minus, Lock } from 'lucide-react'
+import { ArrowLeft, Target, Search, X, Minus, Lock, AlertCircle } from 'lucide-react'
 import {
   getGroupFinishedMatches,
   getGroupMatchPalpites,
@@ -91,7 +91,6 @@ function PalpitesView({
 
   return (
     <div className={s.palpitesView}>
-      {/* summary strip */}
       <div className={s.summaryStrip}>
         {catOrder.map((cat) => {
           const n = palpites.filter((p) => p.category === cat).length
@@ -106,7 +105,6 @@ function PalpitesView({
         })}
       </div>
 
-      {/* groups */}
       {groups.map(({ cat, cfg, items }) => {
         const hasDrawBonus = isFinished && cat === 'resultado_certo' && items.some(
           p => p.points !== null && getPredBreakdown(p.points, match.phase)?.drawBonus
@@ -153,6 +151,9 @@ export default function BolaoGrupoPalpites() {
   const [groupName, setGroupName]             = useState('')
   const [search, setSearch]                   = useState('')
   const [selectedPlayer, setSelectedPlayer]   = useState<MemberPalpite | null>(null)
+  const [matchesError, setMatchesError]       = useState<string | null>(null)
+  const [palpitesError, setPalpitesError]     = useState<string | null>(null)
+  const [retryCount, setRetryCount]           = useState(0)
   const cacheRef = useRef<Record<string, GroupMatchPalpites>>({})
 
   useEffect(() => {
@@ -162,6 +163,7 @@ export default function BolaoGrupoPalpites() {
 
   const selectMatch = useCallback(async (matchId: string) => {
     setSelectedId(matchId)
+    setPalpitesError(null)
     if (cacheRef.current[matchId]) {
       setPalpites(cacheRef.current[matchId])
       return
@@ -172,29 +174,56 @@ export default function BolaoGrupoPalpites() {
       const data = await getGroupMatchPalpites(id!, matchId)
       cacheRef.current[matchId] = data
       setPalpites(data)
+    } catch {
+      setPalpitesError('Não foi possível carregar os palpites.')
     } finally {
       setLoadingPalpites(false)
     }
   }, [id])
 
+  // initial load (re-runs on retry)
   useEffect(() => {
     if (!id) return
     let active = true
+    setLoadingMatches(true)
+    setMatchesError(null)
     async function load() {
       try {
         const res = await getGroupFinishedMatches(id!)
         if (!active) return
         setMatches(res.matches)
         if (res.matches.length > 0) selectMatch(res.matches[0].id)
-      } catch {
-        navigate(`/bolao/${id}`)
+      } catch (err: unknown) {
+        if (!active) return
+        const status = (err as { response?: { status?: number } })?.response?.status
+        if (status === 403 || status === 404) {
+          navigate(`/bolao/${id}`)
+        } else {
+          setMatchesError('Não foi possível carregar as partidas.')
+        }
       } finally {
         if (active) setLoadingMatches(false)
       }
     }
     load()
     return () => { active = false }
-  }, [id, navigate, selectMatch])
+  }, [id, navigate, selectMatch, retryCount])
+
+  // background polling for live / awaiting_result matches
+  useEffect(() => {
+    if (!selectedId || !palpites) return
+    const { status } = palpites.match
+    if (status !== 'live' && status !== 'awaiting_result') return
+    const delay = status === 'live' ? 30_000 : 60_000
+    const timer = setInterval(async () => {
+      try {
+        const data = await getGroupMatchPalpites(id!, selectedId)
+        cacheRef.current[selectedId] = data
+        setPalpites(data)
+      } catch { /* silent — don't disrupt the user on background refresh */ }
+    }, delay)
+    return () => clearInterval(timer)
+  }, [id, selectedId, palpites?.match.status])
 
   const filtered = search.trim() ? matches.filter((m) => matchesSearch(m, search)) : matches
   const latestMatchId = matches[0]?.id ?? null
@@ -210,6 +239,7 @@ export default function BolaoGrupoPalpites() {
   const selectedMatch = matches.find((m) => m.id === selectedId)
   const isLatest = selectedId === latestMatchId
 
+  // ── loading state ──
   if (loadingMatches) {
     return (
       <div className="app-layout">
@@ -235,7 +265,19 @@ export default function BolaoGrupoPalpites() {
           </div>
         </div>
 
-        {matches.length === 0 ? (
+        {/* Matches list error */}
+        {matchesError ? (
+          <div className={s.errorState}>
+            <AlertCircle size={36} strokeWidth={1.5} />
+            <p>{matchesError}</p>
+            <button
+              className={s.retryBtn}
+              onClick={() => setRetryCount(c => c + 1)}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : matches.length === 0 ? (
           <div className={s.emptyState}>
             <Target size={40} strokeWidth={1.5} />
             <p>Nenhum palpite disponível ainda.</p>
@@ -266,22 +308,32 @@ export default function BolaoGrupoPalpites() {
               <div className={s.chipWrapper}>
                 <div className={s.chipScroll}>
                   {filtered.map((m) => {
-                    const isLocked = m.predictionsLocked && m.status !== 'finished'
+                    const isLive     = m.status === 'live'
+                    const isAwaiting = m.status === 'awaiting_result'
+                    const isLocked   = m.predictionsLocked && !isLive && !isAwaiting && m.status !== 'finished'
                     return (
                       <button
                         key={m.id}
-                        className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''} ${isLocked ? s.chipLocked : ''}`}
+                        className={[
+                          s.chip,
+                          m.id === selectedId ? s.chipActive : '',
+                          isLive ? s.chipLive : isAwaiting ? s.chipAwaiting : isLocked ? s.chipLocked : '',
+                        ].join(' ')}
                         onClick={() => selectMatch(m.id)}
                       >
                         {m.id === latestMatchId && (
                           <span className={s.latestDot} title="Último jogo" />
                         )}
                         <CountryBadge country={m.homeTeam} size="xs" />
-                        {isLocked ? (
-                          <Lock size={9} className={s.chipLockIcon} />
-                        ) : (
+                        {m.status === 'finished' ? (
                           <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
-                        )}
+                        ) : isLive ? (
+                          <span className={s.chipLiveText}>AO VIVO</span>
+                        ) : isAwaiting ? (
+                          <span className={s.chipAwaitingIcon} />
+                        ) : isLocked ? (
+                          <Lock size={9} className={s.chipLockIcon} />
+                        ) : null}
                         <CountryBadge country={m.awayTeam} size="xs" />
                       </button>
                     )
@@ -309,15 +361,28 @@ export default function BolaoGrupoPalpites() {
                     <span className={s.matchBarTeamNames}>
                       {selectedMatch.homeTeam} · {selectedMatch.awayTeam}
                     </span>
-                    {isLatest && (
-                      <span className={s.latestBadge}>
-                        {selectedMatch.status !== 'finished' ? 'Bloqueado' : 'Último jogo'}
-                      </span>
-                    )}
+                    {selectedMatch.status === 'live' ? (
+                      <span className={s.badgeLive}><span className={s.liveDot} /> Ao Vivo</span>
+                    ) : selectedMatch.status === 'awaiting_result' ? (
+                      <span className={s.badgeAwaiting}><span className={s.awaitingSpinner} /> Aguardando</span>
+                    ) : selectedMatch.predictionsLocked && selectedMatch.status !== 'finished' ? (
+                      <span className={s.badgeLocked}>Bloqueado</span>
+                    ) : isLatest ? (
+                      <span className={s.latestBadge}>Último jogo</span>
+                    ) : null}
                   </div>
                   <span className={s.matchBarInfo}>
                     {phaseLabel(selectedMatch.phase)} · {shortDate(selectedMatch.matchDate)}
-                    {selectedMatch.status !== 'finished' && (
+                    {selectedMatch.status === 'live' && (
+                      <> · <span className={s.matchBarLiveInfo}>Em andamento</span></>
+                    )}
+                    {selectedMatch.status === 'awaiting_result' && (
+                      <> · <span className={s.matchBarAwaitingInfo}>Apuração em breve</span></>
+                    )}
+                    {selectedMatch.predictionsLocked &&
+                     selectedMatch.status !== 'finished' &&
+                     selectedMatch.status !== 'live' &&
+                     selectedMatch.status !== 'awaiting_result' && (
                       <> · <span className={s.matchBarLockInfo}><Lock size={9} /> {shortTime(selectedMatch.matchDate)}</span></>
                     )}
                     {selectedMatch.penaltyWinner && (
@@ -334,6 +399,17 @@ export default function BolaoGrupoPalpites() {
                 <div className={s.loadingBar} />
                 <div className={s.loadingBar} style={{ width: '70%' }} />
                 <div className={s.loadingBar} style={{ width: '85%' }} />
+              </div>
+            ) : palpitesError ? (
+              <div className={s.errorState}>
+                <AlertCircle size={32} strokeWidth={1.5} />
+                <p>{palpitesError}</p>
+                <button
+                  className={s.retryBtn}
+                  onClick={() => { if (selectedId) selectMatch(selectedId) }}
+                >
+                  Tentar novamente
+                </button>
               </div>
             ) : palpites ? (
               <PalpitesView data={palpites} onCardClick={setSelectedPlayer} />
