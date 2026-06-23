@@ -68,7 +68,7 @@ const FINISHED_CAT_CONFIG: Record<string, { label: string; pts: string; css: str
 
 const FINISHED_CAT_ORDER = ['cravou', 'resultado_bonus', 'resultado_certo', 'parcial', 'errou', 'sem_palpite']
 
-function lockedCatConfig(homeTeam: string, awayTeam: string) {
+function lockedCatConfig(homeTeam: string, awayTeam: string): Record<string, { label: string; pts: string; css: string }> {
   return {
     vitoria_casa: { label: `Vitória ${homeTeam}`, pts: '', css: 'vitoriacasa' },
     vitoria_fora: { label: `Vitória ${awayTeam}`, pts: '', css: 'vitoriafora' },
