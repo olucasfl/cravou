@@ -36,12 +36,15 @@
 }
 
 /* card — borda colorida por categoria */
-.card_cravou    { border-color: rgba(34,197,94,0.45);   box-shadow: 0 0 28px rgba(34,197,94,0.10); }
-.card_bonus     { border-color: rgba(245,158,11,0.35); }
-.card_resultado { border-color: rgba(245,158,11,0.35); }
-.card_parcial   { border-color: rgba(0,212,255,0.30); }
-.card_errou     { border-color: rgba(255,59,48,0.25); }
-.card_sempal    { border-color: rgba(255,255,255,0.06); }
+.card_cravou       { border-color: rgba(34,197,94,0.45);   box-shadow: 0 0 28px rgba(34,197,94,0.10); }
+.card_bonus        { border-color: rgba(245,158,11,0.35); }
+.card_resultado    { border-color: rgba(245,158,11,0.35); }
+.card_parcial      { border-color: rgba(0,212,255,0.30); }
+.card_errou        { border-color: rgba(255,59,48,0.25); }
+.card_sempal       { border-color: rgba(255,255,255,0.06); }
+.card_vitoriacasa  { border-color: rgba(59,130,246,0.40); }
+.card_vitoriafora  { border-color: rgba(245,158,11,0.35); }
+.card_empate       { border-color: rgba(139,92,246,0.35); }
 
 /* ── Fechar ────────────────────────────────────────────────── */
 .closeBtn {
@@ -246,6 +249,27 @@
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.3);
+}
+
+/* vitória mandante → azul */
+.catBadge_vitoriacasa {
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.35);
+  color: #3b82f6;
+}
+
+/* vitória visitante → gold */
+.catBadge_vitoriafora {
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  color: #f59e0b;
+}
+
+/* empate → roxo */
+.catBadge_empate {
+  background: rgba(139,92,246,0.10);
+  border: 1px solid rgba(139,92,246,0.35);
+  color: #8b5cf6;
 }
 
 /* ── Partículas mini (cravou) ──────────────────────────────── */

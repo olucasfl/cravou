@@ -27,6 +27,9 @@ const CAT_CONFIG: Record<string, { label: string; css: string }> = {
   parcial:         { label: 'Gols de um time',    css: 'parcial'   },
   errou:           { label: 'Errou tudo',          css: 'errou'     },
   sem_palpite:     { label: 'Sem palpite',         css: 'sempal'    },
+  vitoria_casa:    { label: 'Vitória mandante',    css: 'vitoriacasa' },
+  vitoria_fora:    { label: 'Vitória visitante',   css: 'vitoriafora' },
+  empate:          { label: 'Empate',              css: 'empate'    },
 }
 
 const MINI_PARTICLES = [
@@ -53,8 +56,8 @@ export interface PlayerModalData {
 export interface MatchContext {
   homeTeam: string
   awayTeam: string
-  homeScore: number
-  awayScore: number
+  homeScore: number | null
+  awayScore: number | null
   penaltyWinner: string | null
   phase: string
 }
@@ -80,6 +83,8 @@ export function PlayerModal({ player, match, onClose }: Props) {
   const hasBonus = bd !== null && bd.bonus > 0
   const effectiveLabel = hasBonus && cat === 'resultado_certo' && bd?.drawBonus
     ? 'Empate Acertado'
+    : cat === 'vitoria_casa' ? `Vitória ${match.homeTeam}`
+    : cat === 'vitoria_fora' ? `Vitória ${match.awayTeam}`
     : cfg.label
 
   useEffect(() => {
@@ -105,7 +110,12 @@ export function PlayerModal({ player, match, onClose }: Props) {
         <div className={s.matchSection}>
           <div className={s.matchTeams}>
             <CountryBadge country={match.homeTeam} size="sm" />
-            <span className={s.matchScore}>{match.homeScore} × {match.awayScore}</span>
+            <span className={s.matchScore}>
+              {match.homeScore !== null && match.awayScore !== null
+                ? `${match.homeScore} × ${match.awayScore}`
+                : 'VS'
+              }
+            </span>
             <CountryBadge country={match.awayTeam} size="sm" />
           </div>
           <div className={s.matchNames}>{match.homeTeam} · {match.awayTeam}</div>

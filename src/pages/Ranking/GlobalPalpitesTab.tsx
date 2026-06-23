@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Target, Search, X, Minus } from 'lucide-react'
+import { Target, Search, X, Minus, Lock } from 'lucide-react'
 import {
   getGlobalFinishedMatches,
   getGlobalMatchPalpites,
-  type GlobalFinishedMatch,
+  type GlobalMatch,
   type GlobalMatchPalpites,
-  type GlobalPalpiteCategory,
   type GlobalPalpite,
 } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
@@ -20,6 +19,14 @@ function shortDate(dateStr: string) {
     timeZone: 'America/Sao_Paulo',
     day: '2-digit',
     month: 'short',
+  })
+}
+
+function shortTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -42,29 +49,50 @@ function normalize(str: string) {
   return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-function matchesSearch(m: GlobalFinishedMatch, q: string) {
+function matchesSearch(m: GlobalMatch, q: string) {
   const nq = normalize(q.trim())
   return normalize(m.homeTeam).includes(nq) || normalize(m.awayTeam).includes(nq)
 }
 
 // ── category config ───────────────────────────────────────────────────────────
 
-const CAT_CONFIG: Record<GlobalPalpiteCategory, { label: string; pts: string; css: string }> = {
+const FINISHED_CAT_CONFIG: Record<string, { label: string; pts: string; css: string }> = {
   cravou:           { label: 'Cravou!',            pts: '10–17 pts', css: 'cravou'    },
   resultado_bonus:  { label: 'Resultado + Bônus',   pts: '7–11 pts',  css: 'bonus'     },
   resultado_certo:  { label: 'Resultado Certo',     pts: '5–9 pts',   css: 'resultado' },
   parcial:          { label: 'Gols de um time',     pts: '2 pts',     css: 'parcial'   },
   errou:            { label: 'Errou tudo',           pts: '0 pts',     css: 'errou'     },
+  sem_palpite:      { label: 'Não palpitou',         pts: '—',         css: 'sempal'    },
 }
 
-const CAT_ORDER: GlobalPalpiteCategory[] = ['cravou', 'resultado_bonus', 'resultado_certo', 'parcial', 'errou']
+const FINISHED_CAT_ORDER = ['cravou', 'resultado_bonus', 'resultado_certo', 'parcial', 'errou', 'sem_palpite']
+
+function lockedCatConfig(homeTeam: string, awayTeam: string) {
+  return {
+    vitoria_casa: { label: `Vitória ${homeTeam}`, pts: '', css: 'vitoriacasa' },
+    vitoria_fora: { label: `Vitória ${awayTeam}`, pts: '', css: 'vitoriafora' },
+    empate:       { label: 'Empate',               pts: '', css: 'empate'     },
+    sem_palpite:  { label: 'Não palpitou',          pts: '', css: 'sempal'    },
+  }
+}
+
+const LOCKED_CAT_ORDER = ['vitoria_casa', 'vitoria_fora', 'empate', 'sem_palpite']
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function MemberCard({ p, phase, onCardClick }: { p: GlobalPalpite; phase: string; onCardClick: () => void }) {
-  const css = CAT_CONFIG[p.category].css
-  const bd = p.points !== null ? getPredBreakdown(p.points, phase) : null
+function MemberCard({
+  p, phase, isFinished, onCardClick,
+}: {
+  p: GlobalPalpite
+  phase: string
+  isFinished: boolean
+  onCardClick: () => void
+}) {
+  const cfg = FINISHED_CAT_CONFIG[p.category] ?? { css: 'sempal' }
+  const css = cfg.css
+  const bd = (isFinished && p.points !== null) ? getPredBreakdown(p.points, phase) : null
   const hasBonus = bd && bd.bonus > 0
+  const hasPalpite = p.homeScore !== null && p.awayScore !== null
 
   return (
     <div className={`${s.card} ${s[`card_${css}`]}`} onClick={onCardClick}>
@@ -74,9 +102,9 @@ function MemberCard({ p, phase, onCardClick }: { p: GlobalPalpite; phase: string
       <span className={s.cardName}>{p.name}</span>
       <div className={s.cardRight}>
         <span className={s.cardScore}>
-          {p.homeScore !== null && p.awayScore !== null ? `${p.homeScore}×${p.awayScore}` : '—'}
+          {hasPalpite ? `${p.homeScore}×${p.awayScore}` : '—'}
         </span>
-        {hasBonus && p.points !== null ? (
+        {isFinished && hasBonus && p.points !== null ? (
           <div className={s.cardBonusRow}>
             <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>{`+${bd!.base}`}</span>
             <span className={bd!.modifier < 0 ? s.penaltyPill : s.bonusPill}>
@@ -84,11 +112,11 @@ function MemberCard({ p, phase, onCardClick }: { p: GlobalPalpite; phase: string
               {bd!.modifier < 0 ? String(bd!.modifier) : `+${bd!.bonus}`}
             </span>
           </div>
-        ) : (
+        ) : isFinished && p.category !== 'sem_palpite' ? (
           <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>
-            {p.points !== null ? `+${p.points}` : '—'}
+            {p.points !== null ? `+${p.points}` : '0'}
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   )
@@ -101,21 +129,28 @@ function PalpitesView({
   data: GlobalMatchPalpites
   onCardClick: (p: GlobalPalpite) => void
 }) {
-  const groups = CAT_ORDER.map((cat) => ({
+  const { isFinished, match, palpites } = data
+  const catOrder = isFinished ? FINISHED_CAT_ORDER : LOCKED_CAT_ORDER
+  const catConfig = isFinished
+    ? FINISHED_CAT_CONFIG
+    : lockedCatConfig(match.homeTeam, match.awayTeam)
+
+  const groups = catOrder.map((cat) => ({
     cat,
-    cfg: CAT_CONFIG[cat],
-    items: data.palpites.filter((p) => p.category === cat),
+    cfg: catConfig[cat] ?? { label: cat, pts: '', css: 'sempal' },
+    items: palpites.filter((p) => p.category === cat),
   })).filter((g) => g.items.length > 0)
 
-  const total = data.palpites.length
+  const total = palpites.length
 
   return (
     <div className={s.palpitesView}>
+      {/* summary strip */}
       <div className={s.summaryStrip}>
-        {CAT_ORDER.map((cat) => {
-          const n = data.palpites.filter((p) => p.category === cat).length
+        {catOrder.map((cat) => {
+          const n = palpites.filter((p) => p.category === cat).length
           if (n === 0) return null
-          const css = CAT_CONFIG[cat].css
+          const css = (catConfig[cat] ?? { css: 'sempal' }).css
           return (
             <div key={cat} className={`${s.stripChip} ${s[`chip_${css}`]}`}>
               <span className={s.stripNum}>{n}</span>
@@ -125,9 +160,10 @@ function PalpitesView({
         })}
       </div>
 
+      {/* groups */}
       {groups.map(({ cat, cfg, items }) => {
-        const hasDrawBonus = cat === 'resultado_certo' && items.some(
-          p => p.points !== null && getPredBreakdown(p.points, data.match.phase)?.drawBonus
+        const hasDrawBonus = isFinished && cat === 'resultado_certo' && items.some(
+          p => p.points !== null && getPredBreakdown(p.points, match.phase)?.drawBonus
         )
         return (
           <div key={cat} className={s.catSection}>
@@ -136,12 +172,18 @@ function PalpitesView({
                 {cfg.label}
                 {hasDrawBonus && <Minus size={10} strokeWidth={2.5} className={s.catTitleDrawIcon} />}
               </span>
-              <span className={s.catPts}>{cfg.pts}</span>
+              {cfg.pts && <span className={s.catPts}>{cfg.pts}</span>}
               <span className={s.catCount}>{items.length}</span>
             </div>
             <div className={s.cardGrid}>
               {items.map((p) => (
-                <MemberCard key={p.userId} p={p} phase={data.match.phase} onCardClick={() => onCardClick(p)} />
+                <MemberCard
+                  key={p.userId}
+                  p={p}
+                  phase={match.phase}
+                  isFinished={isFinished}
+                  onCardClick={() => onCardClick(p)}
+                />
               ))}
             </div>
           </div>
@@ -153,13 +195,13 @@ function PalpitesView({
 
 // ── module-level cache (survives tab switches) ────────────────────────────────
 
-let _cachedMatches: GlobalFinishedMatch[] | null = null
+let _cachedMatches: GlobalMatch[] | null = null
 const _palpitesCache: Record<string, GlobalMatchPalpites> = {}
 
 // ── main component ────────────────────────────────────────────────────────────
 
 export default function GlobalPalpitesTab() {
-  const [matches, setMatches]                 = useState<GlobalFinishedMatch[]>(_cachedMatches ?? [])
+  const [matches, setMatches]                 = useState<GlobalMatch[]>(_cachedMatches ?? [])
   const [selectedId, setSelectedId]           = useState<string | null>(null)
   const [palpites, setPalpites]               = useState<GlobalMatchPalpites | null>(null)
   const [loadingMatches, setLoadingMatches]   = useState(_cachedMatches === null)
@@ -233,8 +275,8 @@ export default function GlobalPalpitesTab() {
     return (
       <div className={s.emptyState}>
         <Target size={40} strokeWidth={1.5} />
-        <p>Nenhum jogo finalizado ainda.</p>
-        <span>Os palpites aparecem assim que os jogos forem encerrados.</span>
+        <p>Nenhum palpite disponível ainda.</p>
+        <span>Os palpites aparecem quando os jogos bloqueiam ou encerram.</span>
       </div>
     )
   }
@@ -261,18 +303,25 @@ export default function GlobalPalpitesTab() {
       ) : (
         <div className={s.chipWrapper}>
           <div className={s.chipScroll}>
-            {filtered.map((m) => (
-              <button
-                key={m.id}
-                className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''}`}
-                onClick={() => selectMatch(m.id)}
-              >
-                {m.id === latestMatchId && <span className={s.latestDot} />}
-                <CountryBadge country={m.homeTeam} size="xs" />
-                <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
-                <CountryBadge country={m.awayTeam} size="xs" />
-              </button>
-            ))}
+            {filtered.map((m) => {
+              const isLocked = m.predictionsLocked && m.status !== 'finished'
+              return (
+                <button
+                  key={m.id}
+                  className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''} ${isLocked ? s.chipLocked : ''}`}
+                  onClick={() => selectMatch(m.id)}
+                >
+                  {m.id === latestMatchId && <span className={s.latestDot} />}
+                  <CountryBadge country={m.homeTeam} size="xs" />
+                  {isLocked ? (
+                    <Lock size={9} className={s.chipLockIcon} />
+                  ) : (
+                    <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
+                  )}
+                  <CountryBadge country={m.awayTeam} size="xs" />
+                </button>
+              )
+            })}
           </div>
         </div>
       )}
@@ -281,9 +330,13 @@ export default function GlobalPalpitesTab() {
         <div className={s.matchBar}>
           <div className={s.matchBarTeams}>
             <CountryBadge country={selectedMatch.homeTeam} size="sm" />
-            <span className={s.matchBarScore}>
-              {selectedMatch.homeScore} × {selectedMatch.awayScore}
-            </span>
+            {selectedMatch.homeScore !== null && selectedMatch.awayScore !== null ? (
+              <span className={s.matchBarScore}>
+                {selectedMatch.homeScore} × {selectedMatch.awayScore}
+              </span>
+            ) : (
+              <span className={s.matchBarVs}>VS</span>
+            )}
             <CountryBadge country={selectedMatch.awayTeam} size="sm" />
           </div>
           <div className={s.matchBarMeta}>
@@ -291,10 +344,15 @@ export default function GlobalPalpitesTab() {
               <span className={s.matchBarTeamNames}>
                 {selectedMatch.homeTeam} · {selectedMatch.awayTeam}
               </span>
-              {isLatest && <span className={s.latestBadge}>Último jogo</span>}
+              {isLatest && <span className={s.latestBadge}>
+                {selectedMatch.status !== 'finished' ? 'Bloqueado' : 'Último jogo'}
+              </span>}
             </div>
             <span className={s.matchBarInfo}>
               {phaseLabel(selectedMatch.phase)} · {shortDate(selectedMatch.matchDate)}
+              {selectedMatch.status !== 'finished' && (
+                <> · <span className={s.matchBarLockInfo}><Lock size={9} /> {shortTime(selectedMatch.matchDate)}</span></>
+              )}
               {selectedMatch.penaltyWinner && (
                 <> · <span className={s.matchBarPen}>Classif.: {selectedMatch.penaltyWinner}</span></>
               )}
