@@ -10,73 +10,19 @@ import {
 import { CountryBadge } from '@/components/CountryBadge'
 import { PlayerModal } from '@/components/PlayerModal/PlayerModal'
 import { phaseLabel, getPredBreakdown } from '@/utils/format'
+import {
+  shortDate, shortTime, avatarInitial, avatarColor,
+  ALL_CAT_CSS, FINISHED_CAT_ORDER, LOCKED_CAT_ORDER,
+  finishedCatConfig, lockedCatConfig, normalize,
+} from '@/utils/palpitesConfig'
 import s from './GlobalPalpitesTab.module.css'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-
-function shortDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    day: '2-digit',
-    month: 'short',
-  })
-}
-
-function shortTime(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function avatarInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase()
-}
-
-const AVATAR_COLORS = [
-  '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981',
-  '#f59e0b', '#ef4444', '#ec4899', '#6366f1',
-]
-
-function avatarColor(userId: string) {
-  let h = 0
-  for (let i = 0; i < userId.length; i++) h = userId.charCodeAt(i) + ((h << 5) - h)
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
-}
-
-function normalize(str: string) {
-  return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-}
 
 function matchesSearch(m: GlobalMatch, q: string) {
   const nq = normalize(q.trim())
   return normalize(m.homeTeam).includes(nq) || normalize(m.awayTeam).includes(nq)
 }
-
-// ── category config ───────────────────────────────────────────────────────────
-
-const FINISHED_CAT_CONFIG: Record<string, { label: string; pts: string; css: string }> = {
-  cravou:           { label: 'Cravou!',            pts: '10–17 pts', css: 'cravou'    },
-  resultado_bonus:  { label: 'Resultado + Bônus',   pts: '7–11 pts',  css: 'bonus'     },
-  resultado_certo:  { label: 'Resultado Certo',     pts: '5–9 pts',   css: 'resultado' },
-  parcial:          { label: 'Gols de um time',     pts: '2 pts',     css: 'parcial'   },
-  errou:            { label: 'Errou tudo',           pts: '0 pts',     css: 'errou'     },
-  sem_palpite:      { label: 'Não palpitou',         pts: '—',         css: 'sempal'    },
-}
-
-const FINISHED_CAT_ORDER = ['cravou', 'resultado_bonus', 'resultado_certo', 'parcial', 'errou', 'sem_palpite']
-
-function lockedCatConfig(homeTeam: string, awayTeam: string): Record<string, { label: string; pts: string; css: string }> {
-  return {
-    vitoria_casa: { label: `Vitória ${homeTeam}`, pts: '', css: 'vitoriacasa' },
-    vitoria_fora: { label: `Vitória ${awayTeam}`, pts: '', css: 'vitoriafora' },
-    empate:       { label: 'Empate',               pts: '', css: 'empate'     },
-    sem_palpite:  { label: 'Não palpitou',          pts: '', css: 'sempal'    },
-  }
-}
-
-const LOCKED_CAT_ORDER = ['vitoria_casa', 'vitoria_fora', 'empate', 'sem_palpite']
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
@@ -88,8 +34,7 @@ function MemberCard({
   isFinished: boolean
   onCardClick: () => void
 }) {
-  const cfg = FINISHED_CAT_CONFIG[p.category] ?? { css: 'sempal' }
-  const css = cfg.css
+  const css = ALL_CAT_CSS[p.category] ?? 'sempal'
   const bd = (isFinished && p.points !== null) ? getPredBreakdown(p.points, phase) : null
   const hasBonus = bd && bd.bonus > 0
   const hasPalpite = p.homeScore !== null && p.awayScore !== null
@@ -132,7 +77,7 @@ function PalpitesView({
   const { isFinished, match, palpites } = data
   const catOrder = isFinished ? FINISHED_CAT_ORDER : LOCKED_CAT_ORDER
   const catConfig = isFinished
-    ? FINISHED_CAT_CONFIG
+    ? finishedCatConfig(match.phase)
     : lockedCatConfig(match.homeTeam, match.awayTeam)
 
   const groups = catOrder.map((cat) => ({
@@ -219,7 +164,7 @@ export default function GlobalPalpitesTab() {
     setPalpites(null)
     try {
       const data = await getGlobalMatchPalpites(matchId)
-      _palpitesCache[matchId] = data
+      if (data.isFinished) _palpitesCache[matchId] = data
       setPalpites(data)
     } finally {
       setLoadingPalpites(false)

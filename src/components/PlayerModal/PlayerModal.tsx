@@ -3,22 +3,8 @@ import { createPortal } from 'react-dom'
 import { X, Minus } from 'lucide-react'
 import { CountryBadge } from '@/components/CountryBadge'
 import { getPredBreakdown } from '@/utils/format'
+import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
 import s from './PlayerModal.module.css'
-
-function avatarInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase()
-}
-
-const AVATAR_COLORS = [
-  '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981',
-  '#f59e0b', '#ef4444', '#ec4899', '#6366f1',
-]
-
-function avatarColor(userId: string) {
-  let h = 0
-  for (let i = 0; i < userId.length; i++) h = userId.charCodeAt(i) + ((h << 5) - h)
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
-}
 
 const CAT_CONFIG: Record<string, { label: string; css: string }> = {
   cravou:          { label: 'Cravou!',           css: 'cravou'    },
