@@ -310,12 +310,14 @@ export default function MatchDetail() {
             {/* Info pontuação */}
             {isKnockout ? (
               <div className={s.scoringGrid}>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> placar exato de vitória</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>17 pts</b> empate exato + classificado correto <span className={s.scoringBonus}>+2</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>14 pts</b> empate exato + classificado errado <span className={s.scoringPenalty}>−1</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>10 pts</b> resultado certo <span className={s.scoringBonus}>+2 gols de um time ou acertou classificado</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>7 pts</b> acertou empate, errou classificado <span className={s.scoringPenalty}>−1</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>3 pts</b> gols de um time (errou resultado)</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> cravou — placar exato de vitória</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> cravou empate exato <span className={s.scoringBonus}>+2 acertou classificado = 17</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> cravou empate exato <span className={s.scoringPenalty}>−1 errou classificado = 14</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou resultado de vitória <span className={s.scoringBonus}>+2 gols de um time = 10</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou resultado de vitória (sem bônus)</span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou empate (sem cravar) <span className={s.scoringBonus}>+2 acertou classificado = 10</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou empate (sem cravar) <span className={s.scoringPenalty}>−1 errou classificado = 7</span></span></div>
+                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>3 pts</b> gols de um time certos (errou resultado)</span></div>
                 <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
               </div>
             ) : (
