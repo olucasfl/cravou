@@ -774,26 +774,24 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          {/* ── Exemplo Mata-mata ── */}
+          {/* ── Exemplos Mata-mata ── */}
           <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Exemplo — Brasil 2 × 1 Argentina (mata-mata)</div>
+            <div className={s.tutSectionTitle}>Exemplos práticos — Mata-mata</div>
             <div className={s.tutExamples}>
-              <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> 15 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>3 × 1</span><span className={s.tutExLime}><Zap size={11} /> 8 +2</span><span className={s.tutExLabel}>acertou vitória + 1 gol da Argentina</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>1 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> 8 pts</span><span className={s.tutExLabel}>acertou só que Brasil venceu</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> 3 pts</span><span className={s.tutExLabel}>1 gol da Argentina ✓ (errou resultado)</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
-            </div>
-          </div>
+              <div className={s.tutExNote}>Os palpites abaixo são exemplos ilustrativos para o mesmo jogo.</div>
 
-          {/* ── Exemplo Mata-mata Empate ── */}
-          <div className={s.tutSection}>
-            <div className={s.tutSectionTitle}>Exemplo — Empate 1 × 1 (Brasil avança)</div>
-            <div className={s.tutExamples}>
-              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + 🇧🇷</span><span className={s.tutExGreen}><Target size={11} /> 15 +2</span><span className={s.tutExLabel}>CRAVOU empate + acertou classificado</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + 🇦🇷</span><span className={s.tutExYellow}><Target size={11} /> 15 −1</span><span className={s.tutExLabel}>CRAVOU empate + errou classificado</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + 🇧🇷</span><span className={s.tutExLime}><CheckCircle2 size={11} /> 8 +2</span><span className={s.tutExLabel}>acertou empate (sem cravar) + acertou classificado</span></div>
-              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + 🇦🇷</span><span className={s.tutExOrange}><Minus size={11} /> 8 −1</span><span className={s.tutExLabel}>acertou empate (sem cravar) + errou classificado</span></div>
+              <div className={s.tutExSubLabel}>Vitória — Real: 2 × 1</div>
+              <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> 15 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>3 × 1</span><span className={s.tutExLime}><Zap size={11} /> 8 +2</span><span className={s.tutExLabel}>acertou vitória + 1 gol do time B</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> 8 pts</span><span className={s.tutExLabel}>acertou só que o time A venceu</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> 3 pts</span><span className={s.tutExLabel}>1 gol do time B certo (errou resultado)</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
+
+              <div className={s.tutExSubLabel}>Empate — Real: 1 × 1 (Time A avança)</div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + A</span><span className={s.tutExGreen}><Target size={11} /> 15 +2</span><span className={s.tutExLabel}>CRAVOU empate + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + B</span><span className={s.tutExYellow}><Target size={11} /> 15 −1</span><span className={s.tutExLabel}>CRAVOU empate + errou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + A</span><span className={s.tutExLime}><CheckCircle2 size={11} /> 8 +2</span><span className={s.tutExLabel}>acertou empate (sem cravar) + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + B</span><span className={s.tutExOrange}><Minus size={11} /> 8 −1</span><span className={s.tutExLabel}>acertou empate (sem cravar) + errou classificado</span></div>
             </div>
           </div>
 
