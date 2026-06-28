@@ -102,16 +102,17 @@ export default function Admin() {
   const [creatingMatch, setCreatingMatch] = useState<Set<string>>(new Set())
 
   // unified load — silent skips the loading overlay
+  // Uses allSettled so a failed request never wipes existing data
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
     else setLoading(true)
     try {
-      const [m, b] = await Promise.all([
-        adminGetMatches().catch(() => [] as Match[]),
-        getBracket().catch(() => [] as BracketSlot[]),
+      const [mResult, bResult] = await Promise.allSettled([
+        adminGetMatches(),
+        getBracket(),
       ])
-      setMatches(m)
-      setBracket(b)
+      if (mResult.status === 'fulfilled') setMatches(mResult.value)
+      if (bResult.status === 'fulfilled') setBracket(bResult.value)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -191,11 +192,12 @@ export default function Admin() {
     setBracketMsg({ type: 'ok', text: 'Times atualizados!' })
     setOverrideInputs(prev => { const n = { ...prev }; delete n[slotId]; return n })
     setOverrideOpen(prev => { const ns = new Set(prev); ns.delete(slotId); return ns })
-    // Optimistic update for this slot
-    updateSlot(slotId, {
-      homeTeam: newHome === undefined ? undefined : newHome,
-      awayTeam: newAway === undefined ? undefined : newAway,
-    })
+    // Optimistic update — only include fields that were actually changed
+    // (spreading undefined overwrites existing value with undefined, reopening the form)
+    const slotUpdates: Partial<BracketSlot> = {}
+    if (newHome !== undefined) slotUpdates.homeTeam = newHome
+    if (newAway !== undefined) slotUpdates.awayTeam = newAway
+    updateSlot(slotId, slotUpdates)
     load(true)  // background sync
   }
 
@@ -581,7 +583,7 @@ export default function Admin() {
                             try {
                               await adminCreateMatchFromSlot(slot.id, fromDatetimeLocal(slotDate))
                               setBracketMsg({ type: 'ok', text: slot.matchId ? 'Partida atualizada!' : 'Partida criada com sucesso!' })
-                              load(true)  // need full reload to get new match data
+                              await load(true)  // must await — need the new match ID to update the slot badge and partidas list
                             } catch (e) {
                               setBracketMsg({ type: 'err', text: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao criar partida' })
                             } finally {
