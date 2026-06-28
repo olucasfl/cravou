@@ -786,6 +786,17 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
+          {/* ── Exemplo Mata-mata Empate ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Exemplo — Empate 1 × 1 (Brasil avança)</div>
+            <div className={s.tutExamples}>
+              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + 🇧🇷</span><span className={s.tutExGreen}><Target size={11} /> 15 +2</span><span className={s.tutExLabel}>CRAVOU empate + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + 🇦🇷</span><span className={s.tutExYellow}><Target size={11} /> 15 −1</span><span className={s.tutExLabel}>CRAVOU empate + errou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + 🇧🇷</span><span className={s.tutExLime}><CheckCircle2 size={11} /> 8 +2</span><span className={s.tutExLabel}>acertou empate (sem cravar) + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + 🇦🇷</span><span className={s.tutExOrange}><Minus size={11} /> 8 −1</span><span className={s.tutExLabel}>acertou empate (sem cravar) + errou classificado</span></div>
+            </div>
+          </div>
+
           {/* ── Bônus de gols ── */}
           <div className={s.tutSection}>
             <div className={s.tutSectionTitle}>Bônus de gols (+2 pts)</div>
