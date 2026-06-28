@@ -707,34 +707,50 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
                 <span />
                 <span className={s.tutScorePhase}>Total</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU! — placar exato de vitória</span></div>
+
+              {/* ── CRAVOU ── */}
+              <div className={s.tutScoreGroupHeader}>
+                <Target size={12} color="var(--c-green)" />
+                CRAVOU
+                <span className={s.tutScoreGroupBase}>— 15 pts base</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Placar exato de vitória</span></div>
                 <span className={s.tutScorePts}>15 pts</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU empate exato + acertou classificado</span></div>
-                <span className={s.tutScorePts}>15 <span className={s.tutBonusPink}>+2 = 17</span></span>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate exato + acertou classificado</span></div>
+                <span className={s.tutScorePts}>17 <span className={s.tutBonusPink}>+2</span></span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU empate exato + errou classificado</span></div>
-                <span className={s.tutScorePts}>15 <span className={s.tutBonusRed}>−1 = 14</span></span>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate exato + errou classificado</span></div>
+                <span className={s.tutScorePts}>14 <span className={s.tutBonusRed}>−1</span></span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
-                <div className={s.tutScoreLabel}><Zap size={13} /><span>Acertou resultado de vitória + gols de um time</span></div>
-                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2 = 10</span></span>
+
+              {/* ── ACERTOU RESULTADO ── */}
+              <div className={s.tutScoreGroupHeader}>
+                <CheckCircle2 size={12} color="#eab308" />
+                Acertou Resultado
+                <span className={s.tutScoreGroupBase}>— 8 pts base</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreRight}`}>
-                <div className={s.tutScoreLabel}><CheckCircle2 size={13} /><span>Acertou resultado de vitória (sem bônus)</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Vitória + gols de um time</span></div>
+                <span className={s.tutScorePts}>10 <span className={s.tutBonusPink}>+2</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreRight} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Vitória (sem bônus)</span></div>
                 <span className={s.tutScorePts}>8 pts</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
-                <div className={s.tutScoreLabel}><Zap size={13} /><span>Acertou empate (sem cravar) + acertou classificado</span></div>
-                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2 = 10</span></span>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate certo + acertou classificado</span></div>
+                <span className={s.tutScorePts}>10 <span className={s.tutBonusPink}>+2</span></span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreDrawPenalty}`}>
-                <div className={s.tutScoreLabel}><Minus size={13} /><span>Acertou empate (sem cravar) + errou classificado</span></div>
-                <span className={s.tutScorePts}>8 <span className={s.tutBonusRed}>−1 = 7</span></span>
+              <div className={`${s.tutScoreRow} ${s.tutScoreDrawPenalty} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate certo + errou classificado</span></div>
+                <span className={s.tutScorePts}>7 <span className={s.tutBonusRed}>−1</span></span>
               </div>
+
+              {/* ── SIMPLES ── */}
               <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
                 <div className={s.tutScoreLabel}><SoccerBall size={13} /><span>Gols de um time certos (errou resultado)</span></div>
                 <span className={s.tutScorePts}>3 pts</span>

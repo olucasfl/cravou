@@ -310,15 +310,69 @@ export default function MatchDetail() {
             {/* Info pontuação */}
             {isKnockout ? (
               <div className={s.scoringGrid}>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> cravou — placar exato de vitória</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> cravou empate exato <span className={s.scoringBonus}>+2 acertou classificado = 17</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-green)' }} /><span><b>15 pts</b> cravou empate exato <span className={s.scoringPenalty}>−1 errou classificado = 14</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou resultado de vitória <span className={s.scoringBonus}>+2 gols de um time = 10</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou resultado de vitória (sem bônus)</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou empate (sem cravar) <span className={s.scoringBonus}>+2 acertou classificado = 10</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#eab308' }} /><span><b>8 pts</b> acertou empate (sem cravar) <span className={s.scoringPenalty}>−1 errou classificado = 7</span></span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: '#f97316' }} /><span><b>3 pts</b> gols de um time certos (errou resultado)</span></div>
-                <div className={s.scoringItem}><span className={s.scoringDot} style={{ background: 'var(--c-red)' }} /><span><b>0 pts</b> errou tudo</span></div>
+
+                {/* CRAVOU */}
+                <div className={s.scoringGroup}>
+                  <div className={s.scoringGroupLabel}>
+                    <span className={s.scoringDot} style={{ background: 'var(--c-green)' }} />
+                    Cravou
+                    <span className={s.scoringGroupBase}>— 15 pts base</span>
+                  </div>
+                  <div className={s.scoringSubList}>
+                    <div className={s.scoringSubRow}>
+                      <span>Placar exato de vitória</span>
+                      <span className={s.scoringPts}>15 pts</span>
+                    </div>
+                    <div className={s.scoringSubRow}>
+                      <span>Empate exato <span className={s.scoringBonus}>+ acertou classificado</span></span>
+                      <span className={s.scoringPts}>17 pts <span className={s.scoringBonus}>+2</span></span>
+                    </div>
+                    <div className={s.scoringSubRow}>
+                      <span>Empate exato <span className={s.scoringPenalty}>+ errou classificado</span></span>
+                      <span className={s.scoringPts}>14 pts <span className={s.scoringPenalty}>−1</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ACERTOU RESULTADO */}
+                <div className={s.scoringGroup}>
+                  <div className={s.scoringGroupLabel}>
+                    <span className={s.scoringDot} style={{ background: '#eab308' }} />
+                    Acertou Resultado
+                    <span className={s.scoringGroupBase}>— 8 pts base</span>
+                  </div>
+                  <div className={s.scoringSubList}>
+                    <div className={s.scoringSubRow}>
+                      <span>Vitória + gols de um time</span>
+                      <span className={s.scoringPts}>10 pts <span className={s.scoringBonus}>+2</span></span>
+                    </div>
+                    <div className={s.scoringSubRow}>
+                      <span>Vitória (sem bônus)</span>
+                      <span className={s.scoringPts}>8 pts</span>
+                    </div>
+                    <div className={s.scoringSubRow}>
+                      <span>Empate certo <span className={s.scoringBonus}>+ acertou classificado</span></span>
+                      <span className={s.scoringPts}>10 pts <span className={s.scoringBonus}>+2</span></span>
+                    </div>
+                    <div className={s.scoringSubRow}>
+                      <span>Empate certo <span className={s.scoringPenalty}>+ errou classificado</span></span>
+                      <span className={s.scoringPts}>7 pts <span className={s.scoringPenalty}>−1</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SIMPLES */}
+                <div className={s.scoringItem}>
+                  <span className={s.scoringDot} style={{ background: '#f97316' }} />
+                  <span>Gols de um time certos (errou resultado)</span>
+                  <span className={s.scoringPts} style={{ marginLeft: 'auto' }}>3 pts</span>
+                </div>
+                <div className={s.scoringItem}>
+                  <span className={s.scoringDot} style={{ background: 'var(--c-red)' }} />
+                  <span>Errou tudo</span>
+                  <span className={s.scoringPts} style={{ marginLeft: 'auto' }}>0 pts</span>
+                </div>
+
               </div>
             ) : (
               <div className={s.scoringGrid}>
