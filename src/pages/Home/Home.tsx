@@ -720,11 +720,11 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
                 <div className={s.tutScoreLabel}><span>Empate exato + acertou classificado</span></div>
-                <span className={s.tutScorePts}>17 <span className={s.tutBonusPink}>+2</span></span>
+                <span className={s.tutScorePts}>15 <span className={s.tutBonusPink}>+2</span></span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
                 <div className={s.tutScoreLabel}><span>Empate exato + errou classificado</span></div>
-                <span className={s.tutScorePts}>14 <span className={s.tutBonusRed}>−1</span></span>
+                <span className={s.tutScorePts}>15 <span className={s.tutBonusRed}>−1</span></span>
               </div>
 
               {/* ── ACERTOU RESULTADO ── */}
@@ -735,7 +735,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreBonus} ${s.tutScoreIndented}`}>
                 <div className={s.tutScoreLabel}><span>Vitória + gols de um time</span></div>
-                <span className={s.tutScorePts}>10 <span className={s.tutBonusPink}>+2</span></span>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreRight} ${s.tutScoreIndented}`}>
                 <div className={s.tutScoreLabel}><span>Vitória (sem bônus)</span></div>
@@ -743,11 +743,11 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreBonus} ${s.tutScoreIndented}`}>
                 <div className={s.tutScoreLabel}><span>Empate certo + acertou classificado</span></div>
-                <span className={s.tutScorePts}>10 <span className={s.tutBonusPink}>+2</span></span>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreDrawPenalty} ${s.tutScoreIndented}`}>
                 <div className={s.tutScoreLabel}><span>Empate certo + errou classificado</span></div>
-                <span className={s.tutScorePts}>7 <span className={s.tutBonusRed}>−1</span></span>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusRed}>−1</span></span>
               </div>
 
               {/* ── SIMPLES ── */}

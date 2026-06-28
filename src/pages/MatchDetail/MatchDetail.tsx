@@ -325,11 +325,11 @@ export default function MatchDetail() {
                     </div>
                     <div className={s.scoringSubRow}>
                       <span>Empate exato <span className={s.scoringBonus}>+ acertou classificado</span></span>
-                      <span className={s.scoringPts}>17 pts <span className={s.scoringBonus}>+2</span></span>
+                      <span className={s.scoringPts}>15 pts <span className={s.scoringBonus}>+2</span></span>
                     </div>
                     <div className={s.scoringSubRow}>
                       <span>Empate exato <span className={s.scoringPenalty}>+ errou classificado</span></span>
-                      <span className={s.scoringPts}>14 pts <span className={s.scoringPenalty}>−1</span></span>
+                      <span className={s.scoringPts}>15 pts <span className={s.scoringPenalty}>−1</span></span>
                     </div>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export default function MatchDetail() {
                   <div className={s.scoringSubList}>
                     <div className={s.scoringSubRow}>
                       <span>Vitória + gols de um time</span>
-                      <span className={s.scoringPts}>10 pts <span className={s.scoringBonus}>+2</span></span>
+                      <span className={s.scoringPts}>8 pts <span className={s.scoringBonus}>+2</span></span>
                     </div>
                     <div className={s.scoringSubRow}>
                       <span>Vitória (sem bônus)</span>
@@ -352,11 +352,11 @@ export default function MatchDetail() {
                     </div>
                     <div className={s.scoringSubRow}>
                       <span>Empate certo <span className={s.scoringBonus}>+ acertou classificado</span></span>
-                      <span className={s.scoringPts}>10 pts <span className={s.scoringBonus}>+2</span></span>
+                      <span className={s.scoringPts}>8 pts <span className={s.scoringBonus}>+2</span></span>
                     </div>
                     <div className={s.scoringSubRow}>
                       <span>Empate certo <span className={s.scoringPenalty}>+ errou classificado</span></span>
-                      <span className={s.scoringPts}>7 pts <span className={s.scoringPenalty}>−1</span></span>
+                      <span className={s.scoringPts}>8 pts <span className={s.scoringPenalty}>−1</span></span>
                     </div>
                   </div>
                 </div>
