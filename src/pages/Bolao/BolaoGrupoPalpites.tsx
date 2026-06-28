@@ -174,6 +174,12 @@ export default function BolaoGrupoPalpites() {
       const data = await getGroupMatchPalpites(id!, matchId)
       if (data.isFinished) cacheRef.current[matchId] = data
       setPalpites(data)
+      // Sync status/score from fresh response so the chip and badge update immediately
+      setMatches(prev => prev.map(m =>
+        m.id === matchId
+          ? { ...m, status: data.match.status, homeScore: data.match.homeScore, awayScore: data.match.awayScore, predictionsLocked: data.match.predictionsLocked }
+          : m
+      ))
     } catch {
       setPalpitesError('Não foi possível carregar os palpites.')
     } finally {

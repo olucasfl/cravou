@@ -168,6 +168,16 @@ export default function GlobalPalpitesTab() {
       const data = await getGlobalMatchPalpites(matchId)
       if (data.isFinished) _palpitesCache[matchId] = data
       setPalpites(data)
+      // Sync status/score from fresh response so the chip and badge update immediately
+      setMatches(prev => {
+        const next = prev.map(m =>
+          m.id === matchId
+            ? { ...m, status: data.match.status, homeScore: data.match.homeScore, awayScore: data.match.awayScore, predictionsLocked: data.match.predictionsLocked }
+            : m
+        )
+        _cachedMatches = next
+        return next
+      })
     } catch {
       setPalpitesError('Não foi possível carregar os palpites.')
     } finally {
