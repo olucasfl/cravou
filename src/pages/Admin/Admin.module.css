@@ -591,6 +591,14 @@
 }
 .dateInput:focus { border-color: var(--c-accent); }
 
+.dateTzLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--c-text-3);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
 /* Test pill label */
 .testPill {
   background: rgba(139,92,246,0.15);
@@ -1127,6 +1135,14 @@
   min-width: 0;
 }
 .slotDateInput:focus { border-color: var(--c-accent); }
+
+.slotDateTz {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--c-text-3);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
 
 .unlinkBtn {
   display: flex;

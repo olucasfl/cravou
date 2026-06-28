@@ -49,10 +49,30 @@ const ROUND_SLOT_COUNT: Record<string, number> = {
   round_of_32: 16, round_of_16: 8, quarterfinal: 4, semifinal: 2, third_place: 1, final: 1,
 }
 
+// Converts UTC ISO string to datetime-local value in São Paulo timezone
 function toDatetimeLocal(dateStr: string): string {
   const d = new Date(dateStr)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const parts = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d)
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? '00'
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`
+}
+
+// Interprets datetime-local input as São Paulo timezone and returns UTC ISO string
+function fromDatetimeLocal(localStr: string): string {
+  // Create a date object treating the input as São Paulo time
+  const [date, time] = localStr.split('T')
+  const [y, mo, d] = date.split('-').map(Number)
+  const [h, mi] = time.split(':').map(Number)
+  // Use Intl to find the UTC offset for São Paulo at this moment
+  const approx = new Date(y, mo - 1, d, h, mi)
+  const utcStr = approx.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
+  const utcDate = new Date(utcStr)
+  const offset = approx.getTime() - utcDate.getTime()
+  return new Date(approx.getTime() - offset).toISOString()
 }
 
 // ── Admin Page ────────────────────────────────────────────────────────────────
@@ -81,35 +101,39 @@ export default function Admin() {
   const [slotDates, setSlotDates] = useState<Record<string, string>>({})
   const [creatingMatch, setCreatingMatch] = useState<Set<string>>(new Set())
 
+  // unified load — silent skips the loading overlay
   const load = useCallback(async (silent = false) => {
     if (silent) setRefreshing(true)
-    const [m, b] = await Promise.all([
-      adminGetMatches().catch(() => []),
-      getBracket().catch(() => []),
-    ])
-    setMatches(m)
-    setBracket(b)
-    setLoading(false)
-    setRefreshing(false)
-  }, [])
-
-  useEffect(() => {
-    async function init() {
+    else setLoading(true)
+    try {
       const [m, b] = await Promise.all([
-        adminGetMatches().catch(() => []),
-        getBracket().catch(() => []),
+        adminGetMatches().catch(() => [] as Match[]),
+        getBracket().catch(() => [] as BracketSlot[]),
       ])
       setMatches(m)
       setBracket(b)
+    } finally {
       setLoading(false)
+      setRefreshing(false)
     }
-    init()
   }, [])
+
+  useEffect(() => { load() }, [load])
 
   function showToast(type: 'ok' | 'err', text: string) {
     setToast({ type, text })
     setTimeout(() => setToast(null), 4000)
   }
+
+  // Optimistic match update — updates one match in-place immediately
+  const updateMatch = useCallback((matchId: string, updates: Partial<Match>) => {
+    setMatches(prev => prev.map(m => m.id === matchId ? { ...m, ...updates } : m))
+  }, [])
+
+  // Optimistic bracket slot update
+  const updateSlot = useCallback((slotId: string, updates: Partial<BracketSlot>) => {
+    setBracket(prev => prev.map(s => s.id === slotId ? { ...s, ...updates } : s))
+  }, [])
 
   async function runConfirm() {
     if (!confirm) return
@@ -156,18 +180,23 @@ export default function Admin() {
     try {
       const result = await adminInitializeAllSlots()
       setBracketMsg({ type: 'ok', text: `Pronto! ${result.created} slots criados (${result.existing} já existiam).` })
-      await load(true)
+      load(true)
     } catch {
       setBracketMsg({ type: 'err', text: 'Erro ao inicializar slots.' })
     } finally { setInitializing(false) }
   }
 
-  async function _commitOverrideTeams(slotId: string, newHome: string | undefined, newAway: string | undefined) {
+  async function _commitOverrideTeams(slotId: string, newHome: string | null | undefined, newAway: string | null | undefined) {
     await adminOverrideSlotTeams(slotId, newHome, newAway)
     setBracketMsg({ type: 'ok', text: 'Times atualizados!' })
     setOverrideInputs(prev => { const n = { ...prev }; delete n[slotId]; return n })
     setOverrideOpen(prev => { const ns = new Set(prev); ns.delete(slotId); return ns })
-    await load(true)
+    // Optimistic update for this slot
+    updateSlot(slotId, {
+      homeTeam: newHome === undefined ? undefined : newHome,
+      awayTeam: newAway === undefined ? undefined : newAway,
+    })
+    load(true)  // background sync
   }
 
   async function saveOverrideTeams(slotId: string) {
@@ -176,7 +205,6 @@ export default function Admin() {
     const newAway = inp?.away?.trim() || undefined
     if (!newHome && !newAway) return
 
-    // Detect conflicts: same team already assigned to another slot in this round
     type Conflict = { slotId: string; slotNumber: number; side: 'home' | 'away'; team: string }
     const conflicts: Conflict[] = []
     for (const other of bracketByRound[bracketRound] ?? []) {
@@ -212,6 +240,16 @@ export default function Admin() {
                 c.side === 'away' ? null : undefined,
               )
             }
+            // Optimistic update for cleared conflict slots
+            setBracket(prev => prev.map(s => {
+              const conflict = conflicts.find(c => c.slotId === s.id)
+              if (!conflict) return s
+              return {
+                ...s,
+                homeTeam: conflict.side === 'home' ? null : s.homeTeam,
+                awayTeam: conflict.side === 'away' ? null : s.awayTeam,
+              }
+            }))
             await _commitOverrideTeams(slotId, newHome, newAway)
           } catch {
             setBracketMsg({ type: 'err', text: 'Erro ao mover seleção.' })
@@ -236,7 +274,6 @@ export default function Admin() {
         next.delete(slotId)
       } else {
         next.add(slotId)
-        // Pre-fill inputs with current teams so search starts from current value
         const slot = (bracketByRound[bracketRound] ?? []).find(b => b.id === slotId)
         if (slot) {
           setOverrideInputs(prevInp => ({
@@ -351,10 +388,11 @@ export default function Admin() {
             <div className={s.matchList}>
               {filtered.map(m => (
                 <MatchCard
-                  key={`${m.id}-${m.status}-${m.homeScore ?? 'n'}-${m.awayScore ?? 'n'}-${m.matchDate}`}
+                  key={m.id}
                   match={m}
                   isExpanded={expandedId === m.id}
                   onToggle={() => setExpandedId(expandedId === m.id ? null : m.id)}
+                  onMatchUpdate={(updates) => updateMatch(m.id, updates)}
                   onReload={() => load(true)}
                   onToast={showToast}
                   onConfirm={setConfirm}
@@ -501,9 +539,16 @@ export default function Admin() {
                             ],
                             action: async () => {
                               try {
+                                const removedMatchId = slot.matchId
                                 await adminUnlinkMatchFromSlot(slot.id)
+                                // Optimistic: clear slot immediately
+                                updateSlot(slot.id, { matchId: null, homeTeam: null, awayTeam: null, winnerTeam: null })
+                                // Remove the linked match from the matches list
+                                if (removedMatchId) {
+                                  setMatches(prev => prev.filter(m => m.id !== removedMatchId))
+                                }
                                 setBracketMsg({ type: 'ok', text: 'Partida desvinculada! Slot voltou para "A definir".' })
-                                await load(true)
+                                load(true)  // background sync
                               } catch (e) {
                                 setBracketMsg({ type: 'err', text: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao desvincular partida.' })
                               }
@@ -514,7 +559,7 @@ export default function Admin() {
                         </button>
                       )}
 
-                      {/* Match date + create/update — não disponível em slots placeholder */}
+                      {/* Match date + create/update */}
                       {isPlaceholder && (
                         <div className={s.slotPending}>Inicialize o chaveamento para editar este confronto</div>
                       )}
@@ -526,6 +571,7 @@ export default function Admin() {
                           value={slotDate}
                           onChange={e => setSlotDates(prev => ({ ...prev, [slot.id]: e.target.value }))}
                         />
+                        <span className={s.slotDateTz}>BRT</span>
                         <button
                           className={`${s.winnerBtn} ${slot.matchId ? s.winnerBtnUpdate : ''}`}
                           onClick={async () => {
@@ -533,9 +579,9 @@ export default function Admin() {
                             setCreatingMatch(prev => new Set([...prev, slot.id]))
                             setBracketMsg(null)
                             try {
-                              await adminCreateMatchFromSlot(slot.id, new Date(slotDate).toISOString())
+                              await adminCreateMatchFromSlot(slot.id, fromDatetimeLocal(slotDate))
                               setBracketMsg({ type: 'ok', text: slot.matchId ? 'Partida atualizada!' : 'Partida criada com sucesso!' })
-                              await load(true)
+                              load(true)  // need full reload to get new match data
                             } catch (e) {
                               setBracketMsg({ type: 'err', text: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erro ao criar partida' })
                             } finally {
@@ -605,12 +651,13 @@ interface MatchCardProps {
   match: Match
   isExpanded: boolean
   onToggle: () => void
-  onReload: () => Promise<void>
+  onMatchUpdate: (updates: Partial<Match>) => void
+  onReload: () => void
   onToast: (type: 'ok' | 'err', text: string) => void
   onConfirm: (c: ConfirmState) => void
 }
 
-function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfirm }: MatchCardProps) {
+function MatchCard({ match: m, isExpanded, onToggle, onMatchUpdate, onReload, onToast, onConfirm }: MatchCardProps) {
   const [editHome, setEditHome] = useState(m.homeScore !== null ? String(m.homeScore) : '')
   const [editAway, setEditAway] = useState(m.awayScore !== null ? String(m.awayScore) : '')
   const [editStatus, setEditStatus] = useState(m.status)
@@ -619,6 +666,15 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
   const [saving, setSaving] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
   const [savingDate, setSavingDate] = useState(false)
+
+  // Sync form state if match prop changes (after optimistic update)
+  useEffect(() => {
+    setEditHome(m.homeScore !== null ? String(m.homeScore) : '')
+    setEditAway(m.awayScore !== null ? String(m.awayScore) : '')
+    setEditStatus(m.status)
+    setEditDate(toDatetimeLocal(m.matchDate))
+    setPenaltyWinner(m.penaltyWinner ?? '')
+  }, [m.homeScore, m.awayScore, m.status, m.matchDate, m.penaltyWinner])
 
   const isKnockout = m.phase !== 'group_stage'
   const h = parseInt(editHome)
@@ -636,20 +692,28 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     try {
       await adminFinalizeMatch(m.id, hv, av, isKnockout && hv === av ? penaltyWinner : undefined)
       onToast('ok', `Resultado: ${m.homeTeam} ${hv}×${av} ${m.awayTeam} — pontos calculados!`)
-      onToggle()
-      await onReload()
+      onToggle()  // close edit panel
+      onMatchUpdate({
+        homeScore: hv,
+        awayScore: av,
+        status: 'finished',
+        predictionsLocked: true,
+        penaltyWinner: isKnockout && hv === av ? penaltyWinner : null,
+      })
+      onReload()  // background sync
     } catch { onToast('err', 'Erro ao finalizar partida.') }
     finally { setFinalizing(false) }
   }
 
   async function doSaveScore() {
-    const h = parseInt(editHome), a = parseInt(editAway)
-    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) { onToast('err', 'Placar inválido.'); return }
+    const hv = parseInt(editHome), av = parseInt(editAway)
+    if (isNaN(hv) || isNaN(av) || hv < 0 || av < 0) { onToast('err', 'Placar inválido.'); return }
     setSaving(true)
     try {
-      await adminUpdateScore(m.id, h, a)
+      await adminUpdateScore(m.id, hv, av)
       onToast('ok', 'Placar atualizado!')
-      await onReload()
+      onMatchUpdate({ homeScore: hv, awayScore: av })
+      onReload()
     } catch { onToast('err', 'Erro ao salvar placar.') }
     finally { setSaving(false) }
   }
@@ -660,7 +724,8 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     try {
       await adminUpdateStatus(m.id, editStatus)
       onToast('ok', `Status: ${statusLabel(editStatus)}`)
-      await onReload()
+      onMatchUpdate({ status: editStatus })
+      onReload()
     } catch { onToast('err', 'Erro ao atualizar status.') }
     finally { setSaving(false) }
   }
@@ -669,9 +734,11 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     if (!editDate) return
     setSavingDate(true)
     try {
-      await adminUpdateDate(m.id, new Date(editDate).toISOString())
+      const isoDate = fromDatetimeLocal(editDate)
+      await adminUpdateDate(m.id, isoDate)
       onToast('ok', 'Data atualizada! Cron ajusta status em até 1 min.')
-      await onReload()
+      onMatchUpdate({ matchDate: isoDate })
+      onReload()
     } catch { onToast('err', 'Erro ao atualizar data.') }
     finally { setSavingDate(false) }
   }
@@ -680,7 +747,7 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     try {
       await adminReprocessMatch(m.id)
       onToast('ok', 'Pontuações reprocessadas!')
-      await onReload()
+      onReload()
     } catch { onToast('err', 'Erro ao reprocessar.') }
   }
 
@@ -688,7 +755,8 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     try {
       await adminLockMatch(m.id)
       onToast('ok', 'Palpites bloqueados!')
-      await onReload()
+      onMatchUpdate({ predictionsLocked: true })
+      onReload()
     } catch { onToast('err', 'Erro ao bloquear.') }
   }
 
@@ -696,7 +764,8 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
     try {
       await adminUnlockMatch(m.id)
       onToast('ok', 'Palpites desbloqueados!')
-      await onReload()
+      onMatchUpdate({ predictionsLocked: false })
+      onReload()
     } catch { onToast('err', 'Erro ao desbloquear.') }
   }
 
@@ -716,7 +785,14 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
         try {
           const result = await adminResetMatch(m.id)
           onToast('ok', `Resetado! ${result.affectedUsers} usuário(s) afetado(s).`)
-          await onReload()
+          onMatchUpdate({
+            homeScore: null,
+            awayScore: null,
+            penaltyWinner: null,
+            status: inFuture ? 'upcoming' : 'awaiting_result',
+            predictionsLocked: false,
+          })
+          onReload()
         } catch { onToast('err', 'Erro ao resetar partida.') }
       },
     })
@@ -892,6 +968,7 @@ function MatchCard({ match: m, isExpanded, onToggle, onReload, onToast, onConfir
             </div>
             <div className={s.rowActions}>
               <input className={s.dateInput} type="datetime-local" value={editDate} onChange={e => setEditDate(e.target.value)} />
+              <span className={s.dateTzLabel}>BRT</span>
               <button className={s.secBtn} onClick={doSaveDate} disabled={savingDate}>
                 {savingDate ? 'Salvando...' : 'Alterar'}
               </button>
