@@ -386,7 +386,7 @@ export default function MatchDetail() {
                   <div className={s.scoringExRow}>
                     <span className={s.scoringExChip}>3 × 1</span>
                     <span>Acertou vitória + 1 gol</span>
-                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>8 +2</span>
+                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>8 <span className={s.scoringBonus}>+2</span></span>
                   </div>
                   <div className={s.scoringExRow}>
                     <span className={s.scoringExChip}>1 × 0</span>
@@ -403,22 +403,22 @@ export default function MatchDetail() {
                   <div className={s.scoringExRow}>
                     <span className={s.scoringExChip}>1×1 + A</span>
                     <span>Cravou empate + acertou classificado</span>
-                    <span className={s.scoringExPts} style={{ color: 'var(--c-green)' }}>15 +2</span>
+                    <span className={s.scoringExPts} style={{ color: 'var(--c-green)' }}>15 <span className={s.scoringBonus}>+2</span></span>
                   </div>
                   <div className={s.scoringExRow}>
                     <span className={s.scoringExChip}>1×1 + B</span>
                     <span>Cravou empate + errou classificado</span>
-                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>15 −1</span>
+                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>15 <span className={s.scoringPenalty}>−1</span></span>
                   </div>
                   <div className={s.scoringExRow}>
                     <span className={s.scoringExChip}>0×0 + A</span>
                     <span>Empate certo + acertou classificado</span>
-                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>8 +2</span>
+                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>8 <span className={s.scoringBonus}>+2</span></span>
                   </div>
                   <div className={s.scoringExRow}>
                     <span className={s.scoringExChip}>0×0 + B</span>
                     <span>Empate certo + errou classificado</span>
-                    <span className={s.scoringExPts} style={{ color: '#f97316' }}>8 −1</span>
+                    <span className={s.scoringExPts} style={{ color: '#f97316' }}>8 <span className={s.scoringPenalty}>−1</span></span>
                   </div>
                 </div>
 
