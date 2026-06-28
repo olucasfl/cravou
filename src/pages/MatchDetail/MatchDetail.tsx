@@ -373,6 +373,36 @@ export default function MatchDetail() {
                   <span className={s.scoringPts} style={{ marginLeft: 'auto' }}>0 pts</span>
                 </div>
 
+                {/* EXEMPLOS */}
+                <div className={s.scoringExamples}>
+                  <div className={s.scoringExLabel}>Exemplo — Real: 2 × 1</div>
+                  <div className={s.scoringExRow}>
+                    <span className={s.scoringExChip}>2 × 1</span>
+                    <span>Cravou o placar exato</span>
+                    <span className={s.scoringExPts} style={{ color: 'var(--c-green)' }}>15 pts</span>
+                  </div>
+                  <div className={s.scoringExRow}>
+                    <span className={s.scoringExChip}>3 × 1</span>
+                    <span>Acertou vitória + 1 gol</span>
+                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>8 +2</span>
+                  </div>
+                  <div className={s.scoringExRow}>
+                    <span className={s.scoringExChip}>1 × 0</span>
+                    <span>Acertou só que venceu</span>
+                    <span className={s.scoringExPts} style={{ color: '#eab308' }}>8 pts</span>
+                  </div>
+                  <div className={s.scoringExRow}>
+                    <span className={s.scoringExChip}>0 × 1</span>
+                    <span>1 gol certo, errou resultado</span>
+                    <span className={s.scoringExPts} style={{ color: '#f97316' }}>3 pts</span>
+                  </div>
+                  <div className={s.scoringExRow}>
+                    <span className={s.scoringExChip}>0 × 3</span>
+                    <span>Errou tudo</span>
+                    <span className={s.scoringExPts} style={{ color: 'var(--c-red)' }}>0 pts</span>
+                  </div>
+                </div>
+
               </div>
             ) : (
               <div className={s.scoringGrid}>
