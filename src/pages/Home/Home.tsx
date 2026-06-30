@@ -705,38 +705,54 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
             <div className={s.tutScoreGrid}>
               <div className={s.tutScoreHeader}>
                 <span />
-                <span className={s.tutScorePhase}>Pts</span>
+                <span className={s.tutScorePhase}>Total</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU! — placar exato de vitória</span></div>
+
+              {/* ── CRAVOU ── */}
+              <div className={s.tutScoreGroupHeader}>
+                <Target size={12} color="var(--c-green)" />
+                CRAVOU
+                <span className={s.tutScoreGroupBase}>— 15 pts base</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Placar exato de vitória</span></div>
                 <span className={s.tutScorePts}>15 pts</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU empate + classificado correto</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate exato + acertou classificado</span></div>
                 <span className={s.tutScorePts}>15 <span className={s.tutBonusPink}>+2</span></span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreExact}`}>
-                <div className={s.tutScoreLabel}><Target size={13} /><span>CRAVOU empate + classificado errado</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreExact} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate exato + errou classificado</span></div>
                 <span className={s.tutScorePts}>15 <span className={s.tutBonusRed}>−1</span></span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreRight}`}>
-                <div className={s.tutScoreLabel}><CheckCircle2 size={13} /><span>Resultado certo (vitória)</span></div>
+
+              {/* ── ACERTOU RESULTADO ── */}
+              <div className={s.tutScoreGroupHeader}>
+                <CheckCircle2 size={12} color="#eab308" />
+                Acertou Resultado
+                <span className={s.tutScoreGroupBase}>— 8 pts base</span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Vitória + gols de um time</span></div>
+                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
+              </div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreRight} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Vitória (sem bônus)</span></div>
                 <span className={s.tutScorePts}>8 pts</span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
-                <div className={s.tutScoreLabel}><Zap size={13} /><span>Resultado + bônus de gols</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreBonus} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate certo + acertou classificado</span></div>
                 <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
               </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreBonus}`}>
-                <div className={s.tutScoreLabel}><Zap size={13} /><span>Empate acertado (sem cravar) + acertou classificado</span></div>
-                <span className={s.tutScorePts}>8 <span className={s.tutBonusPink}>+2</span></span>
-              </div>
-              <div className={`${s.tutScoreRow} ${s.tutScoreDrawPenalty}`}>
-                <div className={s.tutScoreLabel}><Minus size={13} /><span>Empate acertado (sem cravar) + errou classificado</span></div>
+              <div className={`${s.tutScoreRow} ${s.tutScoreDrawPenalty} ${s.tutScoreIndented}`}>
+                <div className={s.tutScoreLabel}><span>Empate certo + errou classificado</span></div>
                 <span className={s.tutScorePts}>8 <span className={s.tutBonusRed}>−1</span></span>
               </div>
+
+              {/* ── SIMPLES ── */}
               <div className={`${s.tutScoreRow} ${s.tutScorePartial}`}>
-                <div className={s.tutScoreLabel}><SoccerBall size={13} /><span>Gols de um time certos</span></div>
+                <div className={s.tutScoreLabel}><SoccerBall size={13} /><span>Gols de um time certos (errou resultado)</span></div>
                 <span className={s.tutScorePts}>3 pts</span>
               </div>
               <div className={`${s.tutScoreRow} ${s.tutScoreWrong}`}>
@@ -755,6 +771,27 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               <div className={s.tutEx}><span className={s.tutExScore}>3 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> +5 pts</span><span className={s.tutExLabel}>Brasil venceu (sem gols certos)</span></div>
               <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> +2 pts</span><span className={s.tutExLabel}>1 gol da Argentina <CheckCircle2 size={10} /> (errou resultado)</span></div>
               <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
+            </div>
+          </div>
+
+          {/* ── Exemplos Mata-mata ── */}
+          <div className={s.tutSection}>
+            <div className={s.tutSectionTitle}>Exemplos práticos — Mata-mata</div>
+            <div className={s.tutExamples}>
+              <div className={s.tutExNote}>Os palpites abaixo são exemplos ilustrativos para o mesmo jogo.</div>
+
+              <div className={s.tutExSubLabel}>Vitória — Real: 2 × 1</div>
+              <div className={s.tutEx}><span className={s.tutExScore}>2 × 1</span><span className={s.tutExGreen}><Target size={11} /> 15 pts</span><span className={s.tutExLabel}>CRAVOU! — placar exato</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>3 × 1</span><span className={s.tutExLime}><Zap size={11} /> 8 <span className={s.tutBonusPink}>+2</span></span><span className={s.tutExLabel}>acertou vitória + 1 gol do time B</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1 × 0</span><span className={s.tutExYellow}><CheckCircle2 size={11} /> 8 pts</span><span className={s.tutExLabel}>acertou só que o time A venceu</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 1</span><span className={s.tutExOrange}><SoccerBall size={11} /> 3 pts</span><span className={s.tutExLabel}>1 gol do time B certo (errou resultado)</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0 × 3</span><span className={s.tutExRed}><XCircle size={11} /> 0 pts</span><span className={s.tutExLabel}>errou tudo</span></div>
+
+              <div className={s.tutExSubLabel}>Empate — Real: 1 × 1 (Time A avança)</div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + A</span><span className={s.tutExGreen}><Target size={11} /> 15 <span className={s.tutBonusPink}>+2</span></span><span className={s.tutExLabel}>CRAVOU empate + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>1×1 + B</span><span className={s.tutExYellow}><Target size={11} /> 15 <span className={s.tutBonusRed}>−1</span></span><span className={s.tutExLabel}>CRAVOU empate + errou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + A</span><span className={s.tutExLime}><CheckCircle2 size={11} /> 8 <span className={s.tutBonusPink}>+2</span></span><span className={s.tutExLabel}>acertou empate (sem cravar) + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore}>0×0 + B</span><span className={s.tutExOrange}><Minus size={11} /> 8 <span className={s.tutBonusRed}>−1</span></span><span className={s.tutExLabel}>acertou empate (sem cravar) + errou classificado</span></div>
             </div>
           </div>
 
@@ -813,22 +850,12 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
                 <Trophy size={14} color="#f97316" />
                 <span>Ao palpitar <strong>empate</strong> em jogo de mata-mata, você deve escolher também <strong>qual time se classifica</strong> — é obrigatório.</span>
               </div>
-              <div className={s.tutCardRow}>
-                <Target size={14} color="var(--c-green)" />
-                <span>Cravou o empate exato + acertou quem avança? <strong>17 pts</strong> (+2 de bônus por acertar o classificado).</span>
-              </div>
-              <div className={s.tutCardRow}>
-                <Target size={14} color="var(--c-green)" />
-                <span>Cravou o empate exato mas errou quem avança? <strong>14 pts</strong> (−1 de penalidade).</span>
-              </div>
-              <div className={s.tutCardRow}>
-                <CheckCircle2 size={14} color="#eab308" />
-                <span>Acertou empate (sem cravar) + quem avança? <strong>10 pts</strong> (+2 de bônus).</span>
-              </div>
-              <div className={s.tutCardRow}>
-                <Minus size={14} color="var(--c-red)" />
-                <span>Acertou empate (sem cravar) mas errou quem avança? <strong>7 pts</strong> (−1 de penalidade).</span>
-              </div>
+            </div>
+            <div className={s.tutExamples} style={{ marginTop: 10 }}>
+              <div className={s.tutEx}><span className={s.tutExScore} style={{ minWidth: 72 }}>Cravou + ✓</span><span className={s.tutExGreen}><Target size={11} /> 15 <span className={s.tutBonusPink}>+2</span></span><span className={s.tutExLabel}>empate exato + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore} style={{ minWidth: 72 }}>Cravou + ✗</span><span className={s.tutExYellow}><Target size={11} /> 15 <span className={s.tutBonusRed}>−1</span></span><span className={s.tutExLabel}>empate exato + errou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore} style={{ minWidth: 72 }}>Empate + ✓</span><span className={s.tutExLime}><CheckCircle2 size={11} /> 8 <span className={s.tutBonusPink}>+2</span></span><span className={s.tutExLabel}>acertou empate (sem cravar) + acertou classificado</span></div>
+              <div className={s.tutEx}><span className={s.tutExScore} style={{ minWidth: 72 }}>Empate + ✗</span><span className={s.tutExOrange}><Minus size={11} /> 8 <span className={s.tutBonusRed}>−1</span></span><span className={s.tutExLabel}>acertou empate (sem cravar) + errou classificado</span></div>
             </div>
           </div>
 

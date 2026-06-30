@@ -131,14 +131,18 @@ export interface GroupFinishedMatch {
   id: string
   homeTeam: string
   awayTeam: string
-  homeScore: number
-  awayScore: number
+  homeScore: number | null
+  awayScore: number | null
   matchDate: string
   phase: string
   penaltyWinner: string | null
+  status: string
+  predictionsLocked: boolean
 }
 
-export type PalpiteCategory = 'cravou' | 'resultado_bonus' | 'resultado_certo' | 'parcial' | 'errou' | 'sem_palpite'
+export type PalpiteCategory =
+  | 'cravou' | 'resultado_bonus' | 'resultado_certo' | 'parcial' | 'errou' | 'sem_palpite'
+  | 'vitoria_casa' | 'vitoria_fora' | 'empate'
 
 export interface MemberPalpite {
   userId: string
@@ -153,6 +157,7 @@ export interface MemberPalpite {
 export interface GroupMatchPalpites {
   match: GroupFinishedMatch
   palpites: MemberPalpite[]
+  isFinished: boolean
 }
 
 // ── Palpites de partidas bloqueadas/ao vivo/finalizadas (grupo) ───────────────

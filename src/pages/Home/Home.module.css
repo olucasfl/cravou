@@ -763,6 +763,17 @@
 .tutExOrange { font-weight: 700; color: #f97316; min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 .tutExRed    { font-weight: 700; color: var(--c-red); min-width: 72px; display: inline-flex; align-items: center; gap: 4px; }
 
+.tutExNote { font-size: 0.68rem; color: var(--c-text-3); font-style: italic; }
+.tutExSubLabel {
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--c-text-3);
+  padding-top: 4px;
+  border-top: 1px solid var(--c-border);
+}
+
 /* Card de regras */
 .tutAlert {
   display: flex;
@@ -933,6 +944,30 @@
 
 .tutBonusPink { color: #ec4899; font-weight: 800; }
 .tutBonusRed  { color: var(--c-red); font-weight: 800; }
+
+/* Group header inside tutScoreGrid */
+.tutScoreGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px 7px;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--c-text);
+  background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border);
+}
+.tutScoreGroupBase {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--c-text-3);
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* Indented sub-rows */
+.tutScoreRow.tutScoreIndented .tutScoreLabel { padding-left: 10px; font-size: 0.75rem; font-weight: 500; }
 
 .tutScoreWrong { }
 .tutScoreWrong .tutScoreLabel { color: var(--c-text-3); }

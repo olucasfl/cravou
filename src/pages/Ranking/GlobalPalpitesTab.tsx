@@ -1,185 +1,100 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Target, Search, X, Minus, Lock, Radio } from 'lucide-react'
+import { Target, Search, X, Minus, Lock, AlertCircle } from 'lucide-react'
 import {
-  getGlobalPalpitavelMatches,
-  getGlobalMatchPalpitesLive,
-  type PalpitableMatch,
-  type PalpitableMatchPalpites,
-  type PalpitableGlobalPalpite,
-  type GlobalPalpiteCategory,
+  getGlobalFinishedMatches,
+  getGlobalMatchPalpites,
+  type GlobalMatch,
+  type GlobalMatchPalpites,
+  type GlobalPalpite,
 } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
 import { PlayerModal } from '@/components/PlayerModal/PlayerModal'
 import { phaseLabel, getPredBreakdown } from '@/utils/format'
+import {
+  shortDate, shortTime, avatarInitial, avatarColor,
+  ALL_CAT_CSS, FINISHED_CAT_ORDER, LOCKED_CAT_ORDER,
+  finishedCatConfig, lockedCatConfig, normalize,
+} from '@/utils/palpitesConfig'
 import s from './GlobalPalpitesTab.module.css'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function shortDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
-    day: '2-digit',
-    month: 'short',
-  })
-}
-
-function avatarInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase()
-}
-
-const AVATAR_COLORS = [
-  '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981',
-  '#f59e0b', '#ef4444', '#ec4899', '#6366f1',
-]
-
-function avatarColor(userId: string) {
-  let h = 0
-  for (let i = 0; i < userId.length; i++) h = userId.charCodeAt(i) + ((h << 5) - h)
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
-}
-
-function normalize(str: string) {
-  return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-}
-
-function matchesSearch(m: PalpitableMatch, q: string) {
+function matchesSearch(m: GlobalMatch, q: string) {
   const nq = normalize(q.trim())
   return normalize(m.homeTeam).includes(nq) || normalize(m.awayTeam).includes(nq)
 }
 
-function isMatchFinished(m: PalpitableMatch) {
-  return m.status === 'finished'
-}
-
-// ── category config (post-result) ─────────────────────────────────────────────
-
-const CAT_CONFIG: Record<GlobalPalpiteCategory | 'sem_palpite', { label: string; pts: string; css: string }> = {
-  cravou:           { label: 'Cravou!',            pts: '10–17 pts', css: 'cravou'    },
-  resultado_bonus:  { label: 'Resultado + Bônus',   pts: '7–11 pts',  css: 'bonus'     },
-  resultado_certo:  { label: 'Resultado Certo',     pts: '5–9 pts',   css: 'resultado' },
-  parcial:          { label: 'Gols de um time',     pts: '2 pts',     css: 'parcial'   },
-  errou:            { label: 'Errou tudo',           pts: '0 pts',     css: 'errou'     },
-  sem_palpite:      { label: 'Não palpitaram',       pts: '—',         css: 'sempal'    },
-}
-
-const CAT_ORDER: (GlobalPalpiteCategory | 'sem_palpite')[] = [
-  'cravou', 'resultado_bonus', 'resultado_certo', 'parcial', 'errou', 'sem_palpite',
-]
-
-// ── pre-result outcome config ─────────────────────────────────────────────────
-
-type PreResultGroup = 'home_win' | 'away_win' | 'draw' | 'sem_palpite'
-
-function getPreResultGroup(p: PalpitableGlobalPalpite): PreResultGroup {
-  if (p.homeScore === null || p.awayScore === null) return 'sem_palpite'
-  if (p.homeScore > p.awayScore) return 'home_win'
-  if (p.awayScore > p.homeScore) return 'away_win'
-  return 'draw'
-}
-
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function MemberCardFinished({
-  p,
-  phase,
-  onCardClick,
+function MemberCard({
+  p, phase, isFinished, onCardClick,
 }: {
-  p: PalpitableGlobalPalpite
+  p: GlobalPalpite
   phase: string
-  onCardClick?: () => void
+  isFinished: boolean
+  onCardClick: () => void
 }) {
-  const cat = (p.category ?? 'errou') as GlobalPalpiteCategory | 'sem_palpite'
-  const cfg = CAT_CONFIG[cat]
-  const bd = p.points !== null ? getPredBreakdown(p.points, phase) : null
+  const css = ALL_CAT_CSS[p.category] ?? 'sempal'
+  const bd = (isFinished && p.points !== null) ? getPredBreakdown(p.points, phase) : null
   const hasBonus = bd && bd.bonus > 0
+  const hasPalpite = p.homeScore !== null && p.awayScore !== null
 
   return (
-    <div
-      className={`${s.card} ${s[`card_${cfg.css}`]}`}
-      onClick={cat !== 'sem_palpite' ? onCardClick : undefined}
-      style={cat === 'sem_palpite' ? { cursor: 'default' } : undefined}
-    >
+    <div className={`${s.card} ${s[`card_${css}`]}`} onClick={onCardClick}>
       <div className={s.cardAvatar} style={{ background: avatarColor(p.userId) }}>
         {avatarInitial(p.name)}
       </div>
       <span className={s.cardName}>{p.name}</span>
       <div className={s.cardRight}>
         <span className={s.cardScore}>
-          {p.homeScore !== null && p.awayScore !== null ? `${p.homeScore}×${p.awayScore}` : '—'}
+          {hasPalpite ? `${p.homeScore}×${p.awayScore}` : '—'}
         </span>
-        {hasBonus && p.points !== null ? (
+        {isFinished && hasBonus && p.points !== null ? (
           <div className={s.cardBonusRow}>
-            <span className={`${s.cardBadge} ${s[`badge_${cfg.css}`]}`}>{`+${bd!.base}`}</span>
+            <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>{`+${bd!.base}`}</span>
             <span className={bd!.modifier < 0 ? s.penaltyPill : s.bonusPill}>
               {bd!.drawBonus && <Minus size={7} strokeWidth={3} />}
               {bd!.modifier < 0 ? String(bd!.modifier) : `+${bd!.bonus}`}
             </span>
           </div>
-        ) : (
-          <span className={`${s.cardBadge} ${s[`badge_${cfg.css}`]}`}>
-            {p.points !== null ? `+${p.points}` : '—'}
+        ) : isFinished && p.category !== 'sem_palpite' ? (
+          <span className={`${s.cardBadge} ${s[`badge_${css}`]}`}>
+            {p.points !== null ? `+${p.points}` : '0'}
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   )
 }
 
-function MemberCardPreResult({
-  p,
-  groupCss,
-}: {
-  p: PalpitableGlobalPalpite
-  groupCss: string
-}) {
-  const isSemPalpite = p.homeScore === null
-
-  return (
-    <div className={`${s.card} ${s[`card_${groupCss}`]}`} style={{ cursor: 'default' }}>
-      <div className={s.cardAvatar} style={{ background: avatarColor(p.userId) }}>
-        {avatarInitial(p.name)}
-      </div>
-      <span className={s.cardName}>{p.name}</span>
-      <div className={s.cardRight}>
-        {isSemPalpite ? (
-          <span className={s.cardScore}>—</span>
-        ) : (
-          <>
-            <span className={s.cardScore}>{p.homeScore}×{p.awayScore}</span>
-            {p.penaltyWinner && (
-              <span className={s.cardPenLabel}>{p.penaltyWinner}</span>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Post-result view (partida finalizada) ─────────────────────────────────────
-
-function PalpitesFinishedView({
+function PalpitesView({
   data,
   onCardClick,
 }: {
-  data: PalpitableMatchPalpites
-  onCardClick: (p: PalpitableGlobalPalpite) => void
+  data: GlobalMatchPalpites
+  onCardClick: (p: GlobalPalpite) => void
 }) {
-  const groups = CAT_ORDER.map((cat) => ({
+  const { isFinished, match, palpites } = data
+  const catOrder = isFinished ? FINISHED_CAT_ORDER : LOCKED_CAT_ORDER
+  const catConfig = isFinished
+    ? finishedCatConfig(match.phase)
+    : lockedCatConfig(match.homeTeam, match.awayTeam)
+
+  const groups = catOrder.map((cat) => ({
     cat,
-    cfg: CAT_CONFIG[cat],
-    items: data.palpites.filter((p) => p.category === cat),
+    cfg: catConfig[cat] ?? { label: cat, pts: '', css: 'sempal' },
+    items: palpites.filter((p) => p.category === cat),
   })).filter((g) => g.items.length > 0)
 
-  const total = data.palpites.length
+  const total = palpites.length
 
   return (
     <div className={s.palpitesView}>
       <div className={s.summaryStrip}>
-        {CAT_ORDER.map((cat) => {
-          const n = data.palpites.filter((p) => p.category === cat).length
+        {catOrder.map((cat) => {
+          const n = palpites.filter((p) => p.category === cat).length
           if (n === 0) return null
-          const css = CAT_CONFIG[cat].css
+          const css = (catConfig[cat] ?? { css: 'sempal' }).css
           return (
             <div key={cat} className={`${s.stripChip} ${s[`chip_${css}`]}`}>
               <span className={s.stripNum}>{n}</span>
@@ -190,8 +105,8 @@ function PalpitesFinishedView({
       </div>
 
       {groups.map(({ cat, cfg, items }) => {
-        const hasDrawBonus = cat === 'resultado_certo' && items.some(
-          p => p.points !== null && getPredBreakdown(p.points, data.match.phase)?.drawBonus
+        const hasDrawBonus = isFinished && cat === 'resultado_certo' && items.some(
+          p => p.points !== null && getPredBreakdown(p.points, match.phase)?.drawBonus
         )
         return (
           <div key={cat} className={s.catSection}>
@@ -200,16 +115,17 @@ function PalpitesFinishedView({
                 {cfg.label}
                 {hasDrawBonus && <Minus size={10} strokeWidth={2.5} className={s.catTitleDrawIcon} />}
               </span>
-              <span className={s.catPts}>{cfg.pts}</span>
+              {cfg.pts && <span className={s.catPts}>{cfg.pts}</span>}
               <span className={s.catCount}>{items.length}</span>
             </div>
             <div className={s.cardGrid}>
               {items.map((p) => (
-                <MemberCardFinished
+                <MemberCard
                   key={p.userId}
                   p={p}
-                  phase={data.match.phase}
-                  onCardClick={p.category !== 'sem_palpite' ? () => onCardClick(p) : undefined}
+                  phase={match.phase}
+                  isFinished={isFinished}
+                  onCardClick={() => onCardClick(p)}
                 />
               ))}
             </div>
@@ -220,83 +136,28 @@ function PalpitesFinishedView({
   )
 }
 
-// ── Pre-result view (partida bloqueada mas não finalizada) ────────────────────
+// ── module-level cache (survives tab switches, only for finished matches) ──────
 
-const PRE_RESULT_CONFIG: Record<PreResultGroup, { label: (home: string, away: string) => string; css: string }> = {
-  home_win:    { label: (home) => `Vence ${home}`,    css: 'homeWin'   },
-  away_win:    { label: (_, away) => `Vence ${away}`, css: 'awayWin'   },
-  draw:        { label: () => 'Empate',               css: 'draw'      },
-  sem_palpite: { label: () => 'Não palpitaram',       css: 'sempal'    },
-}
-
-const PRE_RESULT_ORDER: PreResultGroup[] = ['home_win', 'away_win', 'draw', 'sem_palpite']
-
-function PalpitesPreResultView({ data }: { data: PalpitableMatchPalpites }) {
-  const { homeTeam, awayTeam } = data.match
-  const total = data.palpites.length
-
-  const groups = PRE_RESULT_ORDER.map((grp) => ({
-    grp,
-    cfg: PRE_RESULT_CONFIG[grp],
-    items: data.palpites.filter((p) => getPreResultGroup(p) === grp),
-  })).filter((g) => g.items.length > 0)
-
-  return (
-    <div className={s.palpitesView}>
-      <div className={s.preResultNote}>
-        <Lock size={11} />
-        Palpites revelados após o bloqueio · resultado ainda não definido
-      </div>
-
-      <div className={s.summaryStrip}>
-        {PRE_RESULT_ORDER.map((grp) => {
-          const n = data.palpites.filter((p) => getPreResultGroup(p) === grp).length
-          if (n === 0) return null
-          const css = PRE_RESULT_CONFIG[grp].css
-          return (
-            <div key={grp} className={`${s.stripChip} ${s[`chip_${css}`]}`}>
-              <span className={s.stripNum}>{n}</span>
-              <span className={s.stripLabel}>/{total}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      {groups.map(({ grp, cfg, items }) => (
-        <div key={grp} className={s.catSection}>
-          <div className={`${s.catHeader} ${s[`catHeader_${cfg.css}`]}`}>
-            <span className={s.catTitle}>{cfg.label(homeTeam, awayTeam)}</span>
-            <span className={s.catCount}>{items.length}</span>
-          </div>
-          <div className={s.cardGrid}>
-            {items.map((p) => (
-              <MemberCardPreResult key={p.userId} p={p} groupCss={cfg.css} />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── module-level cache (survives tab switches) ────────────────────────────────
-
-let _cachedMatches: PalpitableMatch[] | null = null
-const _palpitesCache: Record<string, PalpitableMatchPalpites> = {}
+let _cachedMatches: GlobalMatch[] | null = null
+const _palpitesCache: Record<string, GlobalMatchPalpites> = {}
 
 // ── main component ────────────────────────────────────────────────────────────
 
 export default function GlobalPalpitesTab() {
-  const [matches, setMatches]                 = useState<PalpitableMatch[]>(_cachedMatches ?? [])
+  const [matches, setMatches]                 = useState<GlobalMatch[]>(_cachedMatches ?? [])
   const [selectedId, setSelectedId]           = useState<string | null>(null)
-  const [palpites, setPalpites]               = useState<PalpitableMatchPalpites | null>(null)
+  const [palpites, setPalpites]               = useState<GlobalMatchPalpites | null>(null)
   const [loadingMatches, setLoadingMatches]   = useState(_cachedMatches === null)
   const [loadingPalpites, setLoadingPalpites] = useState(false)
   const [search, setSearch]                   = useState('')
-  const [selectedPlayer, setSelectedPlayer]   = useState<PalpitableGlobalPalpite | null>(null)
+  const [selectedPlayer, setSelectedPlayer]   = useState<GlobalPalpite | null>(null)
+  const [matchesError, setMatchesError]       = useState<string | null>(null)
+  const [palpitesError, setPalpitesError]     = useState<string | null>(null)
+  const [retryCount, setRetryCount]           = useState(0)
 
   const selectMatch = useCallback(async (matchId: string) => {
     setSelectedId(matchId)
+    setPalpitesError(null)
     if (_palpitesCache[matchId]) {
       setPalpites(_palpitesCache[matchId])
       return
@@ -304,14 +165,27 @@ export default function GlobalPalpitesTab() {
     setLoadingPalpites(true)
     setPalpites(null)
     try {
-      const data = await getGlobalMatchPalpitesLive(matchId)
-      _palpitesCache[matchId] = data
+      const data = await getGlobalMatchPalpites(matchId)
+      if (data.isFinished) _palpitesCache[matchId] = data
       setPalpites(data)
+      // Sync status/score from fresh response so the chip and badge update immediately
+      setMatches(prev => {
+        const next = prev.map(m =>
+          m.id === matchId
+            ? { ...m, status: data.match.status, homeScore: data.match.homeScore, awayScore: data.match.awayScore, predictionsLocked: data.match.predictionsLocked }
+            : m
+        )
+        _cachedMatches = next
+        return next
+      })
+    } catch {
+      setPalpitesError('Não foi possível carregar os palpites.')
     } finally {
       setLoadingPalpites(false)
     }
   }, [])
 
+  // initial load
   useEffect(() => {
     if (_cachedMatches !== null) {
       if (_cachedMatches.length > 0) selectMatch(_cachedMatches[0].id)
@@ -319,19 +193,48 @@ export default function GlobalPalpitesTab() {
     }
     let active = true
     async function load() {
+      setMatchesError(null)
       try {
-        const res = await getGlobalPalpitavelMatches()
+        const res = await getGlobalFinishedMatches()
         if (!active) return
         _cachedMatches = res.matches
         setMatches(res.matches)
         if (res.matches.length > 0) selectMatch(res.matches[0].id)
+      } catch {
+        if (active) setMatchesError('Não foi possível carregar as partidas.')
       } finally {
         if (active) setLoadingMatches(false)
       }
     }
     load()
     return () => { active = false }
-  }, [selectMatch])
+  }, [selectMatch, retryCount])
+
+  // background polling for live / awaiting_result matches
+  useEffect(() => {
+    if (!selectedId || !palpites) return
+    const { status } = palpites.match
+    if (status !== 'live' && status !== 'awaiting_result') return
+    const delay = status === 'live' ? 30_000 : 60_000
+    const timer = setInterval(async () => {
+      try {
+        const data = await getGlobalMatchPalpites(selectedId)
+        if (data.isFinished) _palpitesCache[selectedId] = data
+        setPalpites(data)
+        // sync status/score back to chip list so chips reflect the new state immediately
+        setMatches(prev => {
+          const next = prev.map(m =>
+            m.id === selectedId
+              ? { ...m, status: data.match.status, homeScore: data.match.homeScore, awayScore: data.match.awayScore, predictionsLocked: data.match.predictionsLocked }
+              : m
+          )
+          _cachedMatches = next
+          return next
+        })
+      } catch { /* silent — don't disrupt the user on background refresh */ }
+    }, delay)
+    return () => clearInterval(timer)
+  }, [selectedId, palpites?.match.status])
 
   const filtered = search.trim() ? matches.filter((m) => matchesSearch(m, search)) : matches
   const latestMatchId = matches[0]?.id ?? null
@@ -346,8 +249,8 @@ export default function GlobalPalpitesTab() {
 
   const selectedMatch = matches.find((m) => m.id === selectedId)
   const isLatest = selectedId === latestMatchId
-  const finished = selectedMatch ? isMatchFinished(selectedMatch) : false
 
+  // ── loading state ──
   if (loadingMatches) {
     return (
       <div className={s.loadingPalpites}>
@@ -358,18 +261,36 @@ export default function GlobalPalpitesTab() {
     )
   }
 
+  // ── matches list error ──
+  if (matchesError) {
+    return (
+      <div className={s.errorState}>
+        <AlertCircle size={36} strokeWidth={1.5} />
+        <p>{matchesError}</p>
+        <button
+          className={s.retryBtn}
+          onClick={() => { setLoadingMatches(true); setRetryCount(c => c + 1) }}
+        >
+          Tentar novamente
+        </button>
+      </div>
+    )
+  }
+
+  // ── empty state ──
   if (matches.length === 0) {
     return (
       <div className={s.emptyState}>
         <Target size={40} strokeWidth={1.5} />
         <p>Nenhum palpite disponível ainda.</p>
-        <span>Os palpites ficam visíveis assim que a partida bloquear.</span>
+        <span>Os palpites aparecem quando os jogos bloqueiam ou encerram.</span>
       </div>
     )
   }
 
   return (
     <>
+      {/* Search */}
       <div className={s.searchRow}>
         <Search size={15} className={s.searchIcon} />
         <input
@@ -391,23 +312,30 @@ export default function GlobalPalpitesTab() {
         <div className={s.chipWrapper}>
           <div className={s.chipScroll}>
             {filtered.map((m) => {
-              const fin = isMatchFinished(m)
-              const isLive = m.status === 'live'
+              const isLive     = m.status === 'live'
+              const isAwaiting = m.status === 'awaiting_result'
+              const isLocked   = m.predictionsLocked && !isLive && !isAwaiting && m.status !== 'finished'
               return (
                 <button
                   key={m.id}
-                  className={`${s.chip} ${m.id === selectedId ? s.chipActive : ''}`}
+                  className={[
+                    s.chip,
+                    m.id === selectedId ? s.chipActive : '',
+                    isLive ? s.chipLive : isAwaiting ? s.chipAwaiting : isLocked ? s.chipLocked : '',
+                  ].join(' ')}
                   onClick={() => selectMatch(m.id)}
                 >
                   {m.id === latestMatchId && <span className={s.latestDot} />}
                   <CountryBadge country={m.homeTeam} size="xs" />
-                  {fin ? (
+                  {m.status === 'finished' ? (
                     <span className={s.chipScore}>{m.homeScore}×{m.awayScore}</span>
                   ) : isLive ? (
-                    <span className={s.chipLive}><Radio size={9} />AO VIVO</span>
-                  ) : (
-                    <span className={s.chipLock}><Lock size={9} /></span>
-                  )}
+                    <span className={s.chipLiveText}>AO VIVO</span>
+                  ) : isAwaiting ? (
+                    <span className={s.chipAwaitingIcon} />
+                  ) : isLocked ? (
+                    <Lock size={9} className={s.chipLockIcon} />
+                  ) : null}
                   <CountryBadge country={m.awayTeam} size="xs" />
                 </button>
               )
@@ -416,17 +344,18 @@ export default function GlobalPalpitesTab() {
         </div>
       )}
 
+      {/* Selected match info bar */}
       {selectedMatch && (
         <div className={s.matchBar}>
           <div className={s.matchBarTeams}>
             <CountryBadge country={selectedMatch.homeTeam} size="sm" />
-            <span className={s.matchBarScore}>
-              {finished
-                ? `${selectedMatch.homeScore} × ${selectedMatch.awayScore}`
-                : selectedMatch.status === 'live'
-                  ? <span className={s.matchBarLiveBadge}><Radio size={11} />AO VIVO</span>
-                  : <Lock size={16} />}
-            </span>
+            {selectedMatch.homeScore !== null && selectedMatch.awayScore !== null ? (
+              <span className={s.matchBarScore}>
+                {selectedMatch.homeScore} × {selectedMatch.awayScore}
+              </span>
+            ) : (
+              <span className={s.matchBarVs}>VS</span>
+            )}
             <CountryBadge country={selectedMatch.awayTeam} size="sm" />
           </div>
           <div className={s.matchBarMeta}>
@@ -434,12 +363,31 @@ export default function GlobalPalpitesTab() {
               <span className={s.matchBarTeamNames}>
                 {selectedMatch.homeTeam} · {selectedMatch.awayTeam}
               </span>
-              {isLatest && <span className={s.latestBadge}>
-                {finished ? 'Último jogo' : selectedMatch.status === 'live' ? 'Ao vivo' : 'Bloqueado'}
-              </span>}
+              {/* Status badge — always shown for live/awaiting/locked; only latest for finished */}
+              {selectedMatch.status === 'live' ? (
+                <span className={s.badgeLive}><span className={s.liveDot} /> Ao Vivo</span>
+              ) : selectedMatch.status === 'awaiting_result' ? (
+                <span className={s.badgeAwaiting}><span className={s.awaitingSpinner} /> Aguardando</span>
+              ) : selectedMatch.predictionsLocked && selectedMatch.status !== 'finished' ? (
+                <span className={s.badgeLocked}>Bloqueado</span>
+              ) : isLatest ? (
+                <span className={s.latestBadge}>Último jogo</span>
+              ) : null}
             </div>
             <span className={s.matchBarInfo}>
               {phaseLabel(selectedMatch.phase)} · {shortDate(selectedMatch.matchDate)}
+              {selectedMatch.status === 'live' && (
+                <> · <span className={s.matchBarLiveInfo}>Em andamento</span></>
+              )}
+              {selectedMatch.status === 'awaiting_result' && (
+                <> · <span className={s.matchBarAwaitingInfo}>Apuração em breve</span></>
+              )}
+              {selectedMatch.predictionsLocked &&
+               selectedMatch.status !== 'finished' &&
+               selectedMatch.status !== 'live' &&
+               selectedMatch.status !== 'awaiting_result' && (
+                <> · <span className={s.matchBarLockInfo}><Lock size={9} /> {shortTime(selectedMatch.matchDate)}</span></>
+              )}
               {selectedMatch.penaltyWinner && (
                 <> · <span className={s.matchBarPen}>Classif.: {selectedMatch.penaltyWinner}</span></>
               )}
@@ -448,22 +396,32 @@ export default function GlobalPalpitesTab() {
         </div>
       )}
 
+      {/* Palpites */}
       {loadingPalpites ? (
         <div className={s.loadingPalpites}>
           <div className={s.loadingBar} />
           <div className={s.loadingBar} style={{ width: '70%' }} />
           <div className={s.loadingBar} style={{ width: '85%' }} />
         </div>
+      ) : palpitesError ? (
+        <div className={s.errorState}>
+          <AlertCircle size={32} strokeWidth={1.5} />
+          <p>{palpitesError}</p>
+          <button
+            className={s.retryBtn}
+            onClick={() => { if (selectedId) selectMatch(selectedId) }}
+          >
+            Tentar novamente
+          </button>
+        </div>
       ) : palpites ? (
-        finished
-          ? <PalpitesFinishedView data={palpites} onCardClick={setSelectedPlayer} />
-          : <PalpitesPreResultView data={palpites} />
+        <PalpitesView data={palpites} onCardClick={setSelectedPlayer} />
       ) : null}
 
-      {selectedPlayer && selectedMatch && finished && (
+      {selectedPlayer && selectedMatch && (
         <PlayerModal
-          player={selectedPlayer as any}
-          match={selectedMatch as any}
+          player={selectedPlayer}
+          match={selectedMatch}
           onClose={() => setSelectedPlayer(null)}
         />
       )}
