@@ -337,6 +337,25 @@
   color: var(--c-accent) !important;
 }
 
+/* ── Você no pódio ─────────────────────────────────── */
+.podiumAvatarMe {
+  outline: 2.5px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+}
+
+.podiumMeBadge {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--r-full);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  margin-top: -2px;
+  padding: 2px 9px;
+  text-transform: uppercase;
+}
+
 /* ── Minha posição (banner acima do pódio) ─────────── */
 .myPositionBanner {
   display: flex;

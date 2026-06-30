@@ -141,10 +141,11 @@ export default function Ranking() {
                         }
                       </div>
                     )}
-                    <div className={`${s.podiumAvatar} ${idx === 0 ? firstCls : ''}`}>
+                    <div className={`${s.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? s.podiumAvatarMe : ''}`}>
                       {avatarInitial(e.name)}
                     </div>
-                    <div className={s.podiumName}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
+                    {e.userId === myId && <div className={s.podiumMeBadge}>Você</div>}
+                    <div className={s.podiumName}>{e.name}</div>
                     <div className={`${s.podiumPts} ${idx === 0 && isCravas ? s.podiumPtsCravas : ''}`}>
                       {getVal(e)}
                     </div>
