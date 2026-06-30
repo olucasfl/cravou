@@ -280,6 +280,7 @@ export default function BolaoDetail() {
                     const e = top3[idx]
                     if (!e) return null
                     const cls = idx === 0 ? r.first : idx === 1 ? r.second : r.third
+                    const firstCls = isCravas ? r.firstCravas : ''
                     return (
                       <div key={e.userId} className={`${r.podiumItem} ${cls}`}>
                         {idx === 0 && (
@@ -290,15 +291,20 @@ export default function BolaoDetail() {
                             }
                           </div>
                         )}
-                        <div className={`${r.podiumAvatar} ${idx === 0 && isCravas ? r.firstCravas : ''}`}>
-                          {avatarInitial(e.name)}
+                        <div className={r.podiumAvatarWrap}>
+                          <div className={`${r.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? r.podiumAvatarMe : ''}`}>
+                            {avatarInitial(e.name)}
+                          </div>
+                          {e.userId === myId && <div className={r.podiumMeBadge}>Você</div>}
                         </div>
-                        <div className={r.podiumName}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
+                        <div className={r.podiumName}>{e.name}</div>
                         <div className={`${r.podiumPts} ${idx === 0 && isCravas ? r.podiumPtsCravas : ''}`}>
                           {isCravas ? e.cravadas : e.points}
                         </div>
                         <div className={r.podiumPtsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
-                        <div className={`${r.podiumBar} ${idx === 0 && isCravas ? r.podiumBarCravas : ''}`} />
+                        <div className={`${r.podiumBar} ${idx === 0 && isCravas ? r.podiumBarCravas : ''}`}>
+                          <span className={r.podiumBarPos}>{idx + 1}º</span>
+                        </div>
                       </div>
                     )
                   })}
