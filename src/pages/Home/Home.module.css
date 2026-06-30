@@ -1321,7 +1321,10 @@
   flex-direction: column;
   gap: 6px;
   position: relative;
+  text-decoration: none;
+  color: inherit;
 }
+.bracketCard:hover { border-color: var(--c-accent); }
 
 .bracketCardDone {
   border-color: rgba(250, 204, 21, 0.3);
