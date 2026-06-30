@@ -809,7 +809,7 @@ function TutorialModal({ onClose }: { onClose: () => void }) {
               </div>
               <div className={s.tutCardRow}>
                 <XCircle size={14} color="var(--c-text-3)" />
-                <span>Bônus de gols não vale sem acertar o resultado — gols certos sem resultado correto = apenas 2 pts (parcial).</span>
+                <span>Bônus de gols não vale sem acertar o resultado — gols certos sem resultado correto = apenas <strong>2 pts nos grupos</strong> / <strong>3 pts no mata-mata</strong> (parcial).</span>
               </div>
             </div>
           </div>
