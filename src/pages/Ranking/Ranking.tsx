@@ -141,16 +141,20 @@ export default function Ranking() {
                         }
                       </div>
                     )}
-                    <div className={`${s.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? s.podiumAvatarMe : ''}`}>
-                      {avatarInitial(e.name)}
+                    <div className={s.podiumAvatarWrap}>
+                      <div className={`${s.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? s.podiumAvatarMe : ''}`}>
+                        {avatarInitial(e.name)}
+                      </div>
+                      {e.userId === myId && <div className={s.podiumMeBadge}>Você</div>}
                     </div>
-                    {e.userId === myId && <div className={s.podiumMeBadge}>Você</div>}
                     <div className={s.podiumName}>{e.name}</div>
                     <div className={`${s.podiumPts} ${idx === 0 && isCravas ? s.podiumPtsCravas : ''}`}>
                       {getVal(e)}
                     </div>
                     <div className={s.podiumPtsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
-                    <div className={`${s.podiumBar} ${idx === 0 && isCravas ? s.podiumBarCravas : ''}`} />
+                    <div className={`${s.podiumBar} ${idx === 0 && isCravas ? s.podiumBarCravas : ''}`}>
+                      <span className={s.podiumBarPos}>{idx + 1}º</span>
+                    </div>
                   </div>
                 )
               })}
