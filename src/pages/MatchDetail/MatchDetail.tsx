@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost, Trophy, Minus } from 'lucide-react'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { CountryBadge } from '@/components/CountryBadge'
