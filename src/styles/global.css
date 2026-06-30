@@ -161,3 +161,22 @@ body {
 .badge-gold   { background: var(--c-gold-glow);  color: var(--c-gold); }
 .badge-red    { background: var(--c-red-glow);   color: var(--c-red); }
 .badge-muted  { background: var(--c-surface-2);  color: var(--c-text-3); }
+
+/* ── Lele theme (data-lele = logged in as her) ────────── */
+[data-lele] {
+  --c-accent: #ff0099;
+  --c-accent-glow: rgba(255, 0, 153, 0.12);
+  --shadow-accent: 0 0 20px rgba(255, 0, 153, 0.3);
+}
+
+/* ── Lele avatar — borda LED rosa neon (visível para todos) */
+@keyframes leleNeonPulse {
+  0%, 100% { box-shadow: 0 0 6px 3px rgba(255, 0, 153, 0.55), 0 0 18px 6px rgba(255, 0, 153, 0.25); }
+  50%       { box-shadow: 0 0 14px 6px rgba(255, 0, 153, 0.9), 0 0 32px 12px rgba(255, 0, 153, 0.5); }
+}
+.lele-avatar {
+  outline: 3px solid #ff0099 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 10px 4px rgba(255, 0, 153, 0.55) !important;
+  animation: leleNeonPulse 1.3s ease-in-out infinite !important;
+}
