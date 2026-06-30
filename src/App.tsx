@@ -19,6 +19,7 @@ import BolaoDetail from '@/pages/Bolao/BolaoDetail'
 import BolaoGrupoPalpites from '@/pages/Bolao/BolaoGrupoPalpites'
 import Profile from '@/pages/Profile/Profile'
 import Admin from '@/pages/Admin/Admin'
+import LeleEffects from '@/components/LeleEffects/LeleEffects'
 
 const APP_VERSION = 'v1'
 
@@ -83,6 +84,7 @@ function ProtectedLayout() {
   return (
     <ProtectedRoute>
       <AppDataProvider>
+        <LeleEffects />
         <Outlet />
         <BottomNav />
       </AppDataProvider>

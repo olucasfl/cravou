@@ -7,6 +7,7 @@ import { getPredCategory } from '@/utils/format'
 import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
+import FloatingHearts from '@/components/FloatingHearts/FloatingHearts'
 import s from './Profile.module.css'
 
 export default function Profile() {
@@ -62,6 +63,7 @@ export default function Profile() {
 
   return (
     <PullToRefresh onRefresh={refresh}>
+      {user?.id === LELE_ID && <FloatingHearts />}
       <div className="app-layout">
         <div className="page fade-up">
 

@@ -103,6 +103,13 @@ code,
   color: var(--text-h);
 }
 
+/* ── Lele theme override (apenas quando ela está logada) ── */
+[data-lele] {
+  --c-accent: #ff0099;
+  --c-accent-glow: rgba(255, 0, 153, 0.12);
+  --shadow-accent: 0 0 20px rgba(255, 0, 153, 0.3);
+}
+
 /* ── Lele avatar especial ───────────────────────────── */
 @keyframes leleAvatarPulse {
   0%, 100% { outline-color: #ff0099; box-shadow: 0 0 0 0 rgba(255, 0, 153, 0); }
