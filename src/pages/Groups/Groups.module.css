@@ -120,6 +120,14 @@
 }
 .bCardFinal .bHeader { background: rgba(234,179,8,0.08); }
 
+.bCardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.bCardLink:hover { border-color: var(--c-accent); }
+
 .bHeader {
   display: flex;
   align-items: center;
@@ -128,6 +136,20 @@
   background: var(--c-surface-2);
   border-bottom: 1px solid var(--c-border);
 }
+
+.bHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bScore {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--c-text-2);
+  letter-spacing: 1px;
+}
+.bScoreLive { color: var(--c-green); }
 .bSlot {
   font-size: 0.6rem;
   font-weight: 700;

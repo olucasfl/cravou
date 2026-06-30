@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Shield, Trophy, ChevronRight, X as XIcon } from 'lucide-react'
 import { type GroupData, type Standing, type BracketSlot, type Match } from '@/services/cravouService'
 import { CountryBadge } from '@/components/CountryBadge'
@@ -33,6 +34,8 @@ export default function Groups() {
   const [selected, setSelected] = useState<string | null>(null)
   const [bracketRound, setBracketRound] = useState('round_of_32')
 
+  const bracketAutoSet = useRef(false)
+
   const bracketByRound = useMemo(() => {
     const map: Record<string, BracketSlot[]> = {}
     for (const slot of bracket) {
@@ -42,6 +45,13 @@ export default function Groups() {
     for (const r in map) map[r].sort((a, b) => a.slotNumber - b.slotNumber)
     return map
   }, [bracket])
+
+  // Auto-detect active bracket round; freeze after manual selection
+  useEffect(() => {
+    if (bracketAutoSet.current) return
+    const active = ROUNDS.find(r => bracketByRound[r.value]?.some(sl => sl.homeTeam || sl.awayTeam))
+    if (active) { setBracketRound(active.value); bracketAutoSet.current = true }
+  }, [bracketByRound])
 
   const currentRoundSlots = useMemo((): BracketSlot[] => {
     if ((bracketByRound[bracketRound]?.length ?? 0) > 0) return bracketByRound[bracketRound]
@@ -59,8 +69,13 @@ export default function Groups() {
     }))
   }, [bracketByRound, bracketRound])
 
-  const rows: GroupData[][] = []
-  for (let i = 0; i < groups.length; i += 2) rows.push(groups.slice(i, i + 2))
+  const matchById = useMemo(() => new Map(matches.map(m => [m.id, m])), [matches])
+
+  const rows = useMemo<GroupData[][]>(() => {
+    const r: GroupData[][] = []
+    for (let i = 0; i < groups.length; i += 2) r.push(groups.slice(i, i + 2))
+    return r
+  }, [groups])
 
   return (
     <PullToRefresh onRefresh={refresh}>
@@ -96,7 +111,15 @@ export default function Groups() {
                 </div>
               )}
 
-              {!loading && (
+              {!loading && groups.length === 0 && (
+                <div className={s.empty}>
+                  <Shield size={32} className={s.emptyIcon} />
+                  <div className={s.emptyTitle}>Grupos ainda não disponíveis</div>
+                  <div className={s.emptySub}>Os grupos serão exibidos quando o torneio começar</div>
+                </div>
+              )}
+
+              {!loading && groups.length > 0 && (
                 <div className={s.rows}>
                   {rows.map((row) => {
                     const activeGroup = row.find((g) => g.group === selected)
@@ -157,7 +180,7 @@ export default function Groups() {
                       <button
                         key={r.value}
                         className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
-                        onClick={() => setBracketRound(r.value)}
+                        onClick={() => { bracketAutoSet.current = true; setBracketRound(r.value) }}
                       >
                         {r.short}
                       </button>
@@ -179,7 +202,7 @@ export default function Groups() {
                         key={slot.id}
                         slot={slot}
                         isFinal={bracketRound === 'final'}
-                        match={slot.matchId ? matches.find(m => m.id === slot.matchId) : undefined}
+                        match={slot.matchId ? matchById.get(slot.matchId) : undefined}
                       />
                     ))}
                   </div>
@@ -196,7 +219,6 @@ export default function Groups() {
 // ── BracketCard ──────────────────────────────────────────────────────────────
 
 function BracketCard({ slot, isFinal, match }: { slot: BracketSlot; isFinal: boolean; match?: Match }) {
-  // Derivar vencedor: preferir slot.winnerTeam, fallback para dados do match
   const effectiveWinner = slot.winnerTeam ?? (() => {
     if (!match || match.status !== 'finished' || match.homeScore === null || match.awayScore === null) return null
     if (match.homeScore > match.awayScore) return match.homeTeam
@@ -205,15 +227,26 @@ function BracketCard({ slot, isFinal, match }: { slot: BracketSlot; isFinal: boo
     return null
   })()
 
-  const homeWon = !!effectiveWinner && effectiveWinner.toLowerCase() === (slot.homeTeam ?? '').toLowerCase()
-  const awayWon = !!effectiveWinner && effectiveWinner.toLowerCase() === (slot.awayTeam ?? '').toLowerCase()
-  const settled = !!effectiveWinner
+  const homeWon  = !!effectiveWinner && effectiveWinner.toLowerCase() === (slot.homeTeam ?? '').toLowerCase()
+  const awayWon  = !!effectiveWinner && effectiveWinner.toLowerCase() === (slot.awayTeam ?? '').toLowerCase()
+  const settled  = !!effectiveWinner
+  const hasScore = match && match.homeScore !== null && match.awayScore !== null
+  const isLive   = match?.status === 'live'
 
-  return (
-    <div className={`${s.bCard} ${settled ? s.bCardDone : ''} ${isFinal ? s.bCardFinal : ''}`}>
+  const cardClass = `${s.bCard} ${settled ? s.bCardDone : ''} ${isFinal ? s.bCardFinal : ''} ${slot.matchId ? s.bCardLink : ''}`
+
+  const inner = (
+    <>
       <div className={s.bHeader}>
         <span className={s.bSlot}>Confronto {slot.slotNumber}</span>
-        {isFinal && <span className={s.bFinalBadge}><Trophy size={10} /> Final</span>}
+        <div className={s.bHeaderRight}>
+          {hasScore && (
+            <span className={`${s.bScore} ${isLive ? s.bScoreLive : ''}`}>
+              {match.homeScore} × {match.awayScore}
+            </span>
+          )}
+          {isFinal && <span className={s.bFinalBadge}><Trophy size={10} /> Final</span>}
+        </div>
       </div>
 
       <div className={`${s.bTeam} ${homeWon ? s.bWinner : ''} ${settled && !homeWon ? s.bLoser : ''} ${!slot.homeTeam ? s.bTbd : ''}`}>
@@ -243,17 +276,23 @@ function BracketCard({ slot, isFinal, match }: { slot: BracketSlot; isFinal: boo
         {awayWon && <span className={s.bAdvancesBadge}><ChevronRight size={9} /> Classificado</span>}
         {settled && !awayWon && slot.awayTeam && <span className={s.bEliminatedBadge}><XIcon size={8} /> Elim.</span>}
       </div>
-    </div>
+    </>
   )
+
+  if (slot.matchId) {
+    return <Link to={`/matches/${slot.matchId}`} className={cardClass}>{inner}</Link>
+  }
+  return <div className={cardClass}>{inner}</div>
 }
 
 // ── StandingsTable ────────────────────────────────────────────────────────────
 
 function StandingsTable({ group, standings }: { group: string; standings: Standing[] }) {
   const sorted = [...standings].sort((a, b) => {
-    if (a.position && b.position) return a.position - b.position
+    if (a.position != null && b.position != null) return a.position - b.position
     if (a.points !== b.points) return b.points - a.points
-    return b.goalDifference - a.goalDifference
+    if (a.goalDifference !== b.goalDifference) return b.goalDifference - a.goalDifference
+    return b.goalsFor - a.goalsFor
   })
 
   return (
@@ -270,6 +309,7 @@ function StandingsTable({ group, standings }: { group: string; standings: Standi
             <th className={s.th}>V</th>
             <th className={s.th}>E</th>
             <th className={s.th}>D</th>
+            <th className={s.th}>GP</th>
             <th className={s.th}>SG</th>
             <th className={s.th}>PTS</th>
           </tr>
@@ -290,6 +330,7 @@ function StandingsTable({ group, standings }: { group: string; standings: Standi
               <td className={s.td}>{st.wins}</td>
               <td className={s.td}>{st.draws}</td>
               <td className={s.td}>{st.losses}</td>
+              <td className={s.td}>{st.goalsFor}</td>
               <td className={s.td}>{st.goalDifference > 0 ? `+${st.goalDifference}` : st.goalDifference}</td>
               <td className={s.td}><span className={s.pts}>{st.points}</span></td>
             </tr>

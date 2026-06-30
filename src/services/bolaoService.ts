@@ -1,5 +1,5 @@
 import api from './api'
-import { getCache, setCache } from '@/utils/cache'
+import { getCache, setCache, clearCache } from '@/utils/cache'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -67,36 +67,46 @@ export async function getMyBolaoGroups() {
 
 export async function createBolaoGroup(name: string, description?: string, brazilOnly?: boolean, zeroPoints?: boolean) {
   const { data } = await api.post('/cravou/groups', { name, description, brazilOnly, zeroPoints })
+  clearCache('myBolaoGroups')
   return data as BolaoGroup
 }
 
 export async function getBolaoGroupDetail(id: string) {
+  const key = `bolaoDetail-${id}`
+  const cached = getCache<GroupDetail>(key, 30_000)
+  if (cached) return cached
   const { data } = await api.get(`/cravou/groups/${id}`)
+  setCache(key, data)
   return data as GroupDetail
 }
 
 export async function joinBolaoGroup(inviteCode: string) {
   const { data } = await api.post('/cravou/groups/join', { inviteCode })
+  clearCache('myBolaoGroups')
   return data as { message: string; groupId: string; groupName: string }
 }
 
 export async function editBolaoGroup(id: string, name?: string, description?: string) {
   const { data } = await api.patch(`/cravou/groups/${id}`, { name, description })
+  clearCache('myBolaoGroups', `bolaoDetail-${id}`)
   return data
 }
 
 export async function leaveBolaoGroup(id: string) {
   const { data } = await api.delete(`/cravou/groups/${id}/leave`)
+  clearCache('myBolaoGroups', `bolaoDetail-${id}`)
   return data
 }
 
 export async function deleteBolaoGroup(id: string) {
   const { data } = await api.delete(`/cravou/groups/${id}`)
+  clearCache('myBolaoGroups', `bolaoDetail-${id}`)
   return data
 }
 
 export async function removeBolaoMember(groupId: string, userId: string) {
   const { data } = await api.delete(`/cravou/groups/${groupId}/members/${userId}`)
+  clearCache('myBolaoGroups', `bolaoDetail-${groupId}`)
   return data
 }
 
@@ -122,6 +132,7 @@ export async function getPendingInvites() {
 
 export async function respondToInvite(inviteId: string, status: 'accepted' | 'declined') {
   const { data } = await api.patch(`/cravou/groups/invites/${inviteId}`, { status })
+  clearCache('pendingInvites', 'myBolaoGroups')
   return data as { message: string; groupId?: string }
 }
 
@@ -197,11 +208,19 @@ export async function getGroupFinishedMatches(groupId: string) {
 }
 
 export async function getGroupPalpitavelMatches(groupId: string) {
+  const key = `groupPalpitavel-${groupId}`
+  const cached = getCache<{ matches: PalpitableGroupMatch[] }>(key, 30_000)
+  if (cached) return cached
   const { data } = await api.get(`/cravou/groups/${groupId}/palpitavel-matches`)
+  setCache(key, data)
   return data as { matches: PalpitableGroupMatch[] }
 }
 
 export async function getGroupMatchPalpites(groupId: string, matchId: string) {
+  const key = `groupMatchPalpites-${groupId}-${matchId}`
+  const cached = getCache<PalpitableGroupMatchPalpites>(key, 30_000)
+  if (cached) return cached
   const { data } = await api.get(`/cravou/groups/${groupId}/matches/${matchId}/palpites`)
+  setCache(key, data)
   return data as PalpitableGroupMatchPalpites
 }
