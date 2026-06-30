@@ -9,7 +9,10 @@ export function avatarInitial(name: string) {
   return name.trim().charAt(0).toUpperCase()
 }
 
+export const LELE_ID = '6e042b19-ee86-433a-8e68-a8e43c90862c'
+
 export function avatarColor(userId: string) {
+  if (userId === LELE_ID) return '#f472b6'
   let h = 0
   for (let i = 0; i < userId.length; i++) h = userId.charCodeAt(i) + ((h << 5) - h)
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]

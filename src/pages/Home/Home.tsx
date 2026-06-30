@@ -7,7 +7,7 @@ import {
 import { useAppData } from '@/context/AppDataContext'
 import { type Match, type Prediction, type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
 import { formatMatchDate, formatTimeUntilClose, phaseLabel, getPredCategory, getPredBreakdown } from '@/utils/format'
-import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
+import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
@@ -116,6 +116,7 @@ export default function Home() {
 
   const initial   = user ? avatarInitial(user.name) : '?'
   const avatarBg  = user ? avatarColor(user.id) : undefined
+  const isLele    = user?.id === LELE_ID
 
   return (
     <PullToRefresh onRefresh={refresh}>
@@ -142,7 +143,7 @@ export default function Home() {
           </div>
 
           {/* Score Card */}
-          <div className={s.scoreCard}>
+          <div className={`${s.scoreCard} ${isLele ? s.scoreCardLele : ''}`}>
             <div className={s.scoreCardTop}>
               <span className={s.scoreLabel}>Seus pontos</span>
               {!loading && (myPosition

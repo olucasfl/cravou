@@ -4,7 +4,7 @@ import { ChevronRight, Shield, BarChart2, LogOut, Target, CheckCircle2, XCircle,
 import { logout } from '@/services/authService'
 import { useAppData } from '@/context/AppDataContext'
 import { getPredCategory } from '@/utils/format'
-import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
+import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import s from './Profile.module.css'
@@ -79,6 +79,7 @@ export default function Profile() {
             <div className={s.name}>{user?.name ?? '...'}</div>
             <div className={s.email}>{user?.email ?? ''}</div>
             {user?.isAdmin && <span className={`badge badge-gold ${s.adminBadge}`}>Admin</span>}
+            {user?.id === LELE_ID && <span className={s.leleBadge}>💗 Especial</span>}
           </div>
 
           {/* ── Stats grid 2×2 ── */}

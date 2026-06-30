@@ -80,6 +80,11 @@
   box-shadow: var(--shadow-accent);
 }
 
+.scoreCardLele {
+  border-color: #f472b6 !important;
+  box-shadow: 0 0 24px rgba(244, 114, 182, 0.3), 0 0 0 1px rgba(244, 114, 182, 0.15) !important;
+}
+
 .scoreCardTop {
   display: flex;
   align-items: center;
