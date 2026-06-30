@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
@@ -6,7 +6,8 @@ import {
 } from 'lucide-react'
 import { useAppData } from '@/context/AppDataContext'
 import { type Match, type Prediction, type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
-import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, getPredBreakdown } from '@/utils/format'
+import { formatMatchDate, formatTimeUntilClose, phaseLabel, getPredCategory, getPredBreakdown } from '@/utils/format'
+import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
@@ -40,6 +41,7 @@ export default function Home() {
   const [copaTab, setCopaTab]                   = useState<CopaTab>('grupos')
   const [bracketRound, setBracketRound]         = useState('round_of_32')
   const [selectedGroup, setSelectedGroup]       = useState<string | null>(null)
+  const bracketAutoSet                          = useRef(false)
 
   useEffect(() => {
     const iv = setInterval(() => setNowMs(Date.now()), 15_000)
@@ -92,6 +94,15 @@ export default function Home() {
     return map
   }, [bracket])
 
+  useEffect(() => {
+    if (bracketAutoSet.current) return
+    const active = BRACKET_ROUNDS.find(r => bracketByRound[r.value]?.some(s => s.homeTeam || s.awayTeam))
+    if (active) {
+      setBracketRound(active.value)
+      bracketAutoSet.current = true
+    }
+  }, [bracketByRound])
+
   const currentRoundSlots = useMemo((): BracketSlot[] => {
     if ((bracketByRound[bracketRound]?.length ?? 0) > 0) return bracketByRound[bracketRound]
     const count = ROUND_SLOT_COUNTS[bracketRound] ?? 1
@@ -103,7 +114,8 @@ export default function Home() {
     }))
   }, [bracketByRound, bracketRound])
 
-  const initials = user?.name?.slice(0, 2).toUpperCase() ?? '?'
+  const initial   = user ? avatarInitial(user.name) : '?'
+  const avatarBg  = user ? avatarColor(user.id) : undefined
 
   return (
     <PullToRefresh onRefresh={refresh}>
@@ -125,7 +137,7 @@ export default function Home() {
               <button className={s.howBtn} onClick={() => setShowTutorial(true)}>
                 <HelpCircle size={14} /> Como funciona?
               </button>
-              <div className={s.avatar}>{initials}</div>
+              <div className={s.avatar} style={avatarBg ? { background: avatarBg } : undefined}>{initial}</div>
             </div>
           </div>
 
@@ -133,8 +145,11 @@ export default function Home() {
           <div className={s.scoreCard}>
             <div className={s.scoreCardTop}>
               <span className={s.scoreLabel}>Seus pontos</span>
-              {!loading && myPosition && (
-                <span className={s.rankBadge}><Crown size={11} />#{myPosition} no ranking</span>
+              {!loading && (myPosition
+                ? <span className={s.rankBadge}><Crown size={11} />#{myPosition} no ranking</span>
+                : (user?.bolaoPoints ?? 0) === 0
+                  ? <span className={s.rankBadge}>Palpite agora e entre no ranking!</span>
+                  : null
               )}
             </div>
             <div className={s.scoreRow}>
@@ -199,7 +214,10 @@ export default function Home() {
               ))}
 
               {!loading && visibleMatches.length === 0 && (
-                <div className={s.empty}><div className={s.emptyIcon}><SoccerBall size={36} /></div>Nenhum jogo ativo</div>
+                <div className={s.empty}>
+                  <div className={s.emptyIcon}><SoccerBall size={36} /></div>
+                  {allMatches.length > 0 ? 'Aguardando próxima fase' : 'Nenhum jogo disponível ainda'}
+                </div>
               )}
 
               {!loading && visibleMatches.slice(0, 8).map(m => (
@@ -208,7 +226,7 @@ export default function Home() {
 
               {!loading && visibleMatches.length > 0 && (
                 <Link to="/matches" className={s.verMaisBtn}>
-                  Ver todos os jogos <ChevronRight size={15} />
+                  Ver todos os jogos ({visibleMatches.length}) <ChevronRight size={15} />
                 </Link>
               )}
             </div>
@@ -266,7 +284,7 @@ export default function Home() {
                       <button
                         key={r.value}
                         className={`${s.roundTab} ${bracketRound === r.value ? s.roundTabActive : ''} ${r.value === 'final' ? s.roundTabFinal : ''}`}
-                        onClick={() => setBracketRound(r.value)}
+                        onClick={() => { bracketAutoSet.current = true; setBracketRound(r.value) }}
                       >
                         {r.label}
                       </button>
@@ -295,15 +313,15 @@ export default function Home() {
 // ── MatchCard ─────────────────────────────────────────────────────────────────
 
 function MatchCard({ match: m, pred, nowMs }: { match: Match; pred?: Prediction; nowMs: number }) {
-  const isLive             = m.status === 'live'
-  const isCalc             = m.status === 'awaiting_result'
-  const isWaiting          = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
-  const isOpen             = m.status === 'upcoming' && !m.predictionsLocked
-  const closeAt            = new Date(m.matchDate).getTime() - 10 * 60_000
-  const closeAlreadyPassed = isOpen && closeAt <= nowMs
-  const closingVerySoon    = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 10)
-  const closingSoon        = isOpen && !closeAlreadyPassed && isWithinMinutes(m.matchDate, 60)
-  const hasScore           = m.homeScore !== null && m.awayScore !== null
+  const isLive          = m.status === 'live'
+  const isCalc          = m.status === 'awaiting_result'
+  const isWaiting       = m.status === 'locked' || (m.status === 'upcoming' && m.predictionsLocked)
+  const isOpen          = m.status === 'upcoming' && !m.predictionsLocked
+  const closeAt         = new Date(m.matchDate).getTime() - 10 * 60_000
+  const msToClose       = closeAt - nowMs
+  const closingVerySoon = isOpen && msToClose >= 0 && msToClose <= 10 * 60_000
+  const closingSoon     = isOpen && msToClose > 10 * 60_000 && msToClose <= 60 * 60_000
+  const hasScore        = m.homeScore !== null && m.awayScore !== null
 
   const borderCls = isLive        ? s.cardBorderLive
     : isCalc                      ? s.cardBorderCalc
@@ -395,8 +413,7 @@ function GroupCard({ group, selected, onToggle }: { group: GroupData; selected: 
 function StandingsTable({ group, standings }: { group: string; standings: Standing[] }) {
   const sorted = [...standings].sort((a, b) => {
     if (a.position && b.position) return a.position - b.position
-    if (a.points !== b.points) return b.points - a.points
-    return b.goalDifference - a.goalDifference
+    return b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor
   })
   return (
     <div className={s.detail}>
@@ -444,8 +461,9 @@ function StandingsTable({ group, standings }: { group: string; standings: Standi
 
 function BracketCard({ slot }: { slot: BracketSlot }) {
   const hasTeams = slot.homeTeam || slot.awayTeam
-  return (
-    <div className={`${s.bracketCard} ${slot.winnerTeam ? s.bracketCardDone : ''}`}>
+  const cls = `${s.bracketCard} ${slot.winnerTeam ? s.bracketCardDone : ''}`
+  const inner = (
+    <>
       <span className={s.bracketNum}>#{slot.slotNumber}</span>
       <div className={s.bracketTeams}>
         <div className={`${s.bracketTeamRow} ${slot.winnerTeam === slot.homeTeam && slot.winnerTeam ? s.bracketWinner : ''}`}>
@@ -463,8 +481,11 @@ function BracketCard({ slot }: { slot: BracketSlot }) {
         </div>
       </div>
       {!hasTeams && <span className={s.bracketPending}>A definir</span>}
-    </div>
+    </>
   )
+  return slot.matchId
+    ? <Link to={`/matches/${slot.matchId}`} className={cls}>{inner}</Link>
+    : <div className={cls}>{inner}</div>
 }
 
 // ── History Modal ─────────────────────────────────────────────────────────────

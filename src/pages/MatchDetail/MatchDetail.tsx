@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useCallback, useRef } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, MapPin, Lock, Zap, Clock, Target, CheckCircle2, XCircle, Ghost, Trophy, Minus } from 'lucide-react'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { CountryBadge } from '@/components/CountryBadge'
@@ -23,6 +23,7 @@ import s from './MatchDetail.module.css'
 export default function MatchDetail() {
   const { id } = useParams<{ id: string }>()
   const { refresh } = useAppData()
+  const navigate = useNavigate()
   const [match, setMatch] = useState<Match | null>(null)
   const [prediction, setPrediction] = useState<Prediction | null>(null)
   const [home, setHome] = useState('')
@@ -39,6 +40,12 @@ export default function MatchDetail() {
     const iv = setInterval(() => setTick((t) => t + 1), 15_000)
     return () => clearInterval(iv)
   }, [])
+
+  useEffect(() => {
+    if (!msg) return
+    const t = setTimeout(() => setMsg(null), 3_500)
+    return () => clearTimeout(t)
+  }, [msg])
 
   const loadMatch = useCallback(() => {
     if (!id) return
@@ -73,8 +80,8 @@ export default function MatchDetail() {
   async function handleSave() {
     if (!match || !id) return
     const h = parseInt(home), a = parseInt(away)
-    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) {
-      setMsg({ type: 'error', text: 'Informe um placar válido.' })
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0 || h > 20 || a > 20) {
+      setMsg({ type: 'error', text: 'Informe um placar válido (0–20).' })
       return
     }
     const isKnockout = match.phase !== 'group_stage'
@@ -153,7 +160,7 @@ export default function MatchDetail() {
   return (
     <div className="app-layout">
       <div className="page fade-up">
-        <Link to="/matches" className={s.back}><ArrowLeft size={16} /> Jogos</Link>
+        <button className={s.back} onClick={() => navigate(-1)}><ArrowLeft size={16} /> Voltar</button>
 
         {/* ══ HERO ══════════════════════════════════════════════ */}
         <div className={`${s.hero}

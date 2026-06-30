@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Lock, Zap, Clock, Target, CheckCircle2, XCircle, Search, X, Minus, Trophy } from 'lucide-react'
 import { type Match, type Prediction } from '@/services/cravouService'
-import { formatMatchDate, formatTimeUntilClose, isWithinMinutes, phaseLabel, getPredCategory, getPredBreakdown, type PredCategory } from '@/utils/format'
+import { formatMatchDate, formatTimeUntilClose, phaseLabel, getPredCategory, getPredBreakdown, type PredCategory } from '@/utils/format'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import { useAppData } from '@/context/AppDataContext'
@@ -23,46 +23,74 @@ const CAT_CHIPS = [
   { label: 'Palpitei',  value: 'palpitei' },
 ]
 
-const STATUS_ORDER: Record<string, number> = {
-  live: 0, awaiting_result: 1, upcoming: 2, finished: 3,
+function matchSortOrder(m: Match): number {
+  if (m.status === 'live')             return 0
+  if (m.status === 'awaiting_result')  return 1
+  if (m.status === 'locked' || m.predictionsLocked) return 2
+  if (m.status === 'upcoming')         return 3
+  return 4 // finished
 }
 
 export default function Matches() {
   const { matches, predictions: predList, loading, refresh } = useAppData()
 
-  const predictions = new Map(predList.map((p) => [p.matchId, p]))
-
   const [statusFilter, setStatusFilter] = useState('')
   const [catFilter, setCatFilter]       = useState('')
   const [searchOpen, setSearchOpen]     = useState(false)
   const [searchQuery, setSearchQuery]   = useState('')
+  const [nowMs, setNowMs]               = useState(Date.now)
   const searchRef                       = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const iv = setInterval(() => setNowMs(Date.now()), 15_000)
+    return () => clearInterval(iv)
+  }, [])
 
   const q = searchQuery.trim().toLowerCase()
 
-  const sorted = [...matches]
-    .filter((m) => {
-      if (q) return m.homeTeam.toLowerCase().includes(q) || m.awayTeam.toLowerCase().includes(q)
-      if (statusFilter === 'upcoming')        return m.status === 'upcoming'
-      if (statusFilter === 'awaiting_result') return m.status === 'awaiting_result'
-      if (statusFilter === 'finished')        return m.status === 'finished'
-      return true
-    })
-    .filter((m) => {
-      if (q) return true
-      if (catFilter === 'group_stage') return m.phase === 'group_stage'
-      if (catFilter === 'knockout')    return m.phase !== 'group_stage'
-      if (catFilter === 'live')        return m.status === 'live'
-      if (catFilter === 'palpitei')    return predictions.has(m.id)
-      return true
-    })
-    .sort((a, b) => {
-      const isAllFilter = !q && statusFilter === ''
-      if (isAllFilter) return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
-      const so = (STATUS_ORDER[a.status] ?? 2) - (STATUS_ORDER[b.status] ?? 2)
-      if (so !== 0) return so
-      return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
-    })
+  const predictions = useMemo(
+    () => new Map(predList.map((p) => [p.matchId, p])),
+    [predList]
+  )
+
+  const { liveCount, calcCount, predCount } = useMemo(() => {
+    let liveCount = 0, calcCount = 0, predCount = 0
+    for (const m of matches) {
+      if (m.status === 'live') liveCount++
+      else if (m.status === 'awaiting_result') calcCount++
+      if (predictions.has(m.id)) predCount++
+    }
+    return { liveCount, calcCount, predCount }
+  }, [matches, predictions])
+
+  const sorted = useMemo(() =>
+    [...matches]
+      .filter((m) => {
+        if (q) return m.homeTeam.toLowerCase().includes(q) || m.awayTeam.toLowerCase().includes(q)
+        if (statusFilter === 'upcoming')        return m.status === 'upcoming'
+        if (statusFilter === 'awaiting_result') return m.status === 'awaiting_result'
+        if (statusFilter === 'finished')        return m.status === 'finished'
+        return true
+      })
+      .filter((m) => {
+        if (q) return true
+        if (catFilter === 'group_stage') return m.phase === 'group_stage'
+        if (catFilter === 'knockout')    return m.phase !== 'group_stage'
+        if (catFilter === 'live')        return m.status === 'live'
+        if (catFilter === 'palpitei')    return predictions.has(m.id)
+        return true
+      })
+      .sort((a, b) => {
+        const sa = matchSortOrder(a)
+        const sb = matchSortOrder(b)
+        if (sa !== sb) return sa - sb
+        // Encerrados: mais recentes primeiro; demais: mais cedo primeiro
+        if (a.status === 'finished' && b.status === 'finished')
+          return new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime()
+        return new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime()
+      }),
+    [matches, predictions, q, statusFilter, catFilter]
+  )
 
   function openSearch() {
     setSearchOpen(true)
@@ -73,10 +101,6 @@ export default function Matches() {
     setSearchQuery('')
     setSearchOpen(false)
   }
-
-  const liveCount = matches.filter((m) => m.status === 'live').length
-  const calcCount = matches.filter((m) => m.status === 'awaiting_result').length
-  const predCount = matches.filter((m) => predictions.has(m.id)).length
 
   function toggleStatus(val: string) {
     setStatusFilter(prev => prev === val ? '' : val)
@@ -197,7 +221,7 @@ export default function Matches() {
               </div>
             )}
             {sorted.map((m) => (
-              <MatchCard key={m.id} match={m} prediction={predictions.get(m.id)} />
+              <MatchCard key={m.id} match={m} prediction={predictions.get(m.id)} nowMs={nowMs} />
             ))}
           </div>
         </div>
@@ -208,7 +232,7 @@ export default function Matches() {
 
 // ── MatchCard ──────────────────────────────────────────────────────────────────
 
-function MatchCard({ match: m, prediction: pred }: { match: Match; prediction?: Prediction }) {
+function MatchCard({ match: m, prediction: pred, nowMs }: { match: Match; prediction?: Prediction; nowMs: number }) {
   const hasScore   = m.homeScore !== null && m.awayScore !== null
   const isOpen     = m.status === 'upcoming' && !m.predictionsLocked
   const isWaiting  = m.status === 'upcoming' && m.predictionsLocked
@@ -216,8 +240,10 @@ function MatchCard({ match: m, prediction: pred }: { match: Match; prediction?: 
   const isCalc     = m.status === 'awaiting_result'
   const isFinished = m.status === 'finished'
 
-  const closingSoon     = isOpen && isWithinMinutes(m.matchDate, 60)
-  const closingVerySoon = isOpen && isWithinMinutes(m.matchDate, 10)
+  const closeAt         = new Date(m.matchDate).getTime() - 10 * 60_000
+  const msToClose       = closeAt - nowMs
+  const closingVerySoon = isOpen && msToClose >= 0 && msToClose <= 10 * 60_000
+  const closingSoon     = isOpen && msToClose > 10 * 60_000 && msToClose <= 60 * 60_000
 
   const cat: PredCategory = isFinished
     ? getPredCategory(pred?.points, !!pred, m.phase)
