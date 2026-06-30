@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Users, Trophy, ChevronRight, Check, X, Hash, UserPlus } from 'lucide-react'
+import { Plus, Users, Trophy, ChevronRight, Check, X, Hash, UserPlus, Crown } from 'lucide-react'
 import {
   getMyBolaoGroups,
   createBolaoGroup,
@@ -11,6 +11,7 @@ import {
   type PendingInvite,
 } from '@/services/bolaoService'
 import { getCache, clearCache } from '@/utils/cache'
+import { useAppData } from '@/context/AppDataContext'
 import { usePendingInviteCount } from '@/hooks/usePendingInviteCount'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import s from './Bolao.module.css'
@@ -19,6 +20,7 @@ type Tab = 'grupos' | 'convites'
 
 export default function Bolao() {
   const navigate = useNavigate()
+  const { user } = useAppData()
   const [tab, setTab] = useState<Tab>('grupos')
   const [groups, setGroups] = useState<BolaoGroup[]>(
     () => getCache<BolaoGroup[]>('myBolaoGroups', 60_000) ?? []
@@ -58,6 +60,11 @@ export default function Bolao() {
     await Promise.all([loadGroups(), loadInvites()])
   }, [loadGroups, loadInvites])
 
+  function switchTab(next: Tab) {
+    setTab(next)
+    setJoinError('')
+  }
+
   async function handleRespond(inviteId: string, status: 'accepted' | 'declined') {
     try {
       const res = await respondToInvite(inviteId, status)
@@ -90,6 +97,29 @@ export default function Bolao() {
     }
   }
 
+  const joinSection = (
+    <div className={s.joinSection}>
+      <div className={s.joinLabel}>Entrar com código</div>
+      <div className={s.joinRow}>
+        <div className={s.joinInputWrap}>
+          <Hash size={14} className={s.joinIcon} />
+          <input
+            className={s.joinInput}
+            placeholder="Cole o código aqui"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
+            maxLength={100}
+            onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+          />
+        </div>
+        <button className={s.joinBtn} onClick={handleJoin} disabled={joinLoading || !joinCode.trim()}>
+          {joinLoading ? '...' : 'Entrar'}
+        </button>
+      </div>
+      {joinError && <div className={s.joinError}>{joinError}</div>}
+    </div>
+  )
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="app-layout">
@@ -107,14 +137,14 @@ export default function Bolao() {
           <div className={s.tabs}>
             <button
               className={`${s.tab} ${tab === 'grupos' ? s.tabActive : ''}`}
-              onClick={() => setTab('grupos')}
+              onClick={() => switchTab('grupos')}
             >
               <Users size={14} />
               Grupos
             </button>
             <button
               className={`${s.tab} ${tab === 'convites' ? s.tabActive : ''}`}
-              onClick={() => setTab('convites')}
+              onClick={() => switchTab('convites')}
             >
               <UserPlus size={14} />
               Convites
@@ -126,7 +156,11 @@ export default function Bolao() {
           {tab === 'grupos' && (
             <div className={s.groupList}>
               {loading ? (
-                <div className={s.empty}>Carregando...</div>
+                <div className={s.skeletonList}>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="skeleton" style={{ height: 72, borderRadius: 12 }} />
+                  ))}
+                </div>
               ) : groups.length === 0 ? (
                 <div className={s.emptyState}>
                   <Trophy size={40} className={s.emptyIcon} />
@@ -138,8 +172,10 @@ export default function Bolao() {
                   <button key={g.id} className={s.groupCard} onClick={() => navigate(`/bolao/${g.id}`)}>
                     <div className={s.groupCardLeft}>
                       <div className={s.groupNameRow}>
+                        {user?.id === g.ownerId && <Crown size={12} className={s.ownerCrown} />}
                         <div className={s.groupName}>{g.name}</div>
-                        {g.brazilOnly && <span className={s.brazilBadge}>🇧🇷 Brasil Edition</span>}
+                        {g.brazilOnly && <span className={s.brazilBadge}>🇧🇷 Brasil</span>}
+                        {g.zeroPoints && <span className={s.zeroBadge}>0 pts</span>}
                       </div>
                       {g.description && <div className={s.groupDesc}>{g.description}</div>}
                       <div className={s.groupMeta}>
@@ -155,27 +191,7 @@ export default function Bolao() {
                 ))
               )}
 
-              {/* Entrar com código na aba grupos também */}
-              <div className={s.joinSection}>
-                <div className={s.joinLabel}>Entrar com código</div>
-                <div className={s.joinRow}>
-                  <div className={s.joinInputWrap}>
-                    <Hash size={14} className={s.joinIcon} />
-                    <input
-                      className={s.joinInput}
-                      placeholder="Cole o código aqui"
-                      value={joinCode}
-                      onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
-                      maxLength={250}
-                      onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-                    />
-                  </div>
-                  <button className={s.joinBtn} onClick={handleJoin} disabled={joinLoading || !joinCode.trim()}>
-                    {joinLoading ? '...' : 'Entrar'}
-                  </button>
-                </div>
-                {joinError && <div className={s.joinError}>{joinError}</div>}
-              </div>
+              {joinSection}
             </div>
           )}
 
@@ -218,27 +234,7 @@ export default function Bolao() {
 
               <div className={s.divider} />
 
-              {/* Entrar com código */}
-              <div className={s.joinSection}>
-                <div className={s.joinLabel}>Entrar com código</div>
-                <div className={s.joinRow}>
-                  <div className={s.joinInputWrap}>
-                    <Hash size={14} className={s.joinIcon} />
-                    <input
-                      className={s.joinInput}
-                      placeholder="Cole o código aqui"
-                      value={joinCode}
-                      onChange={(e) => setJoinCode(e.target.value.toLowerCase())}
-                      maxLength={250}
-                      onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-                    />
-                  </div>
-                  <button className={s.joinBtn} onClick={handleJoin} disabled={joinLoading || !joinCode.trim()}>
-                    {joinLoading ? '...' : 'Entrar'}
-                  </button>
-                </div>
-                {joinError && <div className={s.joinError}>{joinError}</div>}
-              </div>
+              {joinSection}
             </div>
           )}
         </div>
@@ -275,6 +271,12 @@ function CreateGroupModal({
   const [zeroPoints, setZeroPoints] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handle)
+    return () => document.removeEventListener('keydown', handle)
+  }, [onClose])
 
   async function handleSubmit() {
     if (name.trim().length < 3) {

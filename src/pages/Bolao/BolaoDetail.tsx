@@ -13,10 +13,19 @@ import {
   type GroupRankingEntry,
   type UserSearchResult,
 } from '@/services/bolaoService'
+import { clearCache } from '@/utils/cache'
+import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
+import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import r from '@/pages/Ranking/Ranking.module.css'
 import s from './BolaoDetail.module.css'
 
 type Tab = 'ranking' | 'membros' | 'stats'
+
+const TAB_LABELS: Record<Tab, string> = {
+  ranking: 'Ranking',
+  membros: 'Membros',
+  stats: 'Estatísticas',
+}
 
 function getMyId(): string | null {
   const token = localStorage.getItem('access_token')
@@ -72,6 +81,15 @@ export default function BolaoDetail() {
   const activeRanking = isCravas ? rankingCravas : ranking
   const top3 = activeRanking.slice(0, 3)
   const listRest = activeRanking.slice(3)
+
+  async function handleRefresh() {
+    if (!id) return
+    clearCache(`bolaoDetail-${id}`)
+    try {
+      const data = await getBolaoGroupDetail(id)
+      setDetail(data)
+    } catch { /* silent */ }
+  }
 
   async function handleCopyCode() {
     if (!group) return
@@ -145,230 +163,245 @@ export default function BolaoDetail() {
   if (!group) return null
 
   return (
-    <div className="app-layout">
-      <div className="page fade-up">
-        {/* Header */}
-        <div className={s.header}>
-          <button className={s.backBtn} onClick={() => navigate('/bolao')}>
-            <ArrowLeft size={20} />
-          </button>
-          <div className={s.headerInfo}>
-            <h1 className={s.groupName}>{group.name}</h1>
-            {group.description && <p className={s.groupDesc}>{group.description}</p>}
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="app-layout">
+        <div className="page fade-up">
+          {/* Header */}
+          <div className={s.header}>
+            <button className={s.backBtn} onClick={() => navigate('/bolao')}>
+              <ArrowLeft size={20} />
+            </button>
+            <div className={s.headerInfo}>
+              <h1 className={s.groupName}>{group.name}</h1>
+              {group.description && <p className={s.groupDesc}>{group.description}</p>}
+            </div>
+            {isOwner && (
+              <div className={s.headerActions}>
+                <button className={s.iconBtn} onClick={() => setShowEditModal(true)} title="Editar grupo">
+                  <Pencil size={17} />
+                </button>
+                <button className={s.inviteBtn} onClick={() => setShowInvitePanel(true)} title="Convidar membros">
+                  <UserPlus size={18} />
+                </button>
+              </div>
+            )}
           </div>
-          {isOwner && (
-            <div className={s.headerActions}>
-              <button className={s.iconBtn} onClick={() => setShowEditModal(true)} title="Editar grupo">
-                <Pencil size={17} />
-              </button>
-              <button className={s.inviteBtn} onClick={() => setShowInvitePanel(true)} title="Convidar membros">
-                <UserPlus size={18} />
-              </button>
+
+          {/* Invite Code */}
+          <button className={s.codeBar} onClick={handleCopyCode}>
+            <span className={s.codeLabel}>Código do grupo</span>
+            <span className={s.codeValue}>{group.inviteCode}</span>
+            <span className={s.codeCopy}>
+              {codeCopied ? <Check size={14} /> : <Copy size={14} />}
+              {codeCopied ? 'Copiado!' : 'Copiar'}
+            </span>
+          </button>
+
+          {/* Brasil Edition banner */}
+          {group.brazilOnly && (
+            <div className={s.brazilBanner}>
+              <span className={s.brazilBannerFlag}>🇧🇷</span>
+              <div className={s.brazilBannerText}>
+                <span className={s.brazilBannerTitle}>Brasil Edition</span>
+                <span className={s.brazilBannerSub}>Apenas os jogos do Brasil contam neste bolão</span>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Invite Code (todos os membros) */}
-        <button className={s.codeBar} onClick={handleCopyCode}>
-          <span className={s.codeLabel}>Código do grupo</span>
-          <span className={s.codeValue}>{group.inviteCode}</span>
-          <span className={s.codeCopy}>
-            {codeCopied ? <Check size={14} /> : <Copy size={14} />}
-            {codeCopied ? 'Copiado!' : 'Copiar'}
-          </span>
-        </button>
-
-        {/* Brasil Edition banner */}
-        {group.brazilOnly && (
-          <div className={s.brazilBanner}>
-            <span className={s.brazilBannerFlag}>🇧🇷</span>
-            <div className={s.brazilBannerText}>
-              <span className={s.brazilBannerTitle}>Brasil Edition</span>
-              <span className={s.brazilBannerSub}>Apenas os jogos do Brasil contam neste bolão</span>
+          {/* Pontuação zerada banner */}
+          {group.zeroPoints && (
+            <div className={s.zeroBanner}>
+              <span className={s.zeroBannerIcon}>0</span>
+              <div className={s.zeroBannerText}>
+                <span className={s.zeroBannerTitle}>Pontuação Zerada</span>
+                <span className={s.zeroBannerSub}>
+                  Só contam pontos de jogos após a criação deste grupo — histórico anterior não conta
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Pontuação zerada banner */}
-        {group.zeroPoints && (
-          <div className={s.zeroBanner}>
-            <span className={s.zeroBannerIcon}>0</span>
-            <div className={s.zeroBannerText}>
-              <span className={s.zeroBannerTitle}>Pontuação Zerada</span>
-              <span className={s.zeroBannerSub}>
-                Só contam pontos de jogos após a criação deste grupo — histórico anterior não conta
-              </span>
-            </div>
-          </div>
-        )}
+          {/* Ver palpites do grupo */}
+          <button
+            className={s.palpitesBtn}
+            onClick={() => navigate(`/bolao/${id}/palpites`, { state: { groupName: group.name } })}
+          >
+            <Eye size={16} />
+            <span>Ver palpites do grupo</span>
+            <ChevronRight size={15} style={{ marginLeft: 'auto', opacity: 0.5 }} />
+          </button>
 
-        {/* Ver palpites do grupo */}
-        <button
-          className={s.palpitesBtn}
-          onClick={() => navigate(`/bolao/${id}/palpites`, { state: { groupName: group.name } })}
-        >
-          <Eye size={16} />
-          <span>Ver palpites do grupo</span>
-          <ChevronRight size={15} style={{ marginLeft: 'auto', opacity: 0.5 }} />
-        </button>
-
-        {/* Tabs */}
-        <div className={s.tabs}>
-          {(['ranking', 'membros', 'stats'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              className={`${s.tab} ${tab === t ? s.tabActive : ''}`}
-              onClick={() => setTab(t)}
-            >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Ranking Tab ── */}
-        {tab === 'ranking' && (
-          <>
-            {/* Sub-tabs pontos / cravadas */}
-            <div className={r.tabs}>
+          {/* Tabs */}
+          <div className={s.tabs}>
+            {(['ranking', 'membros', 'stats'] as Tab[]).map((t) => (
               <button
-                className={`${r.tab} ${!isCravas ? r.tabActive : ''}`}
-                onClick={() => setRankTab('pontos')}
+                key={t}
+                className={`${s.tab} ${tab === t ? s.tabActive : ''}`}
+                onClick={() => setTab(t)}
               >
-                <Trophy size={14} /> Pontos
+                {t === 'membros'
+                  ? `Membros${ranking.length > 0 ? ` (${ranking.length})` : ''}`
+                  : TAB_LABELS[t]
+                }
               </button>
-              <button
-                className={`${r.tab} ${isCravas ? r.tabActiveCravas : ''}`}
-                onClick={() => setRankTab('cravadas')}
-              >
-                <Target size={14} /> Cravadas
-              </button>
-            </div>
-
-            {ranking.length === 0 && (
-              <div className={r.empty}>
-                <div className={r.emptyIcon}><Trophy size={40} /></div>
-                <div className={r.emptyTitle}>Nenhum palpite pontuado ainda</div>
-                <div className={r.emptySub}>O ranking aparecerá quando as partidas forem encerradas</div>
-              </div>
-            )}
-
-            {activeRanking.length >= 3 && (
-              <div className={r.podium}>
-                {[1, 0, 2].map((idx) => {
-                  const e = top3[idx]
-                  if (!e) return null
-                  const cls = idx === 0 ? r.first : idx === 1 ? r.second : r.third
-                  return (
-                    <div key={e.userId} className={`${r.podiumItem} ${cls}`}>
-                      {idx === 0 && (
-                        <div className={r.podiumCrown}>
-                          {isCravas
-                            ? <Target size={18} color="var(--c-accent)" />
-                            : <Crown size={18} color="var(--c-gold)" />
-                          }
-                        </div>
-                      )}
-                      <div className={`${r.podiumAvatar} ${idx === 0 && isCravas ? r.firstCravas : ''}`}>
-                        {e.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className={r.podiumName}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
-                      <div className={`${r.podiumPts} ${idx === 0 && isCravas ? r.podiumPtsCravas : ''}`}>
-                        {isCravas ? e.cravadas : e.points}
-                      </div>
-                      <div className={r.podiumPtsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
-                      <div className={`${r.podiumBar} ${idx === 0 && isCravas ? r.podiumBarCravas : ''}`} />
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {activeRanking.length > 0 && (
-              <div className={r.list}>
-                {(activeRanking.length < 3 ? activeRanking : listRest).map((e) => (
-                  <div key={e.userId} className={`${r.item} ${e.userId === myId ? (isCravas ? r.meCravas : r.me) : ''}`}>
-                    <div className={r.pos}>#{e.position}</div>
-                    <div className={r.avatar}>{e.name.slice(0, 2).toUpperCase()}</div>
-                    <div className={r.name}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
-                    <div className={r.ptsBlock}>
-                      <div className={`${r.pts} ${isCravas ? r.ptsCravas : ''}`}>
-                        {isCravas ? e.cravadas : e.points}
-                      </div>
-                      <div className={r.ptsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* ── Membros Tab ── */}
-        {tab === 'membros' && (
-          <div className={s.memberList}>
-            {ranking.map((entry) => (
-              <div key={entry.userId} className={`${s.memberRow} ${entry.userId === myId ? s.memberMe : ''}`}>
-                <div className={s.memberAvatar}>{entry.name.charAt(0).toUpperCase()}</div>
-                <div className={s.memberInfo}>
-                  <div className={s.memberName}>
-                    {entry.name}
-                    {entry.userId === group.ownerId && <span className={s.ownerBadge}>Dono</span>}
-                    {entry.userId === myId && <span className={s.meBadge}>Você</span>}
-                  </div>
-                  <div className={s.memberStats}>
-                    {entry.points} pts · {entry.cravadas} cravada{entry.cravadas !== 1 ? 's' : ''}
-                  </div>
-                </div>
-                {isOwner && entry.userId !== myId && (
-                  <button
-                    className={s.removeBtn}
-                    onClick={() => handleRemoveMember(entry.userId, entry.name)}
-                    title="Remover membro"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                )}
-              </div>
             ))}
-
-            {!isOwner && (
-              <button className={s.leaveBtn} onClick={handleLeave} disabled={leaveLoading}>
-                <LogOut size={15} />
-                {leaveLoading ? 'Saindo...' : 'Sair do grupo'}
-              </button>
-            )}
-            {isOwner && (
-              <button className={s.deleteBtn} onClick={handleDelete} disabled={deleteLoading}>
-                <Trash2 size={15} />
-                {deleteLoading ? 'Excluindo...' : 'Excluir grupo'}
-              </button>
-            )}
           </div>
+
+          {/* ── Ranking Tab ── */}
+          {tab === 'ranking' && (
+            <>
+              {/* Sub-tabs pontos / cravadas */}
+              <div className={r.tabs}>
+                <button
+                  className={`${r.tab} ${!isCravas ? r.tabActive : ''}`}
+                  onClick={() => setRankTab('pontos')}
+                >
+                  <Trophy size={14} /> Pontos
+                </button>
+                <button
+                  className={`${r.tab} ${isCravas ? r.tabActiveCravas : ''}`}
+                  onClick={() => setRankTab('cravadas')}
+                >
+                  <Target size={14} /> Cravadas
+                </button>
+              </div>
+
+              {ranking.length === 0 && (
+                <div className={r.empty}>
+                  <div className={r.emptyIcon}><Trophy size={40} /></div>
+                  <div className={r.emptyTitle}>Nenhum palpite pontuado ainda</div>
+                  <div className={r.emptySub}>O ranking aparecerá quando as partidas forem encerradas</div>
+                </div>
+              )}
+
+              {activeRanking.length >= 3 && (
+                <div className={r.podium}>
+                  {[1, 0, 2].map((idx) => {
+                    const e = top3[idx]
+                    if (!e) return null
+                    const cls = idx === 0 ? r.first : idx === 1 ? r.second : r.third
+                    return (
+                      <div key={e.userId} className={`${r.podiumItem} ${cls}`}>
+                        {idx === 0 && (
+                          <div className={r.podiumCrown}>
+                            {isCravas
+                              ? <Target size={18} color="var(--c-accent)" />
+                              : <Crown size={18} color="var(--c-gold)" />
+                            }
+                          </div>
+                        )}
+                        <div className={`${r.podiumAvatar} ${idx === 0 && isCravas ? r.firstCravas : ''}`}>
+                          {avatarInitial(e.name)}
+                        </div>
+                        <div className={r.podiumName}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
+                        <div className={`${r.podiumPts} ${idx === 0 && isCravas ? r.podiumPtsCravas : ''}`}>
+                          {isCravas ? e.cravadas : e.points}
+                        </div>
+                        <div className={r.podiumPtsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
+                        <div className={`${r.podiumBar} ${idx === 0 && isCravas ? r.podiumBarCravas : ''}`} />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {activeRanking.length > 0 && (
+                <div className={r.list}>
+                  {(activeRanking.length < 3 ? activeRanking : listRest).map((e) => (
+                    <div key={e.userId} className={`${r.item} ${e.userId === myId ? (isCravas ? r.meCravas : r.me) : ''}`}>
+                      <div className={r.pos}>#{e.position}</div>
+                      <div
+                        className={r.avatar}
+                        style={{ background: avatarColor(e.userId), color: '#000' }}
+                      >
+                        {avatarInitial(e.name)}
+                      </div>
+                      <div className={r.name}>{e.name}{e.userId === myId ? ' (você)' : ''}</div>
+                      <div className={r.ptsBlock}>
+                        <div className={`${r.pts} ${isCravas ? r.ptsCravas : ''}`}>
+                          {isCravas ? e.cravadas : e.points}
+                        </div>
+                        <div className={r.ptsLabel}>{isCravas ? 'cravadas' : 'pts'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Membros Tab ── */}
+          {tab === 'membros' && (
+            <div className={s.memberList}>
+              {ranking.map((entry) => (
+                <div key={entry.userId} className={`${s.memberRow} ${entry.userId === myId ? s.memberMe : ''}`}>
+                  <div
+                    className={s.memberAvatar}
+                    style={{ background: avatarColor(entry.userId), color: '#000' }}
+                  >
+                    {avatarInitial(entry.name)}
+                  </div>
+                  <div className={s.memberInfo}>
+                    <div className={s.memberName}>
+                      {entry.name}
+                      {entry.userId === group.ownerId && <span className={s.ownerBadge}>Dono</span>}
+                      {entry.userId === myId && <span className={s.meBadge}>Você</span>}
+                    </div>
+                    <div className={s.memberStats}>
+                      {entry.points} pts · {entry.cravadas} cravada{entry.cravadas !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  {isOwner && entry.userId !== myId && (
+                    <button
+                      className={s.removeBtn}
+                      onClick={() => handleRemoveMember(entry.userId, entry.name)}
+                      title="Remover membro"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {!isOwner && (
+                <button className={s.leaveBtn} onClick={handleLeave} disabled={leaveLoading}>
+                  <LogOut size={15} />
+                  {leaveLoading ? 'Saindo...' : 'Sair do grupo'}
+                </button>
+              )}
+              {isOwner && (
+                <button className={s.deleteBtn} onClick={handleDelete} disabled={deleteLoading}>
+                  <Trash2 size={15} />
+                  {deleteLoading ? 'Excluindo...' : 'Excluir grupo'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Stats Tab ── */}
+          {tab === 'stats' && <StatsTab ranking={ranking} memberCount={group.memberCount} />}
+        </div>
+
+        {/* ── Invite Panel ── */}
+        {showInvitePanel && id && (
+          <InvitePanel groupId={id} onClose={() => setShowInvitePanel(false)} />
         )}
 
-        {/* ── Stats Tab ── */}
-        {tab === 'stats' && <StatsTab ranking={ranking} memberCount={group.memberCount} />}
+        {/* ── Edit Modal ── */}
+        {showEditModal && id && group && (
+          <EditGroupModal
+            groupId={id}
+            initialName={group.name}
+            initialDescription={group.description ?? ''}
+            onClose={() => setShowEditModal(false)}
+            onSaved={(name, description) => {
+              setDetail((prev) => prev ? { ...prev, group: { ...prev.group, name, description: description || null } } : prev)
+              setShowEditModal(false)
+            }}
+          />
+        )}
       </div>
-
-      {/* ── Invite Panel ── */}
-      {showInvitePanel && id && (
-        <InvitePanel groupId={id} onClose={() => setShowInvitePanel(false)} />
-      )}
-
-      {/* ── Edit Modal ── */}
-      {showEditModal && id && group && (
-        <EditGroupModal
-          groupId={id}
-          initialName={group.name}
-          initialDescription={group.description ?? ''}
-          onClose={() => setShowEditModal(false)}
-          onSaved={(name, description) => {
-            setDetail((prev) => prev ? { ...prev, group: { ...prev.group, name, description: description || null } } : prev)
-            setShowEditModal(false)
-          }}
-        />
-      )}
-    </div>
+    </PullToRefresh>
   )
 }
 
@@ -377,12 +410,18 @@ export default function BolaoDetail() {
 function StatsTab({ ranking, memberCount }: { ranking: GroupRankingEntry[]; memberCount: number }) {
   const totalPoints = useMemo(() => ranking.reduce((sum, r) => sum + r.points, 0), [ranking])
   const avgPoints = memberCount > 0 ? Math.round(totalPoints / memberCount) : 0
-  const topCravadas = useMemo(() =>
-    [...ranking].sort((a, b) => b.cravadas - a.cravadas)[0],
+
+  const sortedByPoints = useMemo(
+    () => [...ranking].sort((a, b) => b.points - a.points || b.cravadas - a.cravadas),
     [ranking]
   )
-  const leader = ranking[0]
-  const lastPlace = ranking[ranking.length - 1]
+  const topCravadas = useMemo(
+    () => [...ranking].sort((a, b) => b.cravadas - a.cravadas)[0],
+    [ranking]
+  )
+
+  const leader    = sortedByPoints[0]
+  const lastPlace = sortedByPoints[sortedByPoints.length - 1]
 
   return (
     <div className={s.statsList}>
@@ -476,6 +515,12 @@ function EditGroupModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handle)
+    return () => document.removeEventListener('keydown', handle)
+  }, [onClose])
+
   async function handleSave() {
     if (name.trim().length < 3) { setError('O nome precisa ter ao menos 3 caracteres'); return }
     setLoading(true)
@@ -533,10 +578,15 @@ function InvitePanel({ groupId, onClose }: { groupId: string; onClose: () => voi
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<UserSearchResult[]>([])
   const [searching, setSearching] = useState(false)
-  // Mapa local de overrides de status (após convite enviado na sessão)
   const [statusOverride, setStatusOverride] = useState<Map<string, UserSearchResult['status']>>(new Map())
   const [sending, setSending] = useState<Set<string>>(new Set())
   const [inviteError, setInviteError] = useState('')
+
+  useEffect(() => {
+    const handle = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handle)
+    return () => document.removeEventListener('keydown', handle)
+  }, [onClose])
 
   useEffect(() => {
     if (query.trim().length < 2) return
@@ -554,7 +604,6 @@ function InvitePanel({ groupId, onClose }: { groupId: string; onClose: () => voi
     return () => clearTimeout(timer)
   }, [query, groupId])
 
-  // Limpa resultados quando query fica curta (sem setState no effect)
   const displayResults = query.trim().length >= 2 ? results : []
 
   async function handleInvite(user: UserSearchResult) {

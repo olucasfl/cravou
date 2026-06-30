@@ -536,12 +536,24 @@
 .toggleSwitchOn { background: var(--c-accent); }
 .toggleSwitchOn::after { transform: translateX(18px); }
 
+/* ── Skeleton loading list ──────────────────────────────── */
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* ── Group Name Row (badge inline) ─────────────────────── */
 .groupNameRow {
   display: flex;
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
+}
+
+.ownerCrown {
+  color: var(--c-gold);
+  flex-shrink: 0;
 }
 
 .brazilBadge {
@@ -553,6 +565,20 @@
   background: rgba(0, 156, 59, 0.12);
   border: 1px solid rgba(0, 156, 59, 0.35);
   color: #4ade80;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.zeroBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--r-full);
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  color: var(--c-accent);
   font-size: 0.65rem;
   font-weight: 700;
   white-space: nowrap;
