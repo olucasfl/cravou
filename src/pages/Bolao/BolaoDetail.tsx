@@ -14,7 +14,7 @@ import {
   type UserSearchResult,
 } from '@/services/bolaoService'
 import { clearCache } from '@/utils/cache'
-import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
+import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import r from '@/pages/Ranking/Ranking.module.css'
 import s from './BolaoDetail.module.css'
@@ -292,7 +292,7 @@ export default function BolaoDetail() {
                           </div>
                         )}
                         <div className={r.podiumAvatarWrap}>
-                          <div className={`${r.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? r.podiumAvatarMe : ''}`}>
+                          <div className={`${r.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? r.podiumAvatarMe : ''} ${e.userId === LELE_ID ? 'lele-avatar' : ''}`}>
                             {avatarInitial(e.name)}
                           </div>
                           {e.userId === myId && <div className={r.podiumMeBadge}>Você</div>}
@@ -317,7 +317,7 @@ export default function BolaoDetail() {
                     <div key={e.userId} className={`${r.item} ${e.userId === myId ? (isCravas ? r.meCravas : r.me) : ''}`}>
                       <div className={r.pos}>#{e.position}</div>
                       <div
-                        className={r.avatar}
+                        className={`${r.avatar} ${e.userId === LELE_ID ? 'lele-avatar' : ''}`}
                         style={{ background: avatarColor(e.userId), color: '#000' }}
                       >
                         {avatarInitial(e.name)}
@@ -342,7 +342,7 @@ export default function BolaoDetail() {
               {ranking.map((entry) => (
                 <div key={entry.userId} className={`${s.memberRow} ${entry.userId === myId ? s.memberMe : ''}`}>
                   <div
-                    className={s.memberAvatar}
+                    className={`${s.memberAvatar} ${entry.userId === LELE_ID ? 'lele-avatar' : ''}`}
                     style={{ background: avatarColor(entry.userId), color: '#000' }}
                   >
                     {avatarInitial(entry.name)}

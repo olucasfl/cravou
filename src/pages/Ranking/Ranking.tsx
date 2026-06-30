@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Trophy, Crown, Target, List } from 'lucide-react'
 import { useAppData } from '@/context/AppDataContext'
-import { avatarInitial, avatarColor } from '@/utils/palpitesConfig'
+import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
 import GlobalPalpitesTab, { clearGlobalPalpitesCache } from './GlobalPalpitesTab'
 import s from './Ranking.module.css'
@@ -142,7 +142,7 @@ export default function Ranking() {
                       </div>
                     )}
                     <div className={s.podiumAvatarWrap}>
-                      <div className={`${s.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? s.podiumAvatarMe : ''}`}>
+                      <div className={`${s.podiumAvatar} ${idx === 0 ? firstCls : ''} ${e.userId === myId ? s.podiumAvatarMe : ''} ${e.userId === LELE_ID ? 'lele-avatar' : ''}`}>
                         {avatarInitial(e.name)}
                       </div>
                       {e.userId === myId && <div className={s.podiumMeBadge}>Você</div>}
@@ -168,7 +168,7 @@ export default function Ranking() {
                 <div key={e.userId} className={`${s.item} ${e.userId === myId ? (isCravas ? s.meCravas : s.me) : ''}`}>
                   <div className={s.pos}>#{e.position}</div>
                   <div
-                    className={s.avatar}
+                    className={`${s.avatar} ${e.userId === LELE_ID ? 'lele-avatar' : ''}`}
                     style={{ background: avatarColor(e.userId), color: '#000' }}
                   >
                     {avatarInitial(e.name)}

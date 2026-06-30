@@ -69,7 +69,7 @@ export default function Profile() {
           <div className={s.header}>
             <div className={s.avatarWrap}>
               <div
-                className={s.avatar}
+                className={`${s.avatar} ${user?.id === LELE_ID ? 'lele-avatar' : ''}`}
                 style={{ background: avatarColor(user?.id ?? ''), color: '#000' }}
               >
                 {avatarInitial(user?.name ?? '')}

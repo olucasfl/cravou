@@ -2,7 +2,7 @@
 
 export const AVATAR_COLORS = [
   '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981',
-  '#f59e0b', '#ef4444', '#ec4899', '#6366f1',
+  '#f59e0b', '#ef4444', '#f97316', '#6366f1',
 ]
 
 export function avatarInitial(name: string) {
@@ -12,7 +12,7 @@ export function avatarInitial(name: string) {
 export const LELE_ID = '6e042b19-ee86-433a-8e68-a8e43c90862c'
 
 export function avatarColor(userId: string) {
-  if (userId === LELE_ID) return '#f472b6'
+  if (userId === LELE_ID) return '#ff0099'
   let h = 0
   for (let i = 0; i < userId.length; i++) h = userId.charCodeAt(i) + ((h << 5) - h)
   return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
