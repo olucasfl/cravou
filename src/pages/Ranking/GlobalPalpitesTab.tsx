@@ -141,6 +141,13 @@ function PalpitesView({
 let _cachedMatches: GlobalMatch[] | null = null
 const _palpitesCache: Record<string, GlobalMatchPalpites> = {}
 
+export function clearGlobalPalpitesCache(): void {
+  _cachedMatches = null
+  for (const key in _palpitesCache) {
+    delete (_palpitesCache as Record<string, unknown>)[key]
+  }
+}
+
 // ── main component ────────────────────────────────────────────────────────────
 
 export default function GlobalPalpitesTab() {

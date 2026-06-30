@@ -1,7 +1,23 @@
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
 .title {
   font-size: 1.4rem;
   font-weight: 800;
-  margin-bottom: 16px;
+}
+
+.participantCount {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--c-text-3);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 3px 10px;
 }
 
 /* ── Tabs ─────────────────────────────────────────────── */
@@ -321,4 +337,82 @@
   color: var(--c-accent) !important;
 }
 
+/* ── Minha posição (banner acima do pódio) ─────────── */
+.myPositionBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--c-gold-glow);
+  border: 1px solid var(--c-gold);
+  border-radius: var(--r-lg);
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.myPositionBannerCravas {
+  background: var(--c-accent-glow);
+  border-color: var(--c-accent);
+}
+
+.myPositionLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.myPositionRank {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--c-gold);
+}
+
+.myPositionBannerCravas .myPositionRank {
+  color: var(--c-accent);
+}
+
+.myPositionLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--c-text-2);
+}
+
+.myPositionRight {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.myPositionVal {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--c-gold);
+}
+
+.myPositionValCravas {
+  color: var(--c-accent);
+}
+
+.myPositionUnit {
+  font-size: 0.65rem;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+}
+
+/* ── Skeleton ──────────────────────────────────────── */
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.skeletonItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+}
 
