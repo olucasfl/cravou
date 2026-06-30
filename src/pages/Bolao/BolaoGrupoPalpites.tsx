@@ -5,8 +5,8 @@ import {
   getGroupFinishedMatches,
   getGroupMatchPalpites,
   type GroupFinishedMatch,
-  type MemberPalpite,
-  type GroupMatchPalpites,
+  type PalpitableGroupPalpite,
+  type PalpitableGroupMatchPalpites,
 } from '@/services/bolaoService'
 import { CountryBadge } from '@/components/CountryBadge'
 import { PlayerModal } from '@/components/PlayerModal/PlayerModal'
@@ -30,12 +30,12 @@ function matchesSearch(m: GroupFinishedMatch, q: string) {
 function MemberCard({
   p, phase, isFinished, onCardClick,
 }: {
-  p: MemberPalpite
+  p: PalpitableGroupPalpite
   phase: string
   isFinished: boolean
   onCardClick: () => void
 }) {
-  const css = ALL_CAT_CSS[p.category] ?? 'sempal'
+  const css = ALL_CAT_CSS[p.category ?? 'sem_palpite'] ?? 'sempal'
   const bd = (isFinished && p.points !== null) ? getPredBreakdown(p.points, phase) : null
   const hasBonus = bd && bd.bonus > 0
   const hasPalpite = p.homeScore !== null && p.awayScore !== null
@@ -72,8 +72,8 @@ function PalpitesView({
   data,
   onCardClick,
 }: {
-  data: GroupMatchPalpites
-  onCardClick: (p: MemberPalpite) => void
+  data: PalpitableGroupMatchPalpites
+  onCardClick: (p: PalpitableGroupPalpite) => void
 }) {
   const { isFinished, match, palpites } = data
   const catOrder = isFinished ? FINISHED_CAT_ORDER : LOCKED_CAT_ORDER
@@ -145,16 +145,16 @@ export default function BolaoGrupoPalpites() {
 
   const [matches, setMatches]                 = useState<GroupFinishedMatch[]>([])
   const [selectedId, setSelectedId]           = useState<string | null>(null)
-  const [palpites, setPalpites]               = useState<GroupMatchPalpites | null>(null)
+  const [palpites, setPalpites]               = useState<PalpitableGroupMatchPalpites | null>(null)
   const [loadingMatches, setLoadingMatches]   = useState(true)
   const [loadingPalpites, setLoadingPalpites] = useState(false)
   const [groupName, setGroupName]             = useState('')
   const [search, setSearch]                   = useState('')
-  const [selectedPlayer, setSelectedPlayer]   = useState<MemberPalpite | null>(null)
+  const [selectedPlayer, setSelectedPlayer]   = useState<PalpitableGroupPalpite | null>(null)
   const [matchesError, setMatchesError]       = useState<string | null>(null)
   const [palpitesError, setPalpitesError]     = useState<string | null>(null)
   const [retryCount, setRetryCount]           = useState(0)
-  const cacheRef = useRef<Record<string, GroupMatchPalpites>>({})
+  const cacheRef = useRef<Record<string, PalpitableGroupMatchPalpites>>({})
 
   useEffect(() => {
     const state = (window.history.state?.usr ?? window.history.state) as { groupName?: string } | undefined
@@ -433,7 +433,7 @@ export default function BolaoGrupoPalpites() {
 
       {selectedPlayer && selectedMatch && (
         <PlayerModal
-          player={selectedPlayer}
+          player={{ ...selectedPlayer, category: selectedPlayer.category ?? 'sem_palpite' }}
           match={selectedMatch}
           onClose={() => setSelectedPlayer(null)}
         />

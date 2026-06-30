@@ -172,6 +172,7 @@ export interface PalpitableGroupMatch {
   phase: string
   penaltyWinner: string | null
   status: 'upcoming' | 'live' | 'finished' | 'locked' | 'awaiting_result'
+  predictionsLocked: boolean
 }
 
 export interface PalpitableGroupPalpite {
@@ -187,6 +188,7 @@ export interface PalpitableGroupPalpite {
 export interface PalpitableGroupMatchPalpites {
   match: PalpitableGroupMatch
   palpites: PalpitableGroupPalpite[]
+  isFinished: boolean
 }
 
 export async function getGroupFinishedMatches(groupId: string) {
