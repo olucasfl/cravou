@@ -72,7 +72,7 @@ export function finishedCatConfig(phase: string): Record<string, CatConfigEntry>
   return {
     cravou:          { label: 'Cravou!',           pts: gs ? '10 pts'    : '14–17 pts', css: 'cravou'    },
     resultado_bonus: { label: 'Resultado + Bônus',  pts: gs ? '7–8 pts'   : '10–11 pts', css: 'bonus'     },
-    resultado_certo: { label: 'Resultado Certo',    pts: gs ? '5–6 pts'   : '5–9 pts',   css: 'resultado' },
+    resultado_certo: { label: 'Resultado Certo',    pts: gs ? '5–6 pts'   : '7–8 pts',   css: 'resultado' },
     parcial:         { label: 'Gols de um time',    pts: gs ? '2 pts' : '3 pts',          css: 'parcial'   },
     errou:           { label: 'Errou tudo',          pts: '0 pts',                         css: 'errou'     },
     sem_palpite:     { label: 'Não palpitou',        pts: '—',                             css: 'sempal'    },
