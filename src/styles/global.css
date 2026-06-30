@@ -164,9 +164,11 @@ body {
 
 /* ── Lele theme (data-lele = logged in as her) ────────── */
 [data-lele] {
-  --c-accent: #ff0099;
-  --c-accent-glow: rgba(255, 0, 153, 0.12);
-  --shadow-accent: 0 0 20px rgba(255, 0, 153, 0.3);
+  --c-accent:          #ff0099;
+  --c-accent-dark:     #cc007a;
+  --c-accent-glow:     rgba(255, 0, 153, 0.12);
+  --shadow-accent:     0 0 20px rgba(255, 0, 153, 0.3);
+  --c-copa-gradient:   linear-gradient(135deg, #ff0099 0%, #ff66cc 50%, #cc007a 100%);
 }
 
 /* ── Lele avatar — borda LED rosa neon (visível para todos) */

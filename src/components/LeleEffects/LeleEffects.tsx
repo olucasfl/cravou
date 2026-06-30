@@ -3,7 +3,7 @@ import { useAppData } from '@/context/AppDataContext'
 import { LELE_ID } from '@/utils/palpitesConfig'
 import s from './LeleEffects.module.css'
 
-const CONFETTI_KEY = 'lele-confetti-date'
+const CONFETTI_KEY = 'lele-confetti-session'
 const COLORS = ['#ff0099', '#ff66cc', '#ff99dd', '#ffccee', '#ff33aa', '#ff007f']
 const N = 24
 
@@ -32,10 +32,9 @@ export default function LeleEffects() {
 
   useEffect(() => {
     if (!isLele) return
-    const today = new Date().toDateString()
-    if (localStorage.getItem(CONFETTI_KEY) !== today) {
+    if (!sessionStorage.getItem(CONFETTI_KEY)) {
       setShowConfetti(true)
-      localStorage.setItem(CONFETTI_KEY, today)
+      sessionStorage.setItem(CONFETTI_KEY, '1')
       const t = setTimeout(() => setShowConfetti(false), 5000)
       return () => clearTimeout(t)
     }
