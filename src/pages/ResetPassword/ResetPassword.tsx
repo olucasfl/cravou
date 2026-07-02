@@ -31,6 +31,10 @@ export default function ResetPassword() {
     e.preventDefault()
     setError('')
     if (password !== confirm) { setError('As senhas não coincidem.'); return }
+    if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+      setError('A senha deve ter pelo menos 1 letra e 1 número.')
+      return
+    }
     setLoading(true)
     try {
       await resetPassword(token, password)
@@ -72,11 +76,11 @@ export default function ResetPassword() {
             <input
               className="input"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mín. 8 caracteres, letra e número"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoFocus
               autoComplete="new-password"
             />
@@ -90,7 +94,7 @@ export default function ResetPassword() {
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
             />
             {confirm && confirm !== password && (

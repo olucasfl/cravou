@@ -116,6 +116,10 @@ export default function Register() {
     e.preventDefault()
     setError('')
     if (password !== confirm) { setError('As senhas não coincidem.'); return }
+    if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(password)) {
+      setError('A senha deve ter pelo menos 1 letra e 1 número.')
+      return
+    }
     setLoading(true)
     try {
       await register(name, email, password)
@@ -162,9 +166,9 @@ export default function Register() {
           </div>
           <div>
             <label className={s.label}>Senha</label>
-            <input className="input" type="password" placeholder="Mínimo 6 caracteres"
+            <input className="input" type="password" placeholder="Mín. 8 caracteres, letra e número"
               value={password} onChange={(e) => setPassword(e.target.value)}
-              required minLength={6} autoComplete="new-password" />
+              required minLength={8} autoComplete="new-password" />
           </div>
           <div>
             <label className={s.label}>Confirmar senha</label>
@@ -172,7 +176,7 @@ export default function Register() {
               className={`input ${confirm && confirm !== password ? s.inputError : ''}`}
               type="password" placeholder="Repita a senha"
               value={confirm} onChange={(e) => setConfirm(e.target.value)}
-              required minLength={6} autoComplete="new-password" />
+              required minLength={8} autoComplete="new-password" />
             {confirm && confirm !== password && (
               <div className={s.fieldError}>As senhas não coincidem</div>
             )}
