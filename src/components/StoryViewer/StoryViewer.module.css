@@ -1,0 +1,96 @@
+.viewer {
+  position: fixed;
+  inset: 0;
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  z-index: 9600;
+  overflow: hidden;
+}
+
+/* ── Progress bar segmentada ─────────────────────────────────────────── */
+
+.progressRow {
+  position: absolute;
+  top: calc(var(--safe-top) + 10px);
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.segment {
+  flex: 1;
+  height: 3px;
+  border-radius: var(--r-full);
+  background: rgba(240, 244, 250, 0.2);
+  overflow: hidden;
+}
+
+.segmentFill {
+  height: 100%;
+  background: var(--c-text);
+  border-radius: var(--r-full);
+}
+
+.segmentFillAnimating {
+  animation-name: story-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes story-fill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* ── Fechar ───────────────────────────────────────────────────────────── */
+
+.closeBtn {
+  position: absolute;
+  top: calc(var(--safe-top) + 22px);
+  right: 12px;
+  z-index: 4;
+  pointer-events: auto;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--c-text);
+}
+
+/* ── Conteúdo da cena ─────────────────────────────────────────────────── */
+
+.sceneWrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding-top: calc(var(--safe-top) + 44px);
+  padding-bottom: calc(var(--safe-bottom) + 16px);
+  display: flex;
+}
+
+/* ── Zonas de toque (avançar/voltar) ──────────────────────────────────── */
+
+.tapZones {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  touch-action: none;
+}
+
+.tapLeft { flex: 35; }
+.tapRight { flex: 65; }
+
+@media (prefers-reduced-motion: reduce) {
+  .segmentFillAnimating {
+    animation-duration: 0.01ms !important;
+  }
+}

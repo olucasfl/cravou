@@ -162,6 +162,54 @@ export async function getGlobalMatchPalpites(matchId: string) {
   return data as GlobalMatchPalpites
 }
 
+// ── Cravou Wrapped ────────────────────────────────────────────────────────────
+
+export interface WrappedStatus {
+  active: boolean
+  activatedAt: string | null
+}
+
+export async function getWrappedStatus() {
+  // Dado crítico para o gate de navegação: sem cache, sempre busca fresco.
+  const { data } = await api.get('/cravou/wrapped/status')
+  return data as WrappedStatus
+}
+
+export async function adminActivateWrappedPreview() {
+  const { data } = await api.post('/cravou/admin/wrapped/preview')
+  return data as WrappedStatus
+}
+
+export async function adminReleaseWrapped() {
+  const { data } = await api.post('/cravou/admin/wrapped/release')
+  return data as WrappedStatus
+}
+
+export async function adminDeactivateWrapped() {
+  const { data } = await api.post('/cravou/admin/wrapped/deactivate')
+  return data as WrappedStatus
+}
+
+export interface WrappedRawStatus {
+  status: 'off' | 'preview' | 'released'
+  previewUserId: string | null
+  activatedAt: string | null
+}
+
+export async function adminGetWrappedRawStatus() {
+  const { data } = await api.get('/cravou/admin/wrapped/status')
+  return data as WrappedRawStatus
+}
+
+export interface WrappedComparison {
+  avgAprovPct: number
+}
+
+export async function getWrappedComparison() {
+  const { data } = await api.get('/cravou/wrapped/comparison')
+  return data as WrappedComparison
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export async function adminGetMatches() {
@@ -282,6 +330,8 @@ export interface Prediction {
   awayScore: number
   penaltyWinner?: string | null
   points: number | null
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface RankingEntry {

@@ -1,0 +1,57 @@
+.bar {
+  width: 100%;
+  max-width: 280px;
+  height: 14px;
+  border-radius: var(--r-full);
+  overflow: hidden;
+  display: flex;
+  background: var(--c-surface-2);
+  margin-top: 6px;
+}
+
+.seg {
+  height: 100%;
+  width: 0;
+  animation: segGrow 0.6s ease-out both;
+}
+
+@keyframes segGrow {
+  from { flex-basis: 0; }
+}
+
+.exact   { background: var(--c-accent); }
+.right   { background: var(--c-green); }
+.partial { background: var(--c-gold); }
+.wrong   { background: var(--c-text-3); }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 14px;
+  font-size: 0.76rem;
+  color: var(--c-text-2);
+  margin-top: 4px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend b {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dotExact   { background: var(--c-accent); }
+.dotRight   { background: var(--c-green); }
+.dotPartial { background: var(--c-gold); }
+.dotWrong   { background: var(--c-text-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .seg { animation-duration: 0.01ms !important; }
+}

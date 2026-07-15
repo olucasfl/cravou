@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { Home, Calendar, BarChart2, User, Users } from 'lucide-react'
 import { usePendingInviteCount } from '@/hooks/usePendingInviteCount'
 import s from './BottomNav.module.css'
@@ -13,6 +13,9 @@ const items = [
 
 export default function BottomNav() {
   const { count } = usePendingInviteCount()
+  const { pathname } = useLocation()
+
+  if (pathname.startsWith('/wrapped')) return null
 
   return (
     <nav className={s.nav}>

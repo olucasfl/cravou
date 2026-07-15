@@ -1,0 +1,262 @@
+.card {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  position: relative;
+}
+
+/* ── Anúncio ("E o terceiro lugar vai para...") ──────────────────────── */
+
+.caption {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--c-text);
+  text-align: center;
+  max-width: 300px;
+  padding: 0 12px;
+}
+
+.captionIn {
+  animation: captionIn 0.45s ease both;
+}
+
+.captionOut {
+  display: none;
+}
+
+@keyframes captionIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  color: var(--c-text-2);
+}
+
+.third  .label { color: #b45309; }
+.second .label { color: #9ca3af; }
+.first  .label { color: var(--c-gold); font-size: 2rem; }
+
+/* ── Avatar ─────────────────────────────────────────────────────────── */
+
+.avatarRing {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  color: #000;
+  transition: filter 0.5s ease;
+}
+
+.third  .avatar { background: #92400e; color: #fff; }
+.second .avatar { background: #9ca3af; }
+.first  .avatar { background: var(--c-gold); }
+
+.suspense .avatar {
+  filter: blur(14px);
+  color: transparent;
+}
+
+.suspense {
+  animation: ringPulse 1s ease-in-out infinite alternate, avatarShake 0.15s ease-in-out infinite;
+}
+
+.third.suspense  { box-shadow: 0 0 0 3px rgba(146, 64, 14, 0.4); }
+.second.suspense { box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.4); }
+.first.suspense  {
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.5);
+  animation: ringPulseStrong 1s ease-in-out infinite alternate, avatarShake 0.1s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  from { transform: scale(1);    box-shadow: 0 0 10px rgba(255,255,255,0.15); }
+  to   { transform: scale(1.05); box-shadow: 0 0 26px rgba(255,255,255,0.35); }
+}
+
+@keyframes ringPulseStrong {
+  from { transform: scale(1);    box-shadow: 0 0 16px rgba(245,158,11,0.35); }
+  to   { transform: scale(1.08); box-shadow: 0 0 44px rgba(245,158,11,0.75); }
+}
+
+/* Tremor de suspense — não anima transform pra não brigar com o pulso de escala acima */
+@keyframes avatarShake {
+  0%, 100% { margin-left: 0; }
+  25%      { margin-left: -3px; }
+  75%      { margin-left: 3px; }
+}
+
+.revealed .avatar {
+  filter: blur(0);
+}
+
+.revealed {
+  animation: revealPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.third.revealed  { box-shadow: 0 0 24px rgba(146, 64, 14, 0.6); }
+.second.revealed { box-shadow: 0 0 30px rgba(156, 163, 175, 0.65); }
+.first.revealed  { box-shadow: 0 0 44px rgba(245, 158, 11, 0.85); }
+
+@keyframes revealPop {
+  0%   { transform: scale(0.7) rotate(-8deg); }
+  45%  { transform: scale(1.25) rotate(5deg); }
+  70%  { transform: scale(0.94) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.crown {
+  position: absolute;
+  top: -20px;
+  color: var(--c-gold);
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.7));
+  animation: crownDrop 0.4s ease 0.1s both;
+}
+
+@keyframes crownDrop {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Clarão radial atrás do avatar no instante do "TCHAN" ───────────────── */
+.flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(245,158,11,0.55) 35%, transparent 72%);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: flashBurst 0.7s ease-out both;
+}
+
+.second .flash { background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(156,163,175,0.55) 35%, transparent 72%); }
+.third  .flash { background: radial-gradient(circle, rgba(255,255,255,0.9)  0%, rgba(146,64,14,0.5)   35%, transparent 72%); }
+
+@keyframes flashBurst {
+  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.2); }
+  30%  { opacity: 1;   transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(1.8); }
+}
+
+/* Explosão de emojis a partir do centro do card — cobre a tela toda, não só
+   uma área pequena ao redor do avatar ─────────────────────────────────── */
+.burstWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.burstEmoji {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  animation: burstFly 1s cubic-bezier(0.22, 0.61, 0.36, 1) var(--delay, 0s) both;
+}
+
+@keyframes burstFly {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+  25%  { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px)))
+      scale(1.15)
+      rotate(220deg);
+  }
+}
+
+/* ── Detalhes (nome/pontos) ────────────────────────────────────────── */
+
+.details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.detailsIn {
+  animation: detailsIn 0.4s ease 0.1s both;
+}
+
+@keyframes detailsIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.points {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--c-gold);
+}
+.second .points { color: #9ca3af; }
+.third  .points { color: #b45309; }
+
+.points span {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+}
+
+.cravadas {
+  font-size: 0.8rem;
+  color: var(--c-text-3);
+}
+
+.hint {
+  position: absolute;
+  bottom: 12dvh;
+  font-size: 0.78rem;
+  color: var(--c-text-3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  animation: hintBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes hintBlink {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suspense, .revealed, .crown, .details, .detailsIn, .hint, .caption, .captionIn,
+  .flash, .burstEmoji {
+    animation-duration: 0.01ms !important;
+  }
+}

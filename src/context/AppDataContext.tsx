@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { getMe, type User } from '@/services/authService'
 import {
-  getMatches, getMyPredictions, getRanking, getAllGroups, getBracket,
-  type Match, type Prediction, type GroupData, type RankingEntry, type BracketSlot,
+  getMatches, getMyPredictions, getRanking, getAllGroups, getBracket, getWrappedStatus,
+  type Match, type Prediction, type GroupData, type RankingEntry, type BracketSlot, type WrappedStatus,
 } from '@/services/cravouService'
 import { clearCache } from '@/utils/cache'
 import { useSocketEvent } from '@/hooks/useSocketEvent'
+
+const WRAPPED_OFF: WrappedStatus = { active: false, activatedAt: null }
 
 interface AppData {
   user: User | null
@@ -14,6 +16,7 @@ interface AppData {
   ranking: RankingEntry[]
   groups: GroupData[]
   bracket: BracketSlot[]
+  wrapped: WrappedStatus
   loading: boolean
   refreshing: boolean
   refresh: () => Promise<void>
@@ -26,6 +29,7 @@ const AppDataContext = createContext<AppData>({
   ranking: [],
   groups: [],
   bracket: [],
+  wrapped: WRAPPED_OFF,
   loading: true,
   refreshing: false,
   refresh: async () => {},
@@ -42,6 +46,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [ranking, setRanking]       = useState<RankingEntry[]>([])
   const [groups, setGroups]         = useState<GroupData[]>([])
   const [bracket, setBracket]       = useState<BracketSlot[]>([])
+  const [wrapped, setWrapped]       = useState<WrappedStatus>(WRAPPED_OFF)
   const [loading, setLoading]       = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const mountedRef                  = useRef(true)
@@ -59,6 +64,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     rank: RankingEntry[],
     g: GroupData[],
     b: BracketSlot[],
+    w: WrappedStatus,
   ) => {
     if (!mountedRef.current) return
     lastFetchAt.current = Date.now()
@@ -68,20 +74,22 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setRanking(rank)
     setGroups(g)
     setBracket(b)
+    setWrapped(w)
     setLoading(false)
     setRefreshing(false)
   }, [])
 
   const fetchAll = useCallback(async () => {
-    const [u, all, preds, rank, g, b] = await Promise.all([
+    const [u, all, preds, rank, g, b, w] = await Promise.all([
       getMe().catch(() => null),
       getMatches().catch(() => [] as Match[]),
       getMyPredictions().catch(() => [] as Prediction[]),
       getRanking().catch(() => [] as RankingEntry[]),
       getAllGroups().catch(() => [] as GroupData[]),
       getBracket().catch(() => [] as BracketSlot[]),
+      getWrappedStatus().catch(() => WRAPPED_OFF),
     ])
-    applyData(u, all, preds, rank, g, b)
+    applyData(u, all, preds, rank, g, b, w)
   }, [applyData])
 
   // Carregamento inicial
@@ -132,8 +140,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     fetchAll()
   }, [fetchAll]))
 
+  useSocketEvent('wrapped:activated', useCallback(() => { fetchAll() }, [fetchAll]))
+  useSocketEvent('wrapped:deactivated', useCallback(() => { fetchAll() }, [fetchAll]))
+
   return (
-    <AppDataContext.Provider value={{ user, matches, predictions, ranking, groups, bracket, loading, refreshing, refresh }}>
+    <AppDataContext.Provider value={{ user, matches, predictions, ranking, groups, bracket, wrapped, loading, refreshing, refresh }}>
       {children}
     </AppDataContext.Provider>
   )

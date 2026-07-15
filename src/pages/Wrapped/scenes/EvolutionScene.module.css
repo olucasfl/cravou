@@ -1,0 +1,24 @@
+.chart {
+  width: 100%;
+  max-width: 320px;
+  height: 140px;
+}
+
+.line {
+  stroke: var(--c-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.5));
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: drawLine 1.4s ease-out 0.15s forwards;
+}
+
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line { animation-duration: 0.01ms !important; }
+}

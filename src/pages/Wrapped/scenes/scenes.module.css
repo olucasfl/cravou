@@ -1,0 +1,112 @@
+/* Base compartilhada pelas cenas de estatística (cravadas, ousado, streak, etc). */
+
+.card {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 28px;
+  text-align: center;
+  animation: cardIn 0.4s ease both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-2);
+  color: var(--c-accent);
+  margin-bottom: 6px;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text-2);
+}
+
+.bigNumber {
+  font-family: var(--font-display);
+  font-size: 4.2rem;
+  line-height: 1;
+  color: var(--c-text);
+  text-shadow: 0 0 30px var(--c-accent-glow);
+}
+
+.headline {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--c-text);
+  max-width: 320px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--c-text-2);
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+.chipList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 8px;
+  max-height: 38dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  /* Fica acima das zonas de toque do StoryViewer (z-index 2) — dentro da lista,
+     o gesto de arrastar rola a lista em vez de avançar/voltar a cena. */
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  color: var(--c-text-2);
+  animation: chipIn 0.35s ease both;
+}
+
+.chip b { color: var(--c-text); }
+
+@keyframes chipIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.empty {
+  color: var(--c-text-3);
+  font-size: 0.9rem;
+  max-width: 260px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .chip { animation-duration: 0.01ms !important; }
+}

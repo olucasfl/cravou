@@ -700,6 +700,92 @@
 }
 .toastClose:hover { opacity: 1; }
 
+/* ── Cravou Wrapped ──────────────────────────────────────── */
+.wrappedPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 28px 20px;
+}
+
+.wrappedIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-copa-gradient);
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.wrappedTitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--c-text);
+}
+
+.wrappedSub {
+  font-size: 0.82rem;
+  color: var(--c-text-2);
+  max-width: 320px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.wrappedStatus {
+  font-size: 0.85rem;
+  color: var(--c-text-2);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 6px 16px;
+  margin-bottom: 8px;
+}
+.wrappedStatus b { color: var(--c-text); }
+
+.wrappedActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.wrappedActions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--r-full);
+  font-weight: 700;
+  font-size: 0.88rem;
+  border: 1px solid var(--c-border-2);
+  background: var(--c-surface-2);
+  color: var(--c-text);
+}
+.wrappedActions button:disabled { opacity: 0.5; }
+
+.wrappedBtnPreview { border-color: var(--c-accent); color: var(--c-accent); }
+.wrappedBtnRelease { background: var(--c-copa-gradient); border: none; color: #fff; }
+.wrappedBtnOff { border-color: var(--c-red); color: var(--c-red); }
+
+.wrappedMsg {
+  font-size: 0.82rem;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  margin-top: 4px;
+}
+.wrappedMsgOk  { background: #052e16; border: 1px solid #166534; color: #86efac; }
+.wrappedMsgErr { background: #1f0505; border: 1px solid #7f1d1d; color: #fca5a5; }
+
 /* ── Confirmation Modal ──────────────────────────────────── */
 .overlay {
   position: fixed;

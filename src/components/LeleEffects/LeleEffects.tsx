@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAppData } from '@/context/AppDataContext'
 import { LELE_ID } from '@/utils/palpitesConfig'
 import s from './LeleEffects.module.css'
@@ -18,6 +19,7 @@ const PIECES = Array.from({ length: N }, (_, i) => ({
 
 export default function LeleEffects() {
   const { user } = useAppData()
+  const { pathname } = useLocation()
   const isLele = user?.id === LELE_ID
   const [showConfetti, setShowConfetti] = useState(false)
 
@@ -40,7 +42,7 @@ export default function LeleEffects() {
     }
   }, [isLele])
 
-  if (!isLele || !showConfetti) return null
+  if (!isLele || !showConfetti || pathname.startsWith('/wrapped')) return null
 
   return (
     <div className={s.container} aria-hidden="true">

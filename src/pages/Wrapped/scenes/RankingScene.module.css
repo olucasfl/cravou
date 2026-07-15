@@ -1,0 +1,149 @@
+.wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 20px 20px;
+  overflow: hidden;
+}
+
+.header {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-text-2);
+  margin-bottom: 8px;
+}
+
+.myBanner {
+  display: inline-block;
+  background: var(--c-gold-glow);
+  border: 1px solid var(--c-gold);
+  border-radius: var(--r-full);
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  color: var(--c-text);
+}
+.myBanner b { color: var(--c-gold); }
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  /* Fica acima das zonas de toque do StoryViewer (z-index 2) — dentro da lista,
+     o gesto de arrastar rola o ranking em vez de avançar/voltar a cena. */
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 10px 12px;
+  flex-shrink: 0;
+  animation: itemIn 0.35s ease both;
+}
+
+@keyframes itemIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.item.me {
+  border-color: var(--c-gold);
+  background: var(--c-gold-glow);
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  animation: itemIn 0.35s ease both, mePulse 1.6s ease-in-out 0.4s infinite;
+}
+
+@keyframes mePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.35); }
+  50%      { box-shadow: 0 0 16px 2px rgba(245, 158, 11, 0.35); }
+}
+
+.pos {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--c-text-3);
+  min-width: 24px;
+  text-align: center;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--c-surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--c-text-2);
+  flex-shrink: 0;
+}
+
+.name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pts {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--c-text);
+  flex-shrink: 0;
+}
+
+.pts span {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  color: var(--c-text-3);
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item, .item.me { animation-duration: 0.01ms !important; }
+}
+
+/* ── Variante Cravadas — troca o dourado pelo ciano de destaque ──────── */
+.cravadasVariant .myBanner {
+  background: var(--c-accent-glow);
+  border-color: var(--c-accent);
+}
+.cravadasVariant .myBanner b { color: var(--c-accent); }
+
+.cravadasVariant .item.me {
+  border-color: var(--c-accent);
+  background: var(--c-accent-glow);
+  animation: itemIn 0.35s ease both, mePulseCravas 1.6s ease-in-out 0.4s infinite;
+}
+
+@keyframes mePulseCravas {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.35); }
+  50%      { box-shadow: 0 0 16px 2px rgba(0, 212, 255, 0.35); }
+}
+
+.cravadasVariant .pts { color: var(--c-accent); }

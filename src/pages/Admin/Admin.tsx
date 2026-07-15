@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   ArrowLeft, RefreshCw, Lock, Unlock, Check, Trophy, Flag,
   Calendar, RotateCcw, AlertTriangle, ChevronDown,
-  ChevronUp, Zap, X, Save, Shield, Pencil, Search,
+  ChevronUp, Zap, X, Save, Shield, Pencil, Search, Sparkles, Eye, Ban,
 } from 'lucide-react'
 import {
   adminGetMatches, adminUpdateScore, adminUpdateStatus, adminLockMatch,
@@ -13,6 +13,7 @@ import {
   adminCreateMatchFromSlot,
   adminUnlinkMatchFromSlot,
   adminInitializeAllSlots,
+  adminActivateWrappedPreview, adminReleaseWrapped, adminDeactivateWrapped, adminGetWrappedRawStatus,
   type Match, type BracketSlot,
 } from '@/services/cravouService'
 import { formatMatchDate, phaseLabel, statusLabel } from '@/utils/format'
@@ -22,7 +23,7 @@ import s from './Admin.module.css'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = 'matches' | 'bracket'
+type Tab = 'matches' | 'bracket' | 'wrapped'
 type PhaseFilter = 'all' | 'group_stage' | 'knockout'
 type StatusFilter = 'all' | 'upcoming' | 'live' | 'awaiting_result' | 'finished'
 
@@ -92,6 +93,10 @@ export default function Admin() {
   const [toast, setToast] = useState<Toast | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
+
+  const [wrappedRaw, setWrappedRaw] = useState<{ status: string; activatedAt: string | null } | null>(null)
+  const [wrappedLoading, setWrappedLoading] = useState(false)
+  const [wrappedMsg, setWrappedMsg] = useState<Toast | null>(null)
 
   const [bracketMsg, setBracketMsg] = useState<Toast | null>(null)
   const [initializing, setInitializing] = useState(false)
@@ -172,6 +177,65 @@ export default function Admin() {
     }
     return rounds
   }, [bracket])
+
+  // ── Cravou Wrapped ─────────────────────────────────────────────────────────
+
+  const loadWrappedStatus = useCallback(async () => {
+    setWrappedLoading(true)
+    try {
+      const raw = await adminGetWrappedRawStatus()
+      setWrappedRaw(raw)
+    } catch {
+      setWrappedMsg({ type: 'err', text: 'Erro ao carregar status da retrospectiva.' })
+    } finally {
+      setWrappedLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { if (tab === 'wrapped') loadWrappedStatus() }, [tab, loadWrappedStatus])
+
+  async function activatePreview() {
+    setWrappedLoading(true)
+    try {
+      await adminActivateWrappedPreview()
+      setWrappedMsg({ type: 'ok', text: 'Prévia ativada! Só a sua conta vai ver a retrospectiva agora.' })
+      await loadWrappedStatus()
+    } catch {
+      setWrappedMsg({ type: 'err', text: 'Erro ao ativar a prévia.' })
+    } finally {
+      setWrappedLoading(false)
+    }
+  }
+
+  function confirmRelease() {
+    setConfirm({
+      title: 'Liberar retrospectiva pra todo mundo',
+      matchLabel: 'Cravou Wrapped 2026',
+      consequences: [
+        'Todas as contas passam a ver a retrospectiva ao abrir o app',
+        'Sua conta também vai ver a experiência completa de novo, do zero',
+        'Essa ação não tem "voltar atrás" fácil — use Desativar se precisar corrigir algo depois',
+      ],
+      action: async () => {
+        await adminReleaseWrapped()
+        setWrappedMsg({ type: 'ok', text: 'Liberado! Todo mundo já pode ver a retrospectiva.' })
+        await loadWrappedStatus()
+      },
+    })
+  }
+
+  async function deactivateWrapped() {
+    setWrappedLoading(true)
+    try {
+      await adminDeactivateWrapped()
+      setWrappedMsg({ type: 'ok', text: 'Retrospectiva desativada.' })
+      await loadWrappedStatus()
+    } catch {
+      setWrappedMsg({ type: 'err', text: 'Erro ao desativar.' })
+    } finally {
+      setWrappedLoading(false)
+    }
+  }
 
   // ── Bracket actions ────────────────────────────────────────────────────────
 
@@ -344,6 +408,9 @@ export default function Admin() {
           </button>
           <button className={`${s.tab} ${tab === 'bracket' ? s.tabActive : ''}`} onClick={() => setTab('bracket')}>
             Chaveamento
+          </button>
+          <button className={`${s.tab} ${tab === 'wrapped' ? s.tabActive : ''}`} onClick={() => setTab('wrapped')}>
+            Wrapped
           </button>
         </div>
 
@@ -608,6 +675,48 @@ export default function Admin() {
               })()}
             </div>
           </>
+        )}
+
+        {/* ══ CRAVOU WRAPPED ═══════════════════════════════════════ */}
+        {tab === 'wrapped' && (
+          <div className={s.wrappedPanel}>
+            <div className={s.wrappedIcon}><Sparkles size={22} /></div>
+            <div className={s.wrappedTitle}>Retrospectiva Cravou 2026</div>
+            <div className={s.wrappedSub}>
+              Ative só pra você testar o fluxo inteiro antes de liberar pra todo mundo.
+            </div>
+
+            <div className={s.wrappedStatus}>
+              Estado atual:{' '}
+              <b>
+                {wrappedLoading && !wrappedRaw
+                  ? 'carregando...'
+                  : wrappedRaw?.status === 'released'
+                    ? 'Liberado pra todo mundo'
+                    : wrappedRaw?.status === 'preview'
+                      ? 'Prévia ativa (só a sua conta)'
+                      : 'Desativado'}
+              </b>
+            </div>
+
+            <div className={s.wrappedActions}>
+              <button className={s.wrappedBtnPreview} onClick={activatePreview} disabled={wrappedLoading}>
+                <Eye size={16} /> Ativar prévia (só eu)
+              </button>
+              <button className={s.wrappedBtnRelease} onClick={confirmRelease} disabled={wrappedLoading}>
+                <Sparkles size={16} /> Liberar pra todo mundo
+              </button>
+              <button className={s.wrappedBtnOff} onClick={deactivateWrapped} disabled={wrappedLoading}>
+                <Ban size={16} /> Desativar
+              </button>
+            </div>
+
+            {wrappedMsg && (
+              <div className={`${s.wrappedMsg} ${wrappedMsg.type === 'ok' ? s.wrappedMsgOk : s.wrappedMsgErr}`}>
+                {wrappedMsg.text}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

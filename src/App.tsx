@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import Splash from '@/components/Splash/Splash'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import BottomNav from '@/components/BottomNav/BottomNav'
-import { AppDataProvider } from '@/context/AppDataContext'
+import { AppDataProvider, useAppData } from '@/context/AppDataContext'
+import { hasSeenWrapped } from '@/utils/wrappedSeen'
 
 import Login from '@/pages/Login/Login'
 import Register from '@/pages/Register/Register'
@@ -19,6 +20,7 @@ import BolaoDetail from '@/pages/Bolao/BolaoDetail'
 import BolaoGrupoPalpites from '@/pages/Bolao/BolaoGrupoPalpites'
 import Profile from '@/pages/Profile/Profile'
 import Admin from '@/pages/Admin/Admin'
+import Wrapped from '@/pages/Wrapped/Wrapped'
 import LeleEffects from '@/components/LeleEffects/LeleEffects'
 
 const APP_VERSION = 'v1'
@@ -73,6 +75,7 @@ export default function App() {
         <Route path="/bolao/:id/palpites" element={<BolaoGrupoPalpites />} />
         <Route path="/profile"            element={<Profile />} />
         <Route path="/admin"              element={<Admin />} />
+        <Route path="/wrapped"            element={<Wrapped />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/home" replace />} />
@@ -84,10 +87,38 @@ function ProtectedLayout() {
   return (
     <ProtectedRoute>
       <AppDataProvider>
-        <LeleEffects />
-        <Outlet />
-        <BottomNav />
+        <ProtectedContent />
       </AppDataProvider>
     </ProtectedRoute>
+  )
+}
+
+// Decide o que renderizar ANTES de qualquer página da rota aparecer: enquanto os
+// dados carregam, mostra a splash da marca (nunca a Home) — e se a retrospectiva
+// estiver ativa e ainda não vista, troca a rota pela `/wrapped` nesse mesmo
+// momento, sem deixar a página de destino original chegar a pintar na tela.
+// Cobre tanto quem abre o app depois quanto quem já está com o app aberto (o
+// AppDataContext já reage ao evento de socket e atualiza `wrapped` sozinho).
+function ProtectedContent() {
+  const { wrapped, loading } = useAppData()
+  const location = useLocation()
+
+  if (loading) return <Splash />
+
+  const shouldShowWrapped =
+    wrapped.active &&
+    location.pathname !== '/wrapped' &&
+    !hasSeenWrapped(wrapped.activatedAt)
+
+  if (shouldShowWrapped) {
+    return <Navigate to="/wrapped" replace state={{ from: location.pathname + location.search }} />
+  }
+
+  return (
+    <>
+      <LeleEffects />
+      <Outlet />
+      <BottomNav />
+    </>
   )
 }

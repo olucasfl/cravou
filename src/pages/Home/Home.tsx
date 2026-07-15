@@ -2,12 +2,13 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   HelpCircle, X, Lock, Clock, Target, CheckCircle2, XCircle, Trophy,
-  Calendar, Flag, ChevronRight, Crown, Zap, Minus,
+  Calendar, Flag, ChevronRight, Crown, Zap, Minus, Sparkles,
 } from 'lucide-react'
 import { useAppData } from '@/context/AppDataContext'
 import { type Match, type Prediction, type GroupData, type Standing, type BracketSlot } from '@/services/cravouService'
 import { formatMatchDate, formatTimeUntilClose, phaseLabel, getPredCategory, getPredBreakdown } from '@/utils/format'
 import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
+import { hasSeenWrapped } from '@/utils/wrappedSeen'
 import { CountryBadge } from '@/components/CountryBadge'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
@@ -32,7 +33,7 @@ const ROUND_SLOT_COUNTS: Record<string, number> = {
 const STATUS_ORDER: Record<string, number> = { live: 0, awaiting_result: 1, locked: 2, upcoming: 3 }
 
 export default function Home() {
-  const { user, matches: allMatches, predictions: myPredictions, ranking, groups, bracket, loading, refresh } = useAppData()
+  const { user, matches: allMatches, predictions: myPredictions, ranking, groups, bracket, wrapped, loading, refresh } = useAppData()
 
   const [showTutorial, setShowTutorial]         = useState(false)
   const [showHistoryModal, setShowHistoryModal] = useState(false)
@@ -141,6 +142,20 @@ export default function Home() {
               <div className={s.avatar} style={avatarBg ? { background: avatarBg } : undefined}>{initial}</div>
             </div>
           </div>
+
+          {/* Cravou Wrapped */}
+          {wrapped.active && (
+            <Link to="/wrapped" state={{ from: '/home' }} className={s.wrappedBanner}>
+              <div className={s.wrappedBannerIcon}><Sparkles size={20} /></div>
+              <div className={s.wrappedBannerText}>
+                <span className={s.wrappedBannerTitle}>
+                  {hasSeenWrapped(wrapped.activatedAt) ? 'Veja novamente sua retrospectiva' : 'Sua retrospectiva chegou!'}
+                </span>
+                <span className={s.wrappedBannerSub}>Cravou! 2026</span>
+              </div>
+              <ChevronRight size={18} className={s.wrappedBannerChevron} />
+            </Link>
+          )}
 
           {/* Score Card */}
           <div className={`${s.scoreCard} ${isLele ? s.scoreCardLele : ''}`}>

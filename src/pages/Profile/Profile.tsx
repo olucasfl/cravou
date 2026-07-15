@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Shield, BarChart2, LogOut, Target, CheckCircle2, XCircle, Trophy, Minus, Users } from 'lucide-react'
+import { ChevronRight, Shield, BarChart2, LogOut, Target, CheckCircle2, XCircle, Trophy, Minus, Users, Sparkles } from 'lucide-react'
 import { logout } from '@/services/authService'
 import { useAppData } from '@/context/AppDataContext'
-import { getPredCategory } from '@/utils/format'
+import { getAproveitamento } from '@/utils/wrappedStats'
 import { avatarInitial, avatarColor, LELE_ID } from '@/utils/palpitesConfig'
 import { SoccerBall } from '@/components/icons/SoccerBall'
 import PullToRefresh from '@/components/PullToRefresh/PullToRefresh'
@@ -11,7 +11,7 @@ import FloatingHearts from '@/components/FloatingHearts/FloatingHearts'
 import s from './Profile.module.css'
 
 export default function Profile() {
-  const { user, matches, predictions, ranking, loading, refresh } = useAppData()
+  const { user, matches, predictions, ranking, wrapped, loading, refresh } = useAppData()
 
   const myPosition = ranking.find(r => r.userId === user?.id)?.position ?? null
 
@@ -20,28 +20,10 @@ export default function Profile() {
     [matches]
   )
 
-  const matchMap = useMemo(() => new Map(matches.map(m => [m.id, m])), [matches])
-
-  const stats = useMemo(() => {
-    const finished = predictions.filter(p => p.points !== null)
-    let cravadas = 0, certos = 0, parciais = 0, erros = 0
-    for (const p of finished) {
-      const phase = matchMap.get(p.matchId)?.phase ?? 'group_stage'
-      const c = getPredCategory(p.points, true, phase)
-      if (c === 'exact') cravadas++
-      else if (c === 'bonus' || c === 'right') certos++
-      else if (c === 'partial') parciais++
-      else if (c === 'wrong') erros++
-    }
-    const total = predictions.length
-    const missed = Math.max(0, totalFinished - finished.length)
-    const pontuaram = finished.filter(p => (p.points ?? 0) > 0).length
-    const aprovPct = finished.length > 0 ? Math.round((pontuaram / finished.length) * 100) : 0
-    const pct = (n: number) => totalFinished > 0 ? (n / totalFinished) * 100 : 0
-    return { finished, total, cravadas, certos, parciais, erros, missed, aprovPct, pct }
-  }, [predictions, matchMap, totalFinished])
-
-  const { finished, total, cravadas, certos, parciais, erros, missed, aprovPct, pct } = stats
+  const stats = useMemo(() => getAproveitamento(matches, predictions), [matches, predictions])
+  const { total, cravadas, certos, parciais, erros, missed, aprovPct } = stats
+  const finishedLen = cravadas + certos + parciais + erros // = predictions já pontuadas
+  const pct = (n: number) => totalFinished > 0 ? (n / totalFinished) * 100 : 0
 
   if (loading) return (
     <div className="app-layout">
@@ -105,12 +87,12 @@ export default function Profile() {
           </div>
 
           {/* ── Desempenho ── */}
-          {finished.length > 0 ? (
+          {finishedLen > 0 ? (
             <div className={s.perfCard}>
               <div className={s.perfHeader}>
                 <span className={s.perfTitle}>Desempenho</span>
                 <span className={s.perfSub}>
-                  {finished.length} de {totalFinished} jogos encerrados
+                  {finishedLen} de {totalFinished} jogos encerrados
                 </span>
               </div>
 
@@ -172,10 +154,10 @@ export default function Profile() {
           ) : null}
 
           {/* ── Palpites pendentes — clicável ── */}
-          {total > finished.length && (
+          {total > finishedLen && (
             <Link to="/matches" className={s.pendingRow}>
               <span className={s.pendingDot} />
-              <span>{total - finished.length} palpite{total - finished.length > 1 ? 's' : ''} aguardando resultado</span>
+              <span>{total - finishedLen} palpite{total - finishedLen > 1 ? 's' : ''} aguardando resultado</span>
               <ChevronRight size={13} className={s.pendingChevron} />
             </Link>
           )}
@@ -203,6 +185,19 @@ export default function Profile() {
               </div>
               <ChevronRight size={16} className={s.menuChevron} />
             </Link>
+
+            {wrapped.active && (
+              <Link to="/wrapped" state={{ from: '/profile' }} className={s.menuItem}>
+                <div className={s.menuIcon} style={{ background: 'var(--c-copa-gradient)' }}>
+                  <Sparkles size={18} color="#fff" />
+                </div>
+                <div className={s.menuInfo}>
+                  <span className={s.menuLabel}>Retrospectiva 2026</span>
+                  <span className={s.menuSub}>Rever sua Copa no Cravou</span>
+                </div>
+                <ChevronRight size={16} className={s.menuChevron} />
+              </Link>
+            )}
 
             {user?.isAdmin && (
               <Link to="/admin" className={s.menuItem}>

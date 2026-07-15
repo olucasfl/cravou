@@ -1,0 +1,48 @@
+.badge {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-surface-2);
+  border: 2px solid transparent;
+  background-image: linear-gradient(var(--c-surface-2), var(--c-surface-2)), var(--c-copa-gradient);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  margin-top: 6px;
+  animation: badgeIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both, badgeGlow 2.2s ease-in-out 0.55s infinite alternate;
+}
+
+@keyframes badgeIn {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes badgeGlow {
+  from { box-shadow: 0 0 10px rgba(124, 58, 237, 0.25); }
+  to   { box-shadow: 0 0 30px rgba(0, 212, 255, 0.45); }
+}
+
+.badgeEmoji {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.02em;
+  color: var(--c-text);
+  text-align: center;
+  animation: titleIn 0.4s ease 0.3s both;
+}
+
+@keyframes titleIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge, .title { animation-duration: 0.01ms !important; }
+}
